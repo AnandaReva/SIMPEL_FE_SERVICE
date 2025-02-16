@@ -1,94 +1,191 @@
 <template>
-    <v-card class="pa-4">
+ <v-card class="pa-4 elevation-2 fill-height">
         <v-row>
-            <v-col>
-                <h2 class="text-h5 font-weight-bold">Live Monitoring</h2>
-                <v-card class="pa-3" color="blue-lighten-4">
-                    Data Live Monitoring akan tampil di sini
-
-
-                    <div id="chartContainer" style="height: 300px; width: 100%;"></div>
-
-
-
+            <!-- Sidebar Active Devices -->
+            <v-col cols="3">
+                <v-card class="pa-3" color="blue-lighten-4" elevation="1">
+                    <p class="text-subtitle-5 font-weight-bold mb-3">Daftar Perangkat Aktif</p>
+                    <v-infinite-scroll :key="scrollKeyActiveDevices" id="activeDevicesBox" ref="activeDevicesBox"
+                        height="400" side="end" @load="loadDevices" class="overflow-auto">
+                        <!-- Active Device Panel -->
+                        <ActiveDevicesList :activeDevices="activeDevices" :current-currActiveDeviceId="currActiveDeviceId"
+                            @select-device="(data) => {}" />
+                        <template v-slot:empty>
+                            <span class="text-caption text-grey">Tidak ada perangkat aktif</span>
+                        </template>
+                    </v-infinite-scroll>
                 </v-card>
             </v-col>
-        </v-row>
 
-        <v-row class="mt-4">
-            <v-col cols="6">
-                <h3 class="text-h6">Hari Ini</h3>
-                <v-card class="pa-3" color="blue-lighten-5">
-                    Data penggunaan hari ini
-                </v-card>
-            </v-col>
-            <v-col cols="6">
-                <h3 class="text-h6">Minggu Terakhir</h3>
-                <v-card class="pa-3" color="blue-lighten-5">
-                    Data penggunaan minggu terakhir
-                </v-card>
-            </v-col>
-        </v-row>
-
-        <v-row class="mt-4">
-            <v-col cols="6">
-                <h3 class="text-h6">Bulan Terakhir</h3>
-                <v-card class="pa-3" color="blue-lighten-5">
-                    <!-- <CurrMonthOverview :currMonthData="currMonthData" /> -->
-                </v-card>
-            </v-col>
-            <v-col cols="6">
-                <h3 class="text-h6">Tahun Terakhir</h3>
-                <v-card class="pa-3" color="blue-lighten-5">
-                    <!--        <CurrYearOverview :currYearData="currYearData" /> -->
+            <!-- Live Monitoring -->
+            <v-col cols="9">
+                <h2 class="text-h5 font-weight-bold mb-3">Live Monitoring</h2>
+                <v-card class="pa-4" color="blue-lighten-4" elevation="1">
+                    <div class="mb-2">Perangkat saat ini: <strong>{{ activeDevices[currActiveDeviceId]?.device_name || 'Tidak ada' }}</strong></div>
+                    <div id="chartContainer" class="chart-container"></div>
                 </v-card>
             </v-col>
         </v-row>
     </v-card>
 </template>
 
+<style scoped>
+/* Memastikan list device scrollable */
+.overflow-auto {
+    overflow-y: auto;
+}
+
+/* Ukuran chart */
+.chart-container {
+    height: 400px;
+    width: 100%;
+}
+</style>
+
+
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Process, getApiUrl } from '@/utils/requestHelper';
-import { connectWebSocket } from '@/utils/websocket'; 
+import { connectWebSocket } from '@/utils/websocket';
 import CanvasJS from "@canvasjs/charts";
 
-import CurrMonthOverview from './reports/overviews/CurrMonthOverview.vue';
-import CurrYearOverview from './reports/overviews/CurrYearOverview.vue';
+import ActiveDevicesList from './parts/ActiveDevicesList.vue'
 
-const deviceId = ref("1");
-const currMonthData = ref([]);
-const currYearData = ref([]);
-
-const upperLimitLastYearEpoch = ref(0);
-const lowerLimitLastYearEpoch = ref(0);
-const upperLimitCurrMonthEpoch = ref(0);
-const lowerLimitCurrMonthEpoch = ref(0);
+//////////////////// ACTIVE DEVICES////////////////////
 
 
+const currActiveDeviceId = ref(0);
+const activeDevices = ref([]);
+const activeDevices_page_size = ref(10)
+const activeDevices_page_number = ref(0)
+const availableDevices = ref([]);
+const totalActiveDevices = ref(0);
+const lastFetchedPageActiveDevices = ref('')
+const newActiveDevices = ref("")
 
-onMounted(() => {
+const scrollKeyActiveDevices = ref(0)
 
-    initChart();
-    startWebSocket();
+function resetScrollActiveDevices() {
+    scrollKeyActiveDevices.value += 1
+}
+
+const isFetchingActiveDevices = ref(false)// mencegah race condition
 
 
-   /*  calculateLimitCurrMonth();
-    calculateLimitLastYear();
-    getCurrMonthData();
-    getLastYearData(); */
-});
+/* function loadDevices({ done }) {
+    const fetchedPageNumber = Number(lastFetchedPageActiveDevices.value) + 1;
+    setTimeout(async () => {
+        await getActiveDevices(fetchedPageNumber.toString());
+        if (fetchedPageNumber < totalActiveDevices.value) {
+            done('done');
+        } else {
+            done('empty');
+        }
+    }, 1000);
+} */
 
-onUnmounted(() => {
-    if (socket) {
-        socket.disconnect();
+async function loadDevices({ done }) {
+    if (isFetchingActiveDevices.value) {
+        return;
     }
-});
 
-// **Variabel Chart**
+    isFetchingActiveDevices.value = true;
+    const fetchedPageNumber = lastFetchedPageActiveDevices.value + 1;
+
+    await getActiveDevices(fetchedPageNumber, activeDevices_page_size.value);
+
+    lastFetchedPageActiveDevices.value = fetchedPageNumber;
+
+    if (fetchedPageNumber * activeDevices_page_size.value >= totalActiveDevices.value) {
+        done('empty');
+    } else {
+        done('done');
+    }
+
+    isFetchingActiveDevices.value = false;
+}
+
+
+
+function appendActiveDevices(activeDevices, additionalDevices) {
+    const deviceMap = new Map(activeDevices.map(device => [device.device_id, device]));
+
+    additionalDevices.forEach(newDevice => {
+        if (!deviceMap.has(newDevice.device_id)) {
+            activeDevices.push(newDevice);
+            deviceMap.set(newDevice.device_id, newDevice);
+        }
+    });
+
+    activeDevices.sort((a, b) => a.device_name.localeCompare(b.device_name));
+    return activeDevices;
+}
+
+
+
+
+// data akan di fecth dengan triger gulir
+async function getActiveDevices(page_number, page_size) {
+
+    if (isFetchingActiveDevices == true) {
+        console.log("Fething active devices already in progress...")
+        await new Promise(resolve => setTimeout(resolve, 200)) // delay
+    }
+
+    try {
+        const operation = "get_active_devices";
+        const baseUrl = getApiUrl();
+        const params = {
+            page_number: page_number,
+            page_size: page_size
+        };
+
+
+        console.log("getActiveDevices params:", params);
+        const response_be = await Process(baseUrl, operation, params);
+
+        //  console.log("login response_be:", response_be);
+
+
+        if (response_be.status != "success") {
+            console.error("get_active_devices FAILED!!:", response_be.error_message);
+           /*  popUpProps.value = {
+                status: response_be.status,
+                errorMessage: response_be.error_message,
+                errorCode: response_be.error_code,
+            }; */
+        }
+
+
+        if (response_be.status === "success") {
+            let responseBE = response_be.payload;
+
+            if (responseBE.devices) {
+                console.log("get_active_devices SUCCESS!!:");
+                activeDevices.value = appendActiveDevices(activeDevices.value, responseBE.devices);
+                totalActiveDevices.value = Math.ceil(responseBE.total_data / Number(activeDevices_page_size.value));
+                lastFetchedPageActiveDevices.value = page_number;
+            } else {
+                console.log('Active device list is empty');
+            }
+        } else {
+            console.error("get_active_devices FAILED!!:", response_be.error_message);
+        }
+
+    } catch (err) {
+        console.log("ERROR WHILE GETTING ACTIVE DEVICES: " + err)
+    }
+}
+
+
+
+
+
+//////////////////// REALTIME CHART ////////////////////
 const dataPoints = ref([]);
 let chart = null;
-const maxDataLength = 50;
+const maxDataLength = ref(50);
+
 
 // **Fungsi untuk mengupdate chart**
 const updateChart = (newData) => {
@@ -99,7 +196,7 @@ const updateChart = (newData) => {
     });
 
     // Hapus data lama jika lebih dari 20
-    if (dataPoints.value.length > maxDataLength) {
+    if (dataPoints.value.length > maxDataLength.value) {
         dataPoints.value.shift();
     }
 
@@ -129,106 +226,40 @@ const initChart = () => {
 let socket = null;
 
 const startWebSocket = () => {
-    socket = connectWebSocket(deviceId.value);  // Berikan parameter device_id
 
-    socket.onmessage = (event) => {
-    try {
-        const message = JSON.parse(event.data);
-        console.log("📡 Data received:", message);
-        updateChart(message);
-    } catch (error) {
-        console.error("❌ Error parsing WebSocket message:", error);
+    if (currActiveDeviceId.value != 0) {
+
+        socket = connectWebSocket(currActiveDeviceId.value);
+
+        socket.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+                console.log("📡 Data received:", message);
+                updateChart(message);
+            } catch (error) {
+                console.error("❌ Error parsing WebSocket message:", error);
+            }
+        };
+
     }
+
 };
 
-};
 
 
 
+onMounted(() => {
 
+    initChart();
+    startWebSocket();
 
+});
 
-
-
-
-// Hitung batas waktu tahun lalu
-function calculateLimitLastYear() {
-    const now = new Date();
-    const firstDayOfLastYear = new Date(now.getFullYear() - 1, 0, 1);
-    const lastDayOfLastYear = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
-
-    lowerLimitLastYearEpoch.value = firstDayOfLastYear.getTime();
-    upperLimitLastYearEpoch.value = lastDayOfLastYear.getTime();
-}
-
-async function getLastYearData() {
-    const baseUrl = getApiUrl();
-    const operation = "get_lastyear_data";
-    const params = {
-        device_id: deviceId.value,
-        upper_limit: upperLimitLastYearEpoch.value,
-        lower_limit: lowerLimitLastYearEpoch.value,
-    };
-
-    try {
-        const response = await Process(baseUrl, operation, params);
-        if (response.error_code !== "000") {
-            console.error(`${operation} FAILED: ${response.error_message}`);
-            return;
-        }
-        currYearData.value = response.payload.last_year_data;
-    } catch (error) {
-        console.error("Error fetching last year data:", error);
+onUnmounted(() => {
+    if (socket) {
+        socket.disconnect();
     }
-}
-
-// Hitung batas waktu bulan ini
-function calculateLimitCurrMonth() {
-    const now = new Date();
-    const firstDayOfCurrMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    lowerLimitCurrMonthEpoch.value = firstDayOfCurrMonth.getTime();
-    upperLimitCurrMonthEpoch.value = now.getTime();
-}
-
-async function getCurrMonthData() {
-    const baseUrl = getApiUrl();
-    const operation = "get_currmonth_data";
-    const params = {
-        device_id: deviceId.value,
-        upper_limit: upperLimitCurrMonthEpoch.value,
-        lower_limit: lowerLimitCurrMonthEpoch.value,
-    };
-
-    try {
-        const response = await Process(baseUrl, operation, params);
-        if (response.error_code !== "000") {
-            console.error(`${operation} FAILED: ${response.error_message}`);
-            return;
-        }
-        currMonthData.value = response.payload.curr_month_data;
-    } catch (error) {
-        console.error("Error fetching current month data:", error);
-    }
-}
-
-
-
-function getWebscoketData() {
-
-
-
-
-
-}
-
-
-
-
-
-
-
-
+});
 </script>
 
 <style scoped>

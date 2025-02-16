@@ -143,7 +143,7 @@ export async function Process(apiUrl, process_name, params = {}) {
             'Content-Type': 'application/json',
             'session_id': session_id,
             'hash': hash,
-            'process' : process_name
+            'process': process_name
         };
 
         // Kirim request ke backend
@@ -155,6 +155,12 @@ export async function Process(apiUrl, process_name, params = {}) {
         const errorCode = data?.ErrorCode?.slice(0, 3) || "999999";
         const errorMessage = data?.ErrorMessage || "Unknown error";
         const payload = data?.Payload || {};
+
+        // Jika errorCode adalah "401", hapus localStorage dan redirect ke login
+        if (errorCode === "401") {
+            console.warn("⚠️ Unauthorized (401) detected. Clearing localStorage...");
+            localStorage.clear();
+        }
 
         // Fungsi untuk verifikasi hash dari server response
         const verifyServerResponse = (response) => {

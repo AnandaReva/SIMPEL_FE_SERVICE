@@ -127,7 +127,7 @@ const login = async (usernameParam, passwordParam, halfNonceParam) => {
         half_nonce: halfNonceParam,
     };
 
-    console.log("params:", params);
+    console.log("login params:", params);
     const response_be = await Auth_Process(baseUrl, operation, params);
 
 
@@ -184,7 +184,7 @@ const verifyToken = async () => {
     const operation = "verify-token";
     const params = { token: token.value };
 
-    console.log("params:", params);
+    console.log("login params:", params);
     const response_be = await Auth_Process(baseUrl, operation, params);
 
     console.log("verify_token response_be:", response_be);
