@@ -1,0 +1,102 @@
+// const argon2 = require('argon2');
+// const crypto = require('crypto');
+
+
+import * as crypto from 'crypto';
+import argon2 from "argon2-browser";
+
+/* export function GenerateHMAC(text, key) {
+    if (!text || !key) {
+        return ["", "Missing Text or Key"];
+    }
+
+    const hmac = crypto.createHmac('sha256', key);
+    hmac.update(text);
+    const hash = hmac.digest('hex');  
+    return [hash, ""];
+} */
+
+
+export async function GenerateHMAC(text, key) {
+    if (!text || !key) {
+        return ["", "Missing Text or Key"];
+    }
+
+    const encoder = new TextEncoder();
+    const keyBuffer = encoder.encode(key);
+    const textBuffer = encoder.encode(text);
+
+    const cryptoKey = await crypto.subtle.importKey(
+        "raw",
+        keyBuffer,
+        { name: "HMAC", hash: { name: "SHA-256" } },
+        false,
+        ["sign"]
+    );
+
+    const signature = await crypto.subtle.sign("HMAC", cryptoKey, textBuffer);
+    const hash = Array.from(new Uint8Array(signature))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+
+    return [hash, ""];
+}
+
+
+
+
+export async function GenerateArgon2(text, key, len = 32, memory = 16, iterations = 3) {
+    if (!text || !key) {
+        return ["", "missing text or key"];
+    }
+
+    try {
+        const salt = new TextEncoder().encode(key);
+        const hash = await argon2.hash({
+            pass: text,
+            salt: salt,
+            time: iterations,
+            mem: memory * 1024, // Memory in KB
+            hashLen: len,
+            type: argon2.Argon2id
+        });
+
+        return [hash.encoded, ""];
+    } catch (err) {
+        return ["", err.message];
+    }
+}
+
+
+
+/* export async function GenerateArgon2(text, key, len, memory, iterations) {
+    if (!text || !key) {
+        return ["", "missing text or key"];
+    }
+
+    try {
+        // Argon2 Parameters
+        const hashLength = len || 32;  
+        const memoryCost = memory || 16;  // Memory in MB
+        const timeCost = iterations || 1000;  // Iterations
+        const parallelism = 4;  // Number of threads 
+
+        // Convert key to a buffer to be used as salt
+        const salt = Buffer.from(key);
+
+        const hash = await argon2.hash(text, {
+            salt: salt,
+            timeCost: timeCost,
+            memoryCost: memoryCost * 1024,  // Memory in KB
+            parallelism: parallelism,
+            hashLength: hashLength
+        });
+
+        return [hash, ""];
+    } catch (err) {
+        return ["", err.message];
+    }
+}
+
+
+ */

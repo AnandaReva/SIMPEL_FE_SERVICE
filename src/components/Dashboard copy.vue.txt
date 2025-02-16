@@ -1,0 +1,235 @@
+<template>
+    <v-card class="pa-4">
+        <v-row>
+            <v-col>
+                <h2 class="text-h5 font-weight-bold">Live Monitoring</h2>
+                <v-card class="pa-3" color="blue-lighten-4">
+                    Data Live Monitoring akan tampil di sini
+
+
+                    <div id="chartContainer" style="height: 300px; width: 100%;"></div>
+
+
+
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <v-row class="mt-4">
+            <v-col cols="6">
+                <h3 class="text-h6">Hari Ini</h3>
+                <v-card class="pa-3" color="blue-lighten-5">
+                    Data penggunaan hari ini
+                </v-card>
+            </v-col>
+            <v-col cols="6">
+                <h3 class="text-h6">Minggu Terakhir</h3>
+                <v-card class="pa-3" color="blue-lighten-5">
+                    Data penggunaan minggu terakhir
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <v-row class="mt-4">
+            <v-col cols="6">
+                <h3 class="text-h6">Bulan Terakhir</h3>
+                <v-card class="pa-3" color="blue-lighten-5">
+                    <!-- <CurrMonthOverview :currMonthData="currMonthData" /> -->
+                </v-card>
+            </v-col>
+            <v-col cols="6">
+                <h3 class="text-h6">Tahun Terakhir</h3>
+                <v-card class="pa-3" color="blue-lighten-5">
+                    <!--        <CurrYearOverview :currYearData="currYearData" /> -->
+                </v-card>
+            </v-col>
+        </v-row>
+    </v-card>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import { Process, getApiUrl } from '@/utils/requestHelper';
+import { connectWebSocket } from '@/utils/websocket'; 
+import CanvasJS from "@canvasjs/charts";
+
+import CurrMonthOverview from './reports/overviews/CurrMonthOverview.vue';
+import CurrYearOverview from './reports/overviews/CurrYearOverview.vue';
+
+const deviceId = ref("1");
+const currMonthData = ref([]);
+const currYearData = ref([]);
+
+const upperLimitLastYearEpoch = ref(0);
+const lowerLimitLastYearEpoch = ref(0);
+const upperLimitCurrMonthEpoch = ref(0);
+const lowerLimitCurrMonthEpoch = ref(0);
+
+
+
+onMounted(() => {
+
+    initChart();
+    startWebSocket();
+
+
+   /*  calculateLimitCurrMonth();
+    calculateLimitLastYear();
+    getCurrMonthData();
+    getLastYearData(); */
+});
+
+onUnmounted(() => {
+    if (socket) {
+        socket.disconnect();
+    }
+});
+
+// **Variabel Chart**
+const dataPoints = ref([]);
+let chart = null;
+const maxDataLength = 20;
+
+// **Fungsi untuk mengupdate chart**
+const updateChart = (newData) => {
+    // Tambahkan data baru
+    dataPoints.value.push({
+        x: new Date(newData.Tstamp * 1000),
+        y: newData.Power
+    });
+
+    // Hapus data lama jika lebih dari 20
+    if (dataPoints.value.length > maxDataLength) {
+        dataPoints.value.shift();
+    }
+
+    // Render ulang chart
+    if (chart) {
+        chart.render();
+    }
+};
+
+// **Fungsi untuk inisialisasi chart**
+const initChart = () => {
+    chart = new CanvasJS.Chart("chartContainer", {
+        title: { text: "Live Power Usage" },
+        axisX: { valueFormatString: "HH:mm:ss" },
+        axisY: { title: "Power (W)" },
+        data: [{
+            type: "line",
+            dataPoints: dataPoints.value
+        }]
+    });
+
+    chart.render();
+};
+
+// **Fungsi untuk menangani WebSocket**
+let socket = null;
+
+const startWebSocket = () => {
+    socket = connectWebSocket(1);
+
+
+
+    socket.on("device_data", (message) => {
+        console.log("📡 Data received:", message);
+        updateChart(message);
+    });
+};
+
+
+
+
+
+
+
+
+
+
+// Hitung batas waktu tahun lalu
+function calculateLimitLastYear() {
+    const now = new Date();
+    const firstDayOfLastYear = new Date(now.getFullYear() - 1, 0, 1);
+    const lastDayOfLastYear = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
+
+    lowerLimitLastYearEpoch.value = firstDayOfLastYear.getTime();
+    upperLimitLastYearEpoch.value = lastDayOfLastYear.getTime();
+}
+
+async function getLastYearData() {
+    const baseUrl = getApiUrl();
+    const operation = "get_lastyear_data";
+    const params = {
+        device_id: deviceId.value,
+        upper_limit: upperLimitLastYearEpoch.value,
+        lower_limit: lowerLimitLastYearEpoch.value,
+    };
+
+    try {
+        const response = await Process(baseUrl, operation, params);
+        if (response.error_code !== "000") {
+            console.error(`${operation} FAILED: ${response.error_message}`);
+            return;
+        }
+        currYearData.value = response.payload.last_year_data;
+    } catch (error) {
+        console.error("Error fetching last year data:", error);
+    }
+}
+
+// Hitung batas waktu bulan ini
+function calculateLimitCurrMonth() {
+    const now = new Date();
+    const firstDayOfCurrMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    lowerLimitCurrMonthEpoch.value = firstDayOfCurrMonth.getTime();
+    upperLimitCurrMonthEpoch.value = now.getTime();
+}
+
+async function getCurrMonthData() {
+    const baseUrl = getApiUrl();
+    const operation = "get_currmonth_data";
+    const params = {
+        device_id: deviceId.value,
+        upper_limit: upperLimitCurrMonthEpoch.value,
+        lower_limit: lowerLimitCurrMonthEpoch.value,
+    };
+
+    try {
+        const response = await Process(baseUrl, operation, params);
+        if (response.error_code !== "000") {
+            console.error(`${operation} FAILED: ${response.error_message}`);
+            return;
+        }
+        currMonthData.value = response.payload.curr_month_data;
+    } catch (error) {
+        console.error("Error fetching current month data:", error);
+    }
+}
+
+
+
+function getWebscoketData() {
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+</script>
+
+<style scoped>
+.v-card {
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+</style>
