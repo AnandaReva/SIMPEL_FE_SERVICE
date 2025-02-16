@@ -123,7 +123,7 @@ import { HmacSHA256 } from "crypto-js";
 
 export async function Process(apiUrl, process_name, params = {}) {
     try {
-        const fullUrl = `${apiUrl}/process`;
+        const fullUrl = `${apiUrl}process`;
         console.log("📡 Request ke:", fullUrl);
         console.log("🔄 Parameters:", params);
 
@@ -134,17 +134,22 @@ export async function Process(apiUrl, process_name, params = {}) {
         // Stringify body untuk enkripsi
         const bodyString = JSON.stringify(params);
 
+        console.log("HMAC message: ", bodyString);
+        console.log("HMAC key: ", session_hash);
+
         // Generate HMAC-SHA256 hash
-        const hash = HmacSHA256(bodyString + session_hash, session_hash).toString();
+        const signature = HmacSHA256(bodyString , session_hash).toString();
 
         // Konfigurasi headers
 
+        
         const headers = {
             'Content-Type': 'application/json',
             'session_id': session_id,
-            'hash': hash,
+            'signature': signature,
             'process': process_name
         };
+        console.log("headers: " ,headers);
 
         // Kirim request ke backend
         const { data } = await axios.post(fullUrl, params, { headers });
@@ -162,7 +167,7 @@ export async function Process(apiUrl, process_name, params = {}) {
             localStorage.clear();
         }
 
-        // Fungsi untuk verifikasi hash dari server response
+     /*    // Fungsi untuk verifikasi hash dari server response
         const verifyServerResponse = (response) => {
             const { Payload, Hash } = response;
             const responseString = JSON.stringify(Payload);
@@ -180,7 +185,7 @@ export async function Process(apiUrl, process_name, params = {}) {
         // Verifikasi response dari server
         if (errorCode === "000" && !verifyServerResponse(data)) {
             return { error_code: "400", error_message: "Invalid response", payload: {}, status: 'error' };
-        }
+        } */
 
         return errorCode === "000"
             ? { error_code: "000", error_message: "", payload, status: 'success' }

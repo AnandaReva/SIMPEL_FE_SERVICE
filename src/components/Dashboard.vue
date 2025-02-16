@@ -1,5 +1,5 @@
 <template>
- <v-card class="pa-4 elevation-2 fill-height">
+    <v-card class="pa-4 elevation-2 fill-height">
         <v-row>
             <!-- Sidebar Active Devices -->
             <v-col cols="3">
@@ -8,11 +8,10 @@
                     <v-infinite-scroll :key="scrollKeyActiveDevices" id="activeDevicesBox" ref="activeDevicesBox"
                         height="400" side="end" @load="loadDevices" class="overflow-auto">
                         <!-- Active Device Panel -->
-                        <ActiveDevicesList :activeDevices="activeDevices" :current-currActiveDeviceId="currActiveDeviceId"
-                            @select-device="(data) => {}" />
-                        <template v-slot:empty>
-                            <span class="text-caption text-grey">Tidak ada perangkat aktif</span>
-                        </template>
+                        <ActiveDevicesList :activeDevices="activeDevices" :currActiveDeviceId="currActiveDeviceId"
+                            @select-device="handleDeviceSelection" />
+
+
                     </v-infinite-scroll>
                 </v-card>
             </v-col>
@@ -21,7 +20,9 @@
             <v-col cols="9">
                 <h2 class="text-h5 font-weight-bold mb-3">Live Monitoring</h2>
                 <v-card class="pa-4" color="blue-lighten-4" elevation="1">
-                    <div class="mb-2">Perangkat saat ini: <strong>{{ activeDevices[currActiveDeviceId]?.device_name || 'Tidak ada' }}</strong></div>
+                    <div class="mb-2">Perangkat saat ini: <strong>{{ currActiveDeviceId ||
+                        ''
+                            }}</strong></div>
                     <div id="chartContainer" class="chart-container"></div>
                 </v-card>
             </v-col>
@@ -53,15 +54,15 @@ import ActiveDevicesList from './parts/ActiveDevicesList.vue'
 
 //////////////////// ACTIVE DEVICES////////////////////
 
+const ActiveDevices = ref([]);
 
 const currActiveDeviceId = ref(0);
 const activeDevices = ref([]);
-const activeDevices_page_size = ref(10)
-const activeDevices_page_number = ref(0)
-const availableDevices = ref([]);
+const page_size = ref(10)
 const totalActiveDevices = ref(0);
-const lastFetchedPageActiveDevices = ref('')
-const newActiveDevices = ref("")
+
+const lastFetchedPageActiveDevices = ref(0)
+//const newActiveDevice = ref()
 
 const scrollKeyActiveDevices = ref(0)
 
@@ -84,6 +85,13 @@ const isFetchingActiveDevices = ref(false)// mencegah race condition
     }, 1000);
 } */
 
+function handleDeviceSelection(deviceId) {
+    console.log("Selected Device ID:", deviceId);
+    currActiveDeviceId.value = deviceId; // Set device yang aktif
+    startWebSocket(); // Mulai koneksi WebSocket
+}
+
+
 async function loadDevices({ done }) {
     if (isFetchingActiveDevices.value) {
         return;
@@ -92,11 +100,11 @@ async function loadDevices({ done }) {
     isFetchingActiveDevices.value = true;
     const fetchedPageNumber = lastFetchedPageActiveDevices.value + 1;
 
-    await getActiveDevices(fetchedPageNumber, activeDevices_page_size.value);
+    await getActiveDevices(fetchedPageNumber, page_size.value);
 
     lastFetchedPageActiveDevices.value = fetchedPageNumber;
 
-    if (fetchedPageNumber * activeDevices_page_size.value >= totalActiveDevices.value) {
+    if (fetchedPageNumber * page_size.value >= totalActiveDevices.value) {
         done('empty');
     } else {
         done('done');
@@ -108,16 +116,18 @@ async function loadDevices({ done }) {
 
 
 function appendActiveDevices(activeDevices, additionalDevices) {
-    const deviceMap = new Map(activeDevices.map(device => [device.device_id, device]));
+    const deviceMap = new Map();
+    activeDevices.forEach(device => {
+        deviceMap.set(device.device_id, device);
+    });
 
-    additionalDevices.forEach(newDevice => {
-        if (!deviceMap.has(newDevice.device_id)) {
-            activeDevices.push(newDevice);
-            deviceMap.set(newDevice.device_id, newDevice);
+    additionalDevices.forEach(newActiveDevice => {
+        if (!deviceMap.has(newActiveDevice.device_id)) {
+            activeDevices.push(newActiveDevice);
+            deviceMap.set(newActiveDevice.device_id, newActiveDevice);
         }
     });
 
-    activeDevices.sort((a, b) => a.device_name.localeCompare(b.device_name));
     return activeDevices;
 }
 
@@ -125,7 +135,7 @@ function appendActiveDevices(activeDevices, additionalDevices) {
 
 
 // data akan di fecth dengan triger gulir
-async function getActiveDevices(page_number, page_size) {
+async function getActiveDevices(pageNumber) {
 
     if (isFetchingActiveDevices == true) {
         console.log("Fething active devices already in progress...")
@@ -136,8 +146,8 @@ async function getActiveDevices(page_number, page_size) {
         const operation = "get_active_devices";
         const baseUrl = getApiUrl();
         const params = {
-            page_number: page_number,
-            page_size: page_size
+            page_number: pageNumber,
+            page_size: page_size.value
         };
 
 
@@ -148,12 +158,13 @@ async function getActiveDevices(page_number, page_size) {
 
 
         if (response_be.status != "success") {
-            console.error("get_active_devices FAILED!!:", response_be.error_message);
-           /*  popUpProps.value = {
-                status: response_be.status,
-                errorMessage: response_be.error_message,
-                errorCode: response_be.error_code,
-            }; */
+            console.error("getActiveDevices FAILED!!:", response_be.error_message);
+            /*  popUpProps.value = {
+                 status: response_be.status,
+                 errorMessage: response_be.error_message,
+                 errorCode: response_be.error_code,
+             }; */
+            return;
         }
 
 
@@ -161,10 +172,12 @@ async function getActiveDevices(page_number, page_size) {
             let responseBE = response_be.payload;
 
             if (responseBE.devices) {
-                console.log("get_active_devices SUCCESS!!:");
+                console.log("getActiveDevices SUCCESS!!:");
+
+
                 activeDevices.value = appendActiveDevices(activeDevices.value, responseBE.devices);
-                totalActiveDevices.value = Math.ceil(responseBE.total_data / Number(activeDevices_page_size.value));
-                lastFetchedPageActiveDevices.value = page_number;
+                totalActiveDevices.value = Math.ceil(responseBE.total_data / Number(page_size.value));
+                lastFetchedPageActiveDevices.value = pageNumber;
             } else {
                 console.log('Active device list is empty');
             }
@@ -209,7 +222,7 @@ const updateChart = (newData) => {
 // **Fungsi untuk inisialisasi chart**
 const initChart = () => {
     chart = new CanvasJS.Chart("chartContainer", {
-        title: { text: "Live Power Usage" },
+        title: { text: "" },
         axisX: { valueFormatString: "HH:mm:ss" },
         axisY: { title: "Power (W)" },
         data: [{
@@ -227,7 +240,7 @@ let socket = null;
 
 const startWebSocket = () => {
 
-    if (currActiveDeviceId.value != 0) {
+    if (currActiveDeviceId.value != 0 || currActiveDeviceId.value != null) {
 
         socket = connectWebSocket(currActiveDeviceId.value);
 
