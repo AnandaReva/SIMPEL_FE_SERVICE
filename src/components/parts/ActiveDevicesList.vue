@@ -12,7 +12,7 @@
 
 
                             <v-row align="center" no-gutters>
-                                <v-icon class="custom-icon mr-2" color="primary" size="28">mdi-account</v-icon>
+                                <v-img :src="IoTIcon" class="custom-icon mr-2" max-width="15" height="28" contain />
                                 <v-list-item-title class="text-body-2">{{ activeDevice.device_name
                                     }}</v-list-item-title>
                             </v-row>
@@ -35,6 +35,9 @@
 
 <script setup>
 import { ref } from 'vue';
+
+import IoTIcon from '@/assets/images/IoTIcon.png';
+
 const props = defineProps(['activeDevices', 'currActiveDeviceId'])
 const emit = defineEmits(['select-activeDevice'])
 

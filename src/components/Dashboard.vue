@@ -3,8 +3,8 @@
         <v-row>
             <!-- Sidebar Active Devices -->
             <v-col cols="3">
+                <p class="text-subtitle-5 font-weight-bold mb-3">Daftar Perangkat Aktif</p>
                 <v-card class="pa-3" color="blue-lighten-4" elevation="1">
-                    <p class="text-subtitle-5 font-weight-bold mb-3">Daftar Perangkat Aktif</p>
                     <v-infinite-scroll :key="scrollKeyActiveDevices" id="activeDevicesBox" ref="activeDevicesBox"
                         height="400" side="end" @load="loadDevices" class="overflow-auto">
                         <!-- Active Device Panel -->
@@ -86,6 +86,12 @@ const isFetchingActiveDevices = ref(false)// mencegah race condition
 } */
 
 function handleDeviceSelection(deviceId) {
+    if (deviceId == currActiveDeviceId.value) {
+        console.log(`Device id:    ${deviceId} already selected`)
+        return
+    }
+
+
     console.log("Selected Device ID:", deviceId);
     currActiveDeviceId.value = deviceId; // Set device yang aktif
     startWebSocket(); // Mulai koneksi WebSocket
