@@ -9,7 +9,7 @@
                         height="400" side="end" @load="loadDevices" class="overflow-auto">
                         <!-- Active Device Panel -->
                         <ActiveDevicesList :activeDevices="activeDevices" :currActiveDeviceId="currActiveDeviceId"
-                            @select-device="handleDeviceSelection" />
+                            :totalActiveDevices="totalActiveDevices" @select-device="handleDeviceSelection" />
 
 
                     </v-infinite-scroll>
@@ -59,7 +59,8 @@ const ActiveDevices = ref([]);
 const currActiveDeviceId = ref(0);
 const activeDevices = ref([]);
 const page_size = ref(10)
-const totalActiveDevices = ref(0);
+const totalPagesActiveDevices = ref(0);
+const totalActiveDevices = ref();
 
 const lastFetchedPageActiveDevices = ref(0)
 //const newActiveDevice = ref()
@@ -77,7 +78,7 @@ const isFetchingActiveDevices = ref(false)// mencegah race condition
     const fetchedPageNumber = Number(lastFetchedPageActiveDevices.value) + 1;
     setTimeout(async () => {
         await getActiveDevices(fetchedPageNumber.toString());
-        if (fetchedPageNumber < totalActiveDevices.value) {
+        if (fetchedPageNumber < totalPagesActiveDevices.value) {
             done('done');
         } else {
             done('empty');
@@ -98,25 +99,22 @@ function handleDeviceSelection(deviceId) {
 }
 
 
-async function loadDevices({ done }) {
-    if (isFetchingActiveDevices.value) {
-        return;
-    }
+function loadDevices({ done }) {
+    console.log("--- loadDevices() ---");
 
-    isFetchingActiveDevices.value = true;
     const fetchedPageNumber = lastFetchedPageActiveDevices.value + 1;
+    console.log("last page:", lastFetchedPageActiveDevices.value);
+    console.log("Fetched page number:", fetchedPageNumber);
 
-    await getActiveDevices(fetchedPageNumber, page_size.value);
+    setTimeout(async () => {
+        await getActiveDevices(fetchedPageNumber);
+        if (fetchedPageNumber < totalPagesActiveDevices.value) {
+            done('done');
+        } else {
+            done('empty');
+        }
+    }, 1000);
 
-    lastFetchedPageActiveDevices.value = fetchedPageNumber;
-
-    if (fetchedPageNumber * page_size.value >= totalActiveDevices.value) {
-        done('empty');
-    } else {
-        done('done');
-    }
-
-    isFetchingActiveDevices.value = false;
 }
 
 
@@ -149,7 +147,8 @@ async function getActiveDevices(pageNumber) {
     }
 
     try {
-        const operation = "get_active_devices";
+        // const operation = "get_active_devices";
+        const operation = "get_dummy_active_devices";
         const baseUrl = getApiUrl();
         const params = {
             page_number: pageNumber,
@@ -182,7 +181,13 @@ async function getActiveDevices(pageNumber) {
 
 
                 activeDevices.value = appendActiveDevices(activeDevices.value, responseBE.devices);
-                totalActiveDevices.value = Math.ceil(responseBE.total_data / Number(page_size.value));
+                totalActiveDevices.value = responseBE.total_data;
+
+                totalPagesActiveDevices.value = Math.ceil(responseBE.total_data / Number(page_size.value));
+
+                console.log("totalPagesActiveDevices: ", totalPagesActiveDevices.value);
+                console.log("totalActiveDevices: ", totalActiveDevices.value);
+
                 lastFetchedPageActiveDevices.value = pageNumber;
             } else {
                 console.log('Active device list is empty');

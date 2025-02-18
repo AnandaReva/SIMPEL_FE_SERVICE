@@ -1,7 +1,7 @@
 <template>
   <v-footer height="40" app>
 
-    VERSION : 0.0.5
+    VERSION : 0.0.6
 
 
   </v-footer>
