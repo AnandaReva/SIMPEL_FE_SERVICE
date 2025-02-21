@@ -1,59 +1,46 @@
 <template>
-    <div class="px-2 py-2">
-
-        <v-row>
-            <!-- Left side -->
+    <div class="px-4 py-2 bg-blue-lighten-5">
+        <v-row align="center">
+            <!-- Left side: Title -->
             <v-col cols="auto">
-                <h1 class="text-h3">SIMPLE</h1>
+                <h1 class="text-h5 font-weight-medium">SIMPLE</h1>
             </v-col>
 
             <v-spacer></v-spacer>
 
             <!-- User Information (Right side) -->
             <v-col cols="auto">
+                <v-row align="center">
+                    <!-- Avatar -->
+                    <v-avatar size="40" color="primary" class="mr-2">
+                        <img v-if="user.avatar" :src="user.avatar" alt="Avatar" />
+                        <span v-else>{{ user.full_name ? user.full_name.charAt(0) : '?' }}</span>
+                    </v-avatar>
 
-
-                <!-- Avatar -->
-                <v-avatar size="40" color="primary" class="mr-2">
-                    <img v-if="user.avatar" :src="user.avatar" alt="Avatar" />
-                    <span v-else>{{ user.full_name ? user.full_name.charAt(0) : '?' }}</span>
-                </v-avatar>
-
-                <!-- User Info -->
-                <div>
-                    <p class="text-subtitle-1 font-weight-bold">{{ user.full_name }}</p>
-                    <p class="text-subtitle-2 text-grey-darken-1">{{ user.role }}</p>
-                </div>
-
-
+                    <!-- User Info -->
+                    <div>
+                        <p class="text-subtitle-1 font-weight-bold">{{ user.full_name }}</p>
+                        <p class="text-subtitle-2 text-grey-darken-1">{{ user.role }}</p>
+                    </div>
+                </v-row>
             </v-col>
 
+            <!-- Menu Icon -->
             <v-col cols="auto">
-                <div>
+                <v-menu offset-y>
+                    <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props">mdi-menu</v-icon>
+                    </template>
 
-                    <v-menu offset-y>
-                        <template v-slot:activator="{ props }">
-                            <v-icon icon v-bind="props"> mdi-menu
-                                <v-icon>mdi-menu</v-icon>
-                            </v-icon>
-                        </template>
-
-                        <v-list>
-
-
-                            <v-list-item @click="logOut">
-
-                                <v-icon color="red">mdi-logout</v-icon>
-
-                                <v-list-item-title class="text-red">Logout</v-list-item-title>
-                            </v-list-item>
-                        </v-list>
-                    </v-menu>
-
-                </div>
+                    <v-list>
+                        <v-list-item @click="logOut">
+                            <v-icon color="red">mdi-logout</v-icon>
+                            <v-list-item-title class="text-red">Logout</v-list-item-title>
+                        </v-list-item>
+                    </v-list>
+                </v-menu>
             </v-col>
         </v-row>
-
     </div>
 </template>
 
@@ -80,12 +67,11 @@ onMounted(() => {
 });
 
 function logOut() {
-    // hapus data localStorage
-
+    // Clear localStorage
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('role');
+    // Implement logout functionality
 }
-
-
-
 </script>
 
 <style scoped>
@@ -109,5 +95,9 @@ function logOut() {
     align-items: center;
     justify-content: center;
     font-weight: bold;
+}
+
+.v-icon {
+    cursor: pointer;
 }
 </style>

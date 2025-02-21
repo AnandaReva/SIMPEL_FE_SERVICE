@@ -2,26 +2,26 @@
     <div>
 
 
-        
-        
-        <p class="text-subtitle-2">             total : {{ totalActiveDevices }}</p>
+
+        <p class="text-subtitle-2"> total : {{ totalActiveDevices }}</p>
         <v-list bg-color="white">
-
-
 
             <template v-if="activeDevices && activeDevices.length > 0">
 
                 <template v-for="(activeDevice, index) in activeDevices" :key="activeDevice.device_id"
                     class="pa-0 ma-0">
                     <section>
-                        <v-list-item @click="selectActiveDevice(activeDevice)" class="py-0 ma-0"
-                            :disabled="!activeDevice.device_id">
-
+                        <v-list-item
+            @click="selectActiveDevice(activeDevice)"
+            class="py-0 ma-0"
+            :disabled="!activeDevice.device_id"
+            :class="{ 'bg-grey': activeDevice.device_id === currActiveDeviceId }"
+        >
 
                             <v-row align="center" no-gutters>
                                 <v-img :src="IoTIcon" class="custom-icon mr-2" max-width="15" height="28" contain />
                                 <v-list-item-title class="text-body-2">{{ activeDevice.device_name
-                                    }}</v-list-item-title>
+                                }}</v-list-item-title>
                             </v-row>
                         </v-list-item>
                     </section>
@@ -38,7 +38,7 @@
         </v-list>
 
 
-        </div>
+    </div>
 
 </template>
 
@@ -54,7 +54,7 @@ const emit = defineEmits(['select-activeDevice'])
 // Method to handle click events on activeDevice list items
 function selectActiveDevice(data) {
     console.log(`device ID clicked: ${data.device_id}`);
-    emit('select-device', data.device_id); // Kirim device_id ke parent
+    emit('select-activeDevice', data.device_id); // Kirim device_id ke parent
 }
 
 </script>

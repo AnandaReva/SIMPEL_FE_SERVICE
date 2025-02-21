@@ -98,8 +98,7 @@
             </v-col>
         </v-row>
 
-        <!-- {{ currDeviceData.value.Tstamp   }} -->
-        
+        {{ formattedTimestamp }}
 
 
         <!--  {{ convertEpochToUserTimezone(currDeviceData.Tstamp)}} -->
@@ -121,7 +120,7 @@
 
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watchEffect } from 'vue';
 import { Process, getApiUrl } from '@/utils/requestHelper';
 import { connectWebSocket } from '@/utils/websocket';
 import CanvasJS, { addTheme } from "@canvasjs/charts";
@@ -159,20 +158,45 @@ const formatValue = (value) =>
 
 import { computed } from 'vue';
 
-/* const formattedTimestamp = computed(() => {
+const formattedTimestamp = computed(() => {
     return currDeviceData.value.Tstamp ? convertEpochToUserTimezone(currDeviceData.value.Tstamp) : '-';
 });
- */
 
 
- const updateChart = (newData) => {
+const timeCache = new Map();
+
+const convertEpochToUserTimezone = (epochMs) => {
+    if (timeCache.has(epochMs)) {
+        return timeCache.get(epochMs);
+    }
+
+    console.log('convertEpochToUserTimezone(),  epochMs:', epochMs);
+    const date = new Date(epochMs);
+    console.log('convertEpochToUserTimezone(),  date:', date);
+
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const formattedDate = new Intl.DateTimeFormat('en-GB', {
+        timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        fractionalSecondDigits: 3,
+        hour12: false
+    }).format(epochMs);
+
+    timeCache.set(epochMs, formattedDate);
+    return formattedDate;
+};
+
+
+const updateChart = (newData) => {
     console.log('updateChart(), newData:', newData);
     if (!newData.Tstamp || newData.Power === undefined) {
         console.warn("❌ Data tidak valid untuk chart:", newData);
         return;
     }
 
-    const newPoint = { x: newData.Tstamp, y: newData.Power };
+    const newPoint = { x: new Date(newData.Tstamp), y: newData.Power };
     dataPoints.value.push(newPoint);
 
     if (dataPoints.value.length > maxDataLength.value) {
@@ -180,17 +204,18 @@ import { computed } from 'vue';
     }
 
     console.log("🔍 Before push, dataPoints.length:", dataPoints.value.length);
+
+
     console.log("updateChart(), After push: ", [...dataPoints.value]);
 
     if (chart) {
         console.log("🖌️ Rendering chart...");
-        chart.options.data[0].dataPoints = [...dataPoints.value]; // Pastikan data diupdate
         chart.render();
     } else {
         console.log("⚠️ Chart belum ada, menunggu data lebih banyak...");
     }
-};
 
+};
 
 
 const initChart = () => {
@@ -200,15 +225,14 @@ const initChart = () => {
         animationEnabled: true,
         axisX: {
             title: "Waktu (hh:mm:ss::ms)",
+            //  labelFormatter: (e) => convertEpochToUserTimezone(e.value)
+            labelFormatter: (e) => Math.floor(e.value.getTime())
         },
         axisY: {
             title: "Power (W)"
         },
         data: [{
             type: "line",
-            markerSize: 8, // Ukuran titik
-            markerColor: "#39FF14", // Neon hijau
-            lineColor: "#1F51FF",
             dataPoints: dataPoints.value.length ? dataPoints.value : [{ x: new Date(), y: 0 }]
         }]
     });
@@ -273,11 +297,13 @@ onUnmounted(() => {
     socket?.close();
 });
 
-watch(currActiveDeviceId, (newDeviceId) => {
-    console.log(`🔄 Device berubah: ${newDeviceId}, reinit chart!`);
-    dataPoints.value = []; // Reset data saat ganti device
-    initChart();
+watchEffect(() => {
+    if (dataPoints.value.length > 0 && !chart) {
+        console.log("✅ Inisialisasi Chart setelah ada data!");
+        initChart();
+    }
 });
+
 
 
 /* watchEffect(() => {

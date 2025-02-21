@@ -164,7 +164,11 @@ export async function Process(apiUrl, process_name, params = {}) {
         // Jika errorCode adalah "401", hapus localStorage dan redirect ke login
         if (errorCode === "401") {
             console.warn("⚠️ Unauthorized (401) detected. Clearing localStorage...");
-            localStorage.clear();
+
+
+            localStorage.removeItem('session_id')
+            localStorage.removeItem('session_hash')
+            ocalStorage.removeItem('user_data')
         }
 
      /*    // Fungsi untuk verifikasi hash dari server response
