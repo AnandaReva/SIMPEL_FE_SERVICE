@@ -1,9 +1,9 @@
 <template>
   <v-app class="bg-app">
-    <!-- Jika path bukan login, tampilkan header dan footer -->
+    <!-- Jika bukan halaman login, tampilkan header dan footer -->
     <AppHeader v-if="showHeaderFooter" />
-    
-    <!-- Menampilkan halaman dinamis berdasarkan route -->
+
+    <!-- Menampilkan halaman berdasarkan route -->
     <router-view></router-view>
 
     <AppFooter v-if="showHeaderFooter" />
@@ -11,33 +11,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router'; // Hook untuk mendapatkan route aktif
+import { ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import AppHeader from './components/AppHeader.vue';
 import AppFooter from './components/AppFooter.vue';
 
-// State untuk menentukan apakah header/footer perlu ditampilkan
 const showHeaderFooter = ref(true);
-
-// Menggunakan hook useRoute untuk mengakses rute aktif
 const route = useRoute();
 
-// Memeriksa apakah rute saat ini adalah login
-onMounted(() => {
-
-  console.log("route.name: " , route.path );
-  if (route.name === 'login') {
-    showHeaderFooter.value = false; // Sembunyikan header dan footer pada halaman login
-  } else {
-    showHeaderFooter.value = true; // Tampilkan header dan footer pada halaman selain login
-  }
-});
-
-
+// Watch perubahan route
+watch(route, (newRoute) => {
+  console.log("Current route:", newRoute.path);
+  showHeaderFooter.value = newRoute.name !== 'login'; // Hide header/footer jika di halaman login
+}, { immediate: true }); // immediate: true agar dijalankan saat pertama kali komponen dimuat
 
 </script>
-
-
 
 <style>
 body {

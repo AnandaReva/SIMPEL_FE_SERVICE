@@ -1,3 +1,4 @@
+// router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginPage from '@/components/Login.vue';
 import DashboardPage from '@/components/Dashboard.vue';

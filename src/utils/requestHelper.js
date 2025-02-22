@@ -4,21 +4,17 @@ import axios from "axios";
 import { BASE_AUTH_URL } from "@/configs/config";
 import { BASE_API_URL } from "@/configs/config";
 
-
-
 /**
  * Mengembalikan base URL otentikasi.
  * @returns {string} - URL otentikasi.
  */
 export function getAuthUrl() {
-    return BASE_AUTH_URL;
+  return BASE_AUTH_URL;
 }
-
 
 export function getApiUrl() {
-    return BASE_API_URL;
+  return BASE_API_URL;
 }
-
 
 /**
  * Template request handler untuk komunikasi dengan backend.
@@ -27,7 +23,6 @@ export function getApiUrl() {
  * @param {Object} params - Parameter tambahan untuk request.
  * @returns {Promise<Object>} - Response dari server.
  */
-
 
 /*
                return dengan format
@@ -55,38 +50,47 @@ exp success:
 
 */
 export async function Auth_Process(baseUrl, process_name, params = {}) {
-    try {
-        const fullUrl = `${baseUrl}${process_name}`;
-        console.log("📡 Request ke:", fullUrl);
-        console.log("🔄 Parameters:", params);
+  try {
+    const fullUrl = `${baseUrl}${process_name}`;
+    console.log("📡 Request ke:", fullUrl);
+    console.log("🔄 Parameters:", params);
 
-        const { data } = await axios.post(fullUrl, params);
-        console.log("✅ Response:", data);
+    const { data } = await axios.post(fullUrl, params);
+    console.log("✅ Response:", data);
 
-        const errorCode = data?.ErrorCode?.slice(0, 3) || "999999";
-        const errorMessage = data?.ErrorMessage || "Unknown error";
-        const payload = data?.Payload || {};
+    const errorCode = data?.ErrorCode?.slice(0, 3) || "999999";
+    const errorMessage = data?.ErrorMessage || "Unknown error";
+    const payload = data?.Payload || {};
 
-        return errorCode === "000"
-            ? { error_code: "000", error_message: "", payload, status: 'success' }
-            : { error_code: errorCode, error_message: errorMessage, payload, status: 'error' };
-    } catch (error) {
-        console.error("🚨 Request error:", error);
-        return {
-            error_code: "503",
-            error_message: error.message || "Network error",
-            payload: {},
-            status: 'error'
+    return errorCode === "000"
+      ? { error_code: "000", error_message: "", payload, status: "success" }
+      : {
+          error_code: errorCode,
+          error_message: errorMessage,
+          payload,
+          status: "error",
         };
-    }
+  } catch (error) {
+    console.error("🚨 Request error:", error);
+
+    const errorCode =
+      error.response?.status?.toString() ||
+      (error.message === "Network Error" ? "503" : "999999");
+
+    const errorMessage =
+      error.response?.data?.ErrorMessage || error.message || "Unknown error";
+    const payload = error.response?.data?.Payload || {};
+    console.error("disini:", errorMessage);
+    return {
+      error_code: errorCode, // Sekarang tetap 401 jika backend mengirim 401
+      error_message: errorMessage,
+      payload: payload,
+      status: "error",
+    };
+  }
 }
 
-
-
-
-
 ////////////////////////////////////////////////////////////////
-
 
 import { HmacSHA256 } from "crypto-js";
 /* 
@@ -121,92 +125,173 @@ import { HmacSHA256 } from "crypto-js";
 
 */
 
+import router from "@/router";
+
 export async function Process(apiUrl, process_name, params = {}) {
-    try {
-        const fullUrl = `${apiUrl}process`;
-        console.log("📡 Request ke:", fullUrl);
-        console.log("🔄 Parameters:", params);
+  try {
+    const fullUrl = `${apiUrl}process`;
+    console.log("📡 Request ke:", fullUrl);
+    console.log("🔄 Parameters:", params);
 
-        // Ambil session_id dari localStorage
-        const session_id = localStorage.getItem('session_id') || "";
-        const session_hash = localStorage.getItem('session_hash') || "";
+    // Ambil session_id dan session_hash dari localStorage
+    const session_id = localStorage.getItem("session_id") || "";
+    const session_hash = localStorage.getItem("session_hash") || "";
 
-        // Stringify body untuk enkripsi
-        const bodyString = JSON.stringify(params);
+    // Stringify body untuk enkripsi
+    const bodyString = JSON.stringify(params);
+    console.log("HMAC message: ", bodyString);
+    console.log("HMAC key: ", session_hash);
 
-        console.log("HMAC message: ", bodyString);
-        console.log("HMAC key: ", session_hash);
+    // Generate HMAC-SHA256 hash
+    const signature = HmacSHA256(bodyString, session_hash).toString();
 
-        // Generate HMAC-SHA256 hash
-        const signature = HmacSHA256(bodyString , session_hash).toString();
+    // Konfigurasi headers
+    const headers = {
+      "Content-Type": "application/json",
+      session_id: session_id,
+      signature: signature,
+      process: process_name,
+    };
+    console.log("headers: ", headers);
 
-        // Konfigurasi headers
+    // Kirim request ke backend
+    const { data } = await axios.post(fullUrl, params, { headers });
+    console.log("✅ Response:", data);
 
-        
-        const headers = {
-            'Content-Type': 'application/json',
-            'session_id': session_id,
-            'signature': signature,
-            'process': process_name
-        };
-        console.log("headers: " ,headers);
+    // Ambil errorCode, errorMessage, dan payload dari response
+    const errorCode = data?.ErrorCode || "999999";
+    const errorMessage = data?.ErrorMessage || "Unknown error";
+    const payload = data?.Payload || {};
 
-        // Kirim request ke backend
-        const { data } = await axios.post(fullUrl, params, { headers });
-
-        console.log("✅ Response:", data);
-
-        // Proses response
-        const errorCode = data?.ErrorCode?.slice(0, 3) || "999999";
-        const errorMessage = data?.ErrorMessage || "Unknown error";
-        const payload = data?.Payload || {};
-
-        // Jika errorCode adalah "401", hapus localStorage dan redirect ke login
-        if (errorCode === "401") {
-            console.warn("⚠️ Unauthorized (401) detected. Clearing localStorage...");
-
-
-            localStorage.removeItem('session_id')
-            localStorage.removeItem('session_hash')
-            ocalStorage.removeItem('user_data')
-        }
-
-     /*    // Fungsi untuk verifikasi hash dari server response
-        const verifyServerResponse = (response) => {
-            const { Payload, Hash } = response;
-            const responseString = JSON.stringify(Payload);
-            const calculatedHash = HmacSHA256(responseString + session_hash, session_hash).toString();
-
-            if (calculatedHash !== Hash) {
-                console.error("❌ Invalid response hash! Possible data tampering.");
-                return false;
-            }
-
-            console.log("✅ Valid response hash!");
-            return true;
-        };
-
-        // Verifikasi response dari server
-        if (errorCode === "000" && !verifyServerResponse(data)) {
-            return { error_code: "400", error_message: "Invalid response", payload: {}, status: 'error' };
-        } */
-
-        return errorCode === "000"
-            ? { error_code: "000", error_message: "", payload, status: 'success' }
-            : { error_code: errorCode, error_message: errorMessage, payload, status: 'error' };
-    } catch (error) {
-        console.error("🚨 Request error:", error);
-        return {
-            error_code: "503",
-            error_message: error.message || "Network error",
-            payload: {},
-            status: 'error'
-        };
+    // Jika errorCode adalah "000000" berarti sukses
+    if (errorCode === "000000") {
+      return {
+        error_code: errorCode,
+        error_message: "",
+        payload: payload,
+        status: "success",
+      };
+    } else {
+      // Jika errorCode bukan "000000", anggap error
+      return {
+        error_code: errorCode,
+        error_message: errorMessage,
+        payload: payload,
+        status: "error",
+      };
     }
+  } catch (error) {
+    console.error("🚨 Request error:", error);
+
+    // Pastikan response ada sebelum mengakses data
+    const errorCode =
+      error.response?.status?.toString() ||
+      (error.message === "Network Error" ? "503" : "999999");
+
+    const errorMessage = error.response?.data?.ErrorMessage || "Unknown error";
+    const payload = error.response?.data?.Payload || {};
+
+    // Jika errorCode adalah "401", hapus localStorage dan redirect ke login
+    if (errorCode === "401") {
+      console.warn("⚠️ Unauthorized (401) detected. Clearing localStorage...");
+
+      localStorage.removeItem("session_id");
+      localStorage.removeItem("session_hash");
+      localStorage.removeItem("user_data");
+
+      router.push({ name: "login" });
+    }
+
+    return {
+      error_code: errorCode,
+      error_message: errorMessage,
+      payload: payload,
+      status: "error",
+    };
+  }
 }
 
-// WEBSOCKET
+// export async function Process(apiUrl, process_name, params = {}) {
+//     try {
+//         const fullUrl = `${apiUrl}process`;
+//         console.log("📡 Request ke:", fullUrl);
+//         console.log("🔄 Parameters:", params);
 
+//         // Ambil session_id dari localStorage
+//         const session_id = localStorage.getItem('session_id') || "";
+//         const session_hash = localStorage.getItem('session_hash') || "";
 
+//         // Stringify body untuk enkripsi
+//         const bodyString = JSON.stringify(params);
 
+//         console.log("HMAC message: ", bodyString);
+//         console.log("HMAC key: ", session_hash);
 
+//         // Generate HMAC-SHA256 hash
+//         const signature = HmacSHA256(bodyString , session_hash).toString();
+
+//         // Konfigurasi headers
+
+//         const headers = {
+//             'Content-Type': 'application/json',
+//             'session_id': session_id,
+//             'signature': signature,
+//             'process': process_name
+//         };
+//         console.log("headers: " ,headers);
+
+//         // Kirim request ke backend
+//         const { data } = await axios.post(fullUrl, params, { headers });
+
+//         console.log("✅ Response:", data);
+
+//         // Proses response
+//         const errorCode = data?.ErrorCode?.slice(0, 3) || "999999";
+//         const errorMessage = data?.ErrorMessage || "Unknown error";
+//         const payload = data?.Payload || {};
+
+//         // Jika errorCode adalah "401", hapus localStorage dan redirect ke login
+//         if (errorCode === "401") {
+//             console.warn("⚠️ Unauthorized (401) detected. Clearing localStorage...");
+
+//             localStorage.removeItem('session_id')
+//             localStorage.removeItem('session_hash')
+//             ocalStorage.removeItem('user_data')
+//         }
+
+//      /*    // Fungsi untuk verifikasi hash dari server response
+//         const verifyServerResponse = (response) => {
+//             const { Payload, Hash } = response;
+//             const responseString = JSON.stringify(Payload);
+//             const calculatedHash = HmacSHA256(responseString + session_hash, session_hash).toString();
+
+//             if (calculatedHash !== Hash) {
+//                 console.error("❌ Invalid response hash! Possible data tampering.");
+//                 return false;
+//             }
+
+//             console.log("✅ Valid response hash!");
+//             return true;
+//         };
+
+//         // Verifikasi response dari server
+//         if (errorCode === "000" && !verifyServerResponse(data)) {
+//             return { error_code: "400", error_message: "Invalid response", payload: {}, status: 'error' };
+//         } */
+
+//         return errorCode === "000"
+//             ? { error_code: "000", error_message: "", payload, status: 'success' }
+//             : { error_code: errorCode, error_message: errorMessage, payload, status: 'error' };
+//     } catch (error) {
+//         console.error("🚨 Request error:", error);
+
+//         console.log('disini: ' , error.error_code)
+
+//         return {
+//             error_code: "503",
+//             error_message: error.message || "Network error",
+//             payload: {},
+//             status: 'error'
+//         };
+//     }
+// }
