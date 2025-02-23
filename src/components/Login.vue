@@ -1,17 +1,8 @@
 <template>
   <v-row class="fill-height" :class="{ 'disable-interactions': isLoading }">
-    <v-progress-circular
-      v-if="isLoading"
-      color="primary"
-      indeterminate
-      class="loading-spinner"
-    ></v-progress-circular>
+    <v-progress-circular v-if="isLoading" color="primary" indeterminate class="loading-spinner"></v-progress-circular>
 
-    <v-col
-      cols="12"
-      md="6"
-      class="primary d-flex align-center justify-center pa-10"
-    >
+    <v-col cols="12" md="6" class="primary d-flex align-center justify-center pa-10">
       <div class="text-white">
         <h1 class="text-h3 font-weight-bold mb-4">SIMPEL</h1>
         <p class="text-h6">Sistem Monitoring Penggunaan Listrik</p>
@@ -22,11 +13,7 @@
       </div>
     </v-col>
 
-    <v-col
-      cols="12"
-      md="6"
-      class="login-section d-flex align-center justify-center"
-    >
+    <v-col cols="12" md="6" class="login-section d-flex align-center justify-center">
       <v-card class="form-card pa-8" elevation="0" width="400">
         <v-card-title class="text-center text-h5 font-weight-bold mb-2">
           Selamat Datang
@@ -38,39 +25,14 @@
           </v-card-subtitle>
 
           <v-form ref="loginForm" @submit.prevent="submitLogin">
-            <v-text-field
-              v-model="username"
-              label="Username"
-              outlined
-              dense
-              prepend-inner-icon="mdi-account"
-              class="mb-4"
-              :rules="usernameRules"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="password"
-              :type="showPassword ? 'text' : 'password'"
-              label="Password"
-              outlined
-              dense
-              prepend-inner-icon="mdi-lock"
-              :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-              @click:append-inner="togglePasswordVisibility"
-              class="mb-4"
-              :rules="passwordRules"
-              required
-            ></v-text-field>
-            <v-btn
-              type="submit"
-              color="#F3E5F5"
-              block
-              class="mt-2"
-              size="large"
-              elevation="0"
-              :disabled="isDisabledLogin"
-              >Masuk</v-btn
-            >
+            <v-text-field v-model="username" label="Username" outlined dense prepend-inner-icon="mdi-account"
+              class="mb-4" :rules="usernameRules" required></v-text-field>
+            <v-text-field v-model="password" :type="showPassword ? 'text' : 'password'" label="Password" outlined dense
+              prepend-inner-icon="mdi-lock" :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+              @click:append-inner="togglePasswordVisibility" class="mb-4" :rules="passwordRules"
+              required></v-text-field>
+            <v-btn type="submit" color="#F3E5F5" block class="mt-2" size="large" elevation="0"
+              :disabled="isDisabledLogin">Masuk</v-btn>
           </v-form>
         </div>
 
@@ -80,71 +42,26 @@
           </v-card-subtitle>
 
           <v-form ref="registerForm" @submit.prevent="submitRegister">
-            <v-text-field
-              v-model="username"
-              label="Username"
-              outlined
-              dense
-              prepend-inner-icon="mdi-account"
-              class="mb-4"
-              :rules="usernameRules"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="full_name"
-              label="Nama lengkap"
-              outlined
-              dense
-              prepend-inner-icon="mdi-account"
-              class="mb-4"
-              :rules="fullNameRules"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="password"
-              :type="showPassword ? 'text' : 'password'"
-              label="Password"
-              outlined
-              dense
-              prepend-inner-icon="mdi-lock"
-              :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-              @click:append-inner="togglePasswordVisibility"
-              class="mb-4"
-              :rules="passwordRules"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="email"
-              label="Email"
-              outlined
-              dense
-              prepend-inner-icon="mdi-email"
-              class="mb-4"
-              :rules="emailRules"
-              required
-            ></v-text-field>
-            <v-btn
-              type="submit"
-              color="#F3E5F5"
-              block
-              class="mt-2"
-              size="large"
-              elevation="0"
-              :disabled="isDisabledRegister"
-              >Register</v-btn
-            >
+            <v-text-field v-model="username" label="Username" outlined dense prepend-inner-icon="mdi-account"
+              class="mb-4" :rules="usernameRules" required></v-text-field>
+            <v-text-field v-model="full_name" label="Nama lengkap" outlined dense prepend-inner-icon="mdi-account"
+              class="mb-4" :rules="fullNameRules" required></v-text-field>
+            <v-text-field v-model="password" :type="showPassword ? 'text' : 'password'" label="Password" outlined dense
+              prepend-inner-icon="mdi-lock" :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+              @click:append-inner="togglePasswordVisibility" class="mb-4" :rules="passwordRules"
+              required></v-text-field>
+            <v-text-field v-model="email" label="Email" outlined dense prepend-inner-icon="mdi-email" class="mb-4"
+              :rules="emailRules" required></v-text-field>
+            <v-btn type="submit" color="#F3E5F5" block class="mt-2" size="large" elevation="0"
+              :disabled="isDisabledRegister">Register</v-btn>
           </v-form>
         </div>
 
         <br />
 
         <v-card-actions class="justify-end">
-          <v-btn
-            text
-            @click="changeForm"
-            class="text-caption py-1 px-1"
-            style="width: fit-content; min-width: auto; height: 50px"
-          >
+          <v-btn text @click="changeForm" class="text-caption py-1 px-1"
+            style="width: fit-content; min-width: auto; height: 50px">
             <i>{{
               isLoginForm
                 ? "Belum punya akun? Daftar"
@@ -155,14 +72,8 @@
       </v-card>
     </v-col>
 
-    <PopUpBox
-      v-if="popupVisible"
-      :status="popUpProps.status"
-      :errorMessage="popUpProps.errorMessage"
-      :errorCode="popUpProps.errorCode"
-      :visible="popupVisible"
-      @close="closePopup"
-    />
+    <PopUpBox v-if="popupVisible" :status="popUpProps.status" :errorMessage="popUpProps.errorMessage"
+      :errorCode="popUpProps.errorCode" :visible="popupVisible" @close="closePopup" />
   </v-row>
 </template>
 
@@ -222,6 +133,7 @@ const isLoading = ref(false);
 const usernameRules = [
   (v) => !!v || "Username harus diisi",
   (v) => v.length >= 6 || "Username minimal 6 karakter",
+  (v) => /^[A-Za-z0-9._]+$/.test(v) || "Username hanya boleh mengandung huruf, angka, titik, dan underscore",
 ];
 
 const passwordRules = [
@@ -476,40 +388,42 @@ const register = async (
   console.log("REGISTER SUCCESS!!:");
   console.log("status response:" + response_be.payload.status);
 
+
+
+  // Hitung waktu kedaluwarsa OTP
+  const otp_expiration = calculateOTPExpirationTime();
+
+  // Generate OTP session data jika tersedia dalam response
+
+  /* exp otp_data :
+  
+      {
+        "username": "user1",
+        "email":" user1@example.com", ",
+        "password": "password123",
+        "full_name": "User Satu"
+        }
+  */
+
+    sessionStorage.setItem("otp_data",  JSON.stringify(params));
+    sessionStorage.setItem("otp_expiration_time", otp_expiration);
+
+    console.log("otp_data:", sessionStorage.getItem("otp_data"));
+    console.log("otp_expiration_time:", sessionStorage.getItem("otp_expiration_time"));
+    router.push({ name: "verify-otp" });
+ 
   return;
 };
 
-const verifyOTP = async (otpParam) => {
-  const baseUrl = getAuthUrl();
-  const operation = "verify-otp";
-  const params = {
-    otp: otpParam,
-  };
 
-  console.log("verify-otp params:", params);
-  const response_be = await Auth_Process(baseUrl, operation, params);
 
-  console.log("verify-otp response_be:", response_be);
+// Menghitung waktu kedaluwarsa OTP dalam format epoch
+function calculateOTPExpirationTime() {
+  return Math.floor(Date.now() / 1000) + 2 * 60; // Waktu sekarang + 2 menit (dalam detik)
+}
 
-  if (response_be.status != "success") {
-    console.error("VERIFY OTP FAILED!! :", response_be.error_message);
-    popUpProps.value = {
-      status: response_be.status,
-      errorMessage: response_be.error_message,
-      errorCode: response_be.error_code,
-    };
-    popupVisible.value = true;
-    return;
-  }
 
-  console.log("VERIFY OTP SUCCESSFUL!");
-  console.log(`status: ${response_be.payload.status}`);
 
-  // change to login form
-
-  changeForm();
-  
-};
 </script>
 
 <style scoped>

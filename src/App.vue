@@ -22,7 +22,7 @@ const route = useRoute();
 // Watch perubahan route
 watch(route, (newRoute) => {
   console.log("Current route:", newRoute.path);
-  showHeaderFooter.value = newRoute.name !== 'login'; // Hide header/footer jika di halaman login
+  showHeaderFooter.value = newRoute.name !== 'login' && newRoute.name !== 'verify-otp'; // Hanya sembunyikan di halaman login dan verify-otp
 }, { immediate: true }); // immediate: true agar dijalankan saat pertama kali komponen dimuat
 
 </script>
