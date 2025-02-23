@@ -13,8 +13,8 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import AppHeader from './components/AppHeader.vue';
-import AppFooter from './components/AppFooter.vue';
+import AppHeader from './components/parts/AppHeader.vue';
+import AppFooter from './components/parts/AppFooter.vue';
 
 const showHeaderFooter = ref(true);
 const route = useRoute();

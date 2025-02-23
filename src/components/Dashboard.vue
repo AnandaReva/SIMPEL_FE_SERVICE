@@ -160,7 +160,7 @@ import { Process, getApiUrl } from "@/utils/requestHelper";
 import { connectWebSocket } from "@/utils/websocket";
 import CanvasJS, { addTheme } from "@canvasjs/charts";
 
-import ActiveDevicesList from "./parts/ActiveDevicesList.vue";
+import ActiveDevicesList from "./monitoring/ActiveDevicesList.vue";
 
 // ** Deklarasi Variabel Reaktif **
 const currActiveDeviceId = ref(null); // ✅ Menambahkan deklarasi yang hilang

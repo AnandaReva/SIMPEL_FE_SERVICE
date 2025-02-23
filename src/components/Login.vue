@@ -1,25 +1,18 @@
 <template>
   <v-row class="fill-height" :class="{ 'disable-interactions': isLoading }">
-    <!-- Show loading spinner when isLoading is true -->
     <v-progress-circular
-      v-if="isLoading === true"
+      v-if="isLoading"
       color="primary"
       indeterminate
       class="loading-spinner"
     ></v-progress-circular>
 
-    <!-- Section Kiri -->
     <v-col
       cols="12"
       md="6"
       class="primary d-flex align-center justify-center pa-10"
     >
       <div class="text-white">
-        <v-img
-          src="https://cdn.vuetifyjs.com/docs/images/logos/vuetify-logo-dark-atom.svg"
-          class="mb-8"
-          max-width="120"
-        ></v-img>
         <h1 class="text-h3 font-weight-bold mb-4">SIMPEL</h1>
         <p class="text-h6">Sistem Monitoring Penggunaan Listrik</p>
         <p class="text-body-1 mt-4">
@@ -29,63 +22,139 @@
       </div>
     </v-col>
 
-    <!-- Section Kanan (Login) -->
     <v-col
       cols="12"
       md="6"
       class="login-section d-flex align-center justify-center"
     >
-      <v-card class="login-card pa-8" elevation="0" width="400">
+      <v-card class="form-card pa-8" elevation="0" width="400">
         <v-card-title class="text-center text-h5 font-weight-bold mb-2">
           Selamat Datang
         </v-card-title>
-        <v-card-subtitle class="text-center text-body-1 mb-6">
-          Masuk untuk melanjutkan
-        </v-card-subtitle>
 
-        <v-form ref="loginForm" @submit.prevent="submitLogin">
-          <!-- Username Input -->
-          <v-text-field
-            v-model="username"
-            label="Username"
-            outlined
-            dense
-            prepend-inner-icon="mdi-account"
-            class="mb-4"
-            required
-          ></v-text-field>
+        <div v-if="isLoginForm">
+          <v-card-subtitle class="text-center text-body-1 mb-6">
+            Masuk untuk melanjutkan
+          </v-card-subtitle>
 
-          <!-- Password Input dengan Toggle Visibility -->
-          <v-text-field
-            v-model="password"
-            :type="showPassword ? 'text' : 'password'"
-            label="Password"
-            outlined
-            dense
-            prepend-inner-icon="mdi-lock"
-            :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-            @click:append-inner="togglePasswordVisibility"
-            class="mb-4"
-            required
-          ></v-text-field>
+          <v-form ref="loginForm" @submit.prevent="submitLogin">
+            <v-text-field
+              v-model="username"
+              label="Username"
+              outlined
+              dense
+              prepend-inner-icon="mdi-account"
+              class="mb-4"
+              :rules="usernameRules"
+              required
+            ></v-text-field>
+            <v-text-field
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              label="Password"
+              outlined
+              dense
+              prepend-inner-icon="mdi-lock"
+              :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+              @click:append-inner="togglePasswordVisibility"
+              class="mb-4"
+              :rules="passwordRules"
+              required
+            ></v-text-field>
+            <v-btn
+              type="submit"
+              color="#F3E5F5"
+              block
+              class="mt-2"
+              size="large"
+              elevation="0"
+              :disabled="isDisabledLogin"
+              >Masuk</v-btn
+            >
+          </v-form>
+        </div>
 
-          <!-- Tombol Submit (Disable jika username/password kosong) -->
+        <div v-else>
+          <v-card-subtitle class="text-center text-body-1 mb-6">
+            Registrasi untuk bergabung
+          </v-card-subtitle>
+
+          <v-form ref="registerForm" @submit.prevent="submitRegister">
+            <v-text-field
+              v-model="username"
+              label="Username"
+              outlined
+              dense
+              prepend-inner-icon="mdi-account"
+              class="mb-4"
+              :rules="usernameRules"
+              required
+            ></v-text-field>
+            <v-text-field
+              v-model="full_name"
+              label="Nama lengkap"
+              outlined
+              dense
+              prepend-inner-icon="mdi-account"
+              class="mb-4"
+              :rules="fullNameRules"
+              required
+            ></v-text-field>
+            <v-text-field
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              label="Password"
+              outlined
+              dense
+              prepend-inner-icon="mdi-lock"
+              :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+              @click:append-inner="togglePasswordVisibility"
+              class="mb-4"
+              :rules="passwordRules"
+              required
+            ></v-text-field>
+            <v-text-field
+              v-model="email"
+              label="Email"
+              outlined
+              dense
+              prepend-inner-icon="mdi-email"
+              class="mb-4"
+              :rules="emailRules"
+              required
+            ></v-text-field>
+            <v-btn
+              type="submit"
+              color="#F3E5F5"
+              block
+              class="mt-2"
+              size="large"
+              elevation="0"
+              :disabled="isDisabledRegister"
+              >Register</v-btn
+            >
+          </v-form>
+        </div>
+
+        <br />
+
+        <v-card-actions class="justify-end">
           <v-btn
-            type="submit"
-            color="#F3E5F5"
-            block
-            class="mt-2"
-            size="large"
-            elevation="0"
-            :disabled="isDisabled"
+            text
+            @click="changeForm"
+            class="text-caption py-1 px-1"
+            style="width: fit-content; min-width: auto; height: 50px"
           >
-            Masuk
+            <i>{{
+              isLoginForm
+                ? "Belum punya akun? Daftar"
+                : "Sudah punya akun? Login"
+            }}</i>
           </v-btn>
-        </v-form>
+        </v-card-actions>
       </v-card>
     </v-col>
 
-    <!-- PopUp Box -->
     <PopUpBox
       v-if="popupVisible"
       :status="popUpProps.status"
@@ -108,8 +177,25 @@ import { Auth_Process, getAuthUrl } from "@/utils/requestHelper";
 import { RandomStringGenerator } from "@/utils/utils";
 import { GeneratePBKDF2, GenerateHMAC } from "@/libs/crypto";
 
+const isLoginForm = ref(true); // default show login
+
+function changeForm() {
+  //console.log("isLoginForm: ", isLoginForm);
+  // change form accordingly
+  isLoginForm.value == true
+    ? (isLoginForm.value = false)
+    : (isLoginForm.value = true);
+}
+
 const username = ref("");
 const password = ref("");
+
+// register input var
+
+const full_name = ref("");
+const email = ref("");
+
+// login input var
 const saltedPassword = ref("");
 const half_nonce = ref("");
 const full_nonce = ref("");
@@ -132,15 +218,41 @@ const popUpProps = ref({
 
 const isLoading = ref(false);
 
-// Computed untuk menonaktifkan tombol submit jika username atau password kosong
-const isDisabled = computed(() => !username.value || !password.value || password.value.length < 8);
+// Rules
+const usernameRules = [
+  (v) => !!v || "Username harus diisi",
+  (v) => v.length >= 6 || "Username minimal 6 karakter",
+];
+
+const passwordRules = [
+  (v) => !!v || "Password harus diisi",
+  (v) => v.length >= 8 || "Password minimal 8 karakter",
+];
+
+const emailRules = [
+  (v) => !!v || "Email harus diisi",
+  (v) =>
+    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(v) ||
+    "Format email tidak valid",
+];
+
+const fullNameRules = [(v) => !!v || "Nama lengkap harus diisi"];
+
+//////////////// LOGIN ////////////////
+
+// Computed untuk menonaktifkan tombol submit_login jika username atau password kosong
+const isDisabledLogin = computed(
+  () =>
+    !username.value ||
+    username.value < 6 ||
+    !password.value ||
+    password.value.length < 8
+);
 
 // Fungsi untuk toggle visibilitas password
 const togglePasswordVisibility = () => {
-    showPassword.value = !showPassword.value;
+  showPassword.value = !showPassword.value;
 };
-
-
 
 const submitLogin = async () => {
   console.log("🔹 Logging in with:", username.value, password.value);
@@ -185,7 +297,7 @@ const login = async (usernameParam, passwordParam, halfNonceParam) => {
   //  console.log("login response_be:", response_be);
 
   if (response_be.status != "success") {
-    console.error("LOGIN FAILED!!:", response_be.error_message);
+    console.error("LOGIN FAILED!!:", response_be.error_message); //////////
     popUpProps.value = {
       status: response_be.status,
       errorMessage: response_be.error_message,
@@ -248,7 +360,7 @@ const verifyToken = async () => {
   const operation = "verify-token";
   const params = { token: token.value };
 
-  console.log("login params:", params);
+  console.log("verify-token params:", params);
   const response_be = await Auth_Process(baseUrl, operation, params);
 
   console.log("verify_token response_be:", response_be);
@@ -287,6 +399,117 @@ const verifyToken = async () => {
   // Setelah login berhasil, alihkan ke dashboard
   router.push({ name: "dashboard" });
 };
+
+////////// ////////// REGISTER ////////////////////
+
+const isDisabledRegister = computed(() => {
+  const emailRegex =
+    /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i;
+  const usernameRegex = /^[A-Za-z0-9._]+$/;
+
+  return (
+    !username.value ||
+    username.value.length < 6 ||
+    !usernameRegex.test(username.value) ||
+    !password.value ||
+    password.value.length < 8 ||
+    !full_name.value ||
+    !email.value ||
+    !emailRegex.test(email.value)
+  );
+});
+
+const submitRegister = async () => {
+  console.log(
+    "🔹 Registering new user with: ",
+    "username: ",
+    username.value,
+    " password: ",
+    password.value,
+    " email: ",
+    email.value,
+    " full_name: ",
+    full_name.value
+  );
+
+  try {
+    isLoading.value = true;
+    register(username.value, password.value, email.value, full_name.value);
+  } catch (error) {
+    console.error("Register Auth_Process failed:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const register = async (
+  usernameParam,
+  passwordParam,
+  emailParam,
+  fullNameParam
+) => {
+  const baseUrl = getAuthUrl();
+  const operation = "register";
+  const params = {
+    username: usernameParam,
+    password: passwordParam,
+    email: emailParam,
+    full_name: fullNameParam,
+  };
+
+  console.log("register param:", params);
+  const response_be = await Auth_Process(baseUrl, operation, params);
+
+  // console.log("register response_be:", response_be);
+
+  if (response_be.status != "success") {
+    console.error("REGISTER FAILED!!:", response_be.error_message); //////////
+    popUpProps.value = {
+      status: response_be.status,
+      errorMessage: response_be.error_message,
+      errorCode: response_be.error_code,
+    };
+    popupVisible.value = true;
+    return;
+  }
+
+  console.log("REGISTER SUCCESS!!:");
+  console.log("status response:" + response_be.payload.status);
+
+  return;
+};
+
+const verifyOTP = async (otpParam) => {
+  const baseUrl = getAuthUrl();
+  const operation = "verify-otp";
+  const params = {
+    otp: otpParam,
+  };
+
+  console.log("verify-otp params:", params);
+  const response_be = await Auth_Process(baseUrl, operation, params);
+
+  console.log("verify-otp response_be:", response_be);
+
+  if (response_be.status != "success") {
+    console.error("VERIFY OTP FAILED!! :", response_be.error_message);
+    popUpProps.value = {
+      status: response_be.status,
+      errorMessage: response_be.error_message,
+      errorCode: response_be.error_code,
+    };
+    popupVisible.value = true;
+    return;
+  }
+
+  console.log("VERIFY OTP SUCCESSFUL!");
+  console.log(`status: ${response_be.payload.status}`);
+
+  // change to login form
+
+  changeForm();
+  
+};
 </script>
 
 <style scoped>
@@ -300,7 +523,7 @@ const verifyToken = async () => {
   /* Warna ungu lembut */
 }
 
-.login-card {
+.form-card {
   background: linear-gradient(45deg, #1867c0 0%, #5cbbf6 100%);
   /* Ungu tua dengan transparansi */
   border-radius: 12px;
