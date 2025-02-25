@@ -2,6 +2,7 @@
   <v-row class="fill-height" :class="{ 'disable-interactions': isLoading }">
     <v-progress-circular v-if="isLoading" color="primary" indeterminate class="loading-spinner"></v-progress-circular>
 
+
     <v-col cols="12" md="6" class="primary d-flex align-center justify-center pa-10">
       <div class="text-white">
         <h1 class="text-h3 font-weight-bold mb-4">SIMPEL</h1>
@@ -25,7 +26,7 @@
           </v-card-subtitle>
 
           <v-form ref="loginForm" @submit.prevent="submitLogin">
-            <v-text-field v-model="username" label="Username" outlined dense prepend-inner-icon="mdi-account"
+            <v-text-field maxlength="51" v-model="username" label="Username" outlined dense prepend-inner-icon="mdi-account"
               class="mb-4" :rules="usernameRules" required></v-text-field>
             <v-text-field v-model="password" :type="showPassword ? 'text' : 'password'" label="Password" outlined dense
               prepend-inner-icon="mdi-lock" :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -42,11 +43,11 @@
           </v-card-subtitle>
 
           <v-form ref="registerForm" @submit.prevent="submitRegister">
-            <v-text-field v-model="username" label="Username" outlined dense prepend-inner-icon="mdi-account"
+            <v-text-field maxlength="51" v-model="username" label="Username" outlined dense prepend-inner-icon="mdi-account"
               class="mb-4" :rules="usernameRules" required></v-text-field>
-            <v-text-field v-model="full_name" label="Nama lengkap" outlined dense prepend-inner-icon="mdi-account"
+            <v-text-field maxlength="51" v-model="full_name" label="Nama lengkap" outlined dense prepend-inner-icon="mdi-account"
               class="mb-4" :rules="fullNameRules" required></v-text-field>
-            <v-text-field v-model="password" :type="showPassword ? 'text' : 'password'" label="Password" outlined dense
+            <v-text-field  maxlength="51" v-model="password" :type="showPassword ? 'text' : 'password'" label="Password" outlined dense
               prepend-inner-icon="mdi-lock" :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
               @click:append-inner="togglePasswordVisibility" class="mb-4" :rules="passwordRules"
               required></v-text-field>
@@ -68,12 +69,32 @@
                 : "Sudah punya akun? Login"
             }}</i>
           </v-btn>
+
+          <br>
+
         </v-card-actions>
+
+        <v-card-actions class="justify-center">
+          <div class="h-auto w-50">
+            <v-btn type="button" block class="mt-0 text-caption" size="small" elevation="0"
+              style="background-color: #F3E5F5; color: black;">
+              Lupa Password
+            </v-btn>
+          </div>
+        </v-card-actions>
+
+
+
       </v-card>
+
+
+
     </v-col>
 
-    <PopUpBox v-if="popupVisible" :status="popUpProps.status" :errorMessage="popUpProps.errorMessage"
-      :errorCode="popUpProps.errorCode" :visible="popupVisible" @close="closePopup" />
+    <PopUpBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
+      :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
+      @close="closePopup" />
+
   </v-row>
 </template>
 
@@ -83,7 +104,7 @@ import PopUpBox from "@/components/parts/PopUpBox.vue";
 import { useRouter } from "vue-router";
 const router = useRouter();
 
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { Auth_Process, getAuthUrl } from "@/utils/requestHelper";
 import { RandomStringGenerator } from "@/utils/utils";
 import { GeneratePBKDF2, GenerateHMAC } from "@/libs/crypto";
@@ -129,26 +150,42 @@ const popUpProps = ref({
 
 const isLoading = ref(false);
 
+watch(isLoading, (newValue) => {
+  console.log("isLoading changed to:", newValue);
+});
+
+
+const emailRegrex = ref(/^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i);
+const usernameRegrex = ref(/^[A-Za-z0-9~!@#$%^&*()_+<>?/':=.,-]+$/);
+
 // Rules
 const usernameRules = [
   (v) => !!v || "Username harus diisi",
   (v) => v.length >= 6 || "Username minimal 6 karakter",
-  (v) => /^[A-Za-z0-9._]+$/.test(v) || "Username hanya boleh mengandung huruf, angka, titik, dan underscore",
+  (v) => v.length <=30  || "Username maksimal 50 karakter",
+  (v) => usernameRegrex.value.test(v) || "Username hanya boleh mengandung huruf, angka, dan simbol '~!@#$%^&*()_+<>?/':=.,-'"
+
 ];
 
 const passwordRules = [
   (v) => !!v || "Password harus diisi",
   (v) => v.length >= 8 || "Password minimal 8 karakter",
+  (v) => v.length <= 30 || "Password maksimal 30 karakter",
 ];
 
 const emailRules = [
   (v) => !!v || "Email harus diisi",
   (v) =>
-    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(v) ||
+  emailRegrex.value.test(v) ||
     "Format email tidak valid",
 ];
 
-const fullNameRules = [(v) => !!v || "Nama lengkap harus diisi"];
+const fullNameRules = [
+  (v) => !!v || "Nama lengkap harus diisi",
+  (v) => v.length >= 3 || "Nama lengkap minimal 3 karakter",
+  (v) => v.length <= 50 || "Nama lengkap maksimal 50 karakter",
+
+];
 
 //////////////// LOGIN ////////////////
 
@@ -157,8 +194,10 @@ const isDisabledLogin = computed(
   () =>
     !username.value ||
     username.value < 6 ||
+    username.value > 30 ||
     !password.value ||
-    password.value.length < 8
+    password.value.length < 8 ||
+    password.value.length > 30
 );
 
 // Fungsi untuk toggle visibilitas password
@@ -167,6 +206,7 @@ const togglePasswordVisibility = () => {
 };
 
 const submitLogin = async () => {
+  console.log("isLoading:", isLoading.value);
   console.log("🔹 Logging in with:", username.value, password.value);
 
   // Generate half_nonce
@@ -181,18 +221,34 @@ const submitLogin = async () => {
       password.value,
       half_nonce.value
     );
+
     if (isLoginSuccess) {
       token.value = await calculateToken(full_nonce.value, salt.value);
+
       if (token.value) {
         await verifyToken();
       }
     }
   } catch (error) {
     console.error("Login Auth_Process failed:", error);
-  } finally {
-    isLoading.value = false;
   }
+
+  // Pastikan semua proses selesai dulu, baru setTimeout berjalan
+  setTimeout(() => {
+    isLoading.value = false;
+  }, 500);
 };
+
+
+// const submitLogin = async () => {
+//   isLoading.value = true;
+//   console.log("isLoading should be true:", isLoading.value);
+//   await new Promise(resolve => setTimeout(resolve, 1000)); // Test delay
+//   isLoading.value = false;
+//   console.log("isLoading should be false:", isLoading.value);
+// };
+
+
 
 const login = async (usernameParam, passwordParam, halfNonceParam) => {
   const baseUrl = getAuthUrl();
@@ -312,45 +368,62 @@ const verifyToken = async () => {
   router.push({ name: "dashboard" });
 };
 
+
+
+
+
+
+
+
+
+
+
 ////////// ////////// REGISTER ////////////////////
 
 const isDisabledRegister = computed(() => {
-  const emailRegex =
-    /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i;
-  const usernameRegex = /^[A-Za-z0-9._]+$/;
+  // const emailRegex =
+  //   /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i;
+  // const usernameRegex = /^[A-Za-z0-9._]+$/;
 
   return (
     !username.value ||
     username.value.length < 6 ||
-    !usernameRegex.test(username.value) ||
+    username.value.length > 30 ||
+    !usernameRegrex.value.test(username.value) ||
     !password.value ||
     password.value.length < 8 ||
+    password.value.length > 30 ||
     !full_name.value ||
+    full_name.value.length < 3 ||
+    full_name.value.length > 50 ||
     !email.value ||
-    !emailRegex.test(email.value)
+    !emailRegrex.value.test(email.value)
   );
 });
 
 const submitRegister = async () => {
+  isLoading.value = true;
+
   console.log(
     "🔹 Registering new user with: ",
     "username: ",
     username.value,
-    " password: ",
+    "password: ",
     password.value,
-    " email: ",
+    "email: ",
     email.value,
-    " full_name: ",
+    "full_name: ",
     full_name.value
   );
 
   try {
-    isLoading.value = true;
-    register(username.value, password.value, email.value, full_name.value);
+    await register(username.value, password.value, email.value, full_name.value);
   } catch (error) {
     console.error("Register Auth_Process failed:", error);
   } finally {
-    isLoading.value = false;
+    setTimeout(() => {
+      isLoading.value = false;
+    }, 1000);
   }
 };
 
@@ -387,11 +460,12 @@ const register = async (
 
   console.log("REGISTER SUCCESS!!:");
   console.log("status response:" + response_be.payload.status);
+  console.log("otp_expire_tstamp:", response_be.payload.otp_expire_tstamp);
 
 
 
-  // Hitung waktu kedaluwarsa OTP
-  const otp_expiration = calculateOTPExpirationTime();
+
+  const otp_expire_tstamp = response_be.payload.otp_expire_tstamp;
 
   // Generate OTP session data jika tersedia dalam response
 
@@ -405,23 +479,15 @@ const register = async (
         }
   */
 
-    sessionStorage.setItem("otp_data",  JSON.stringify(params));
-    sessionStorage.setItem("otp_expiration_time", otp_expiration);
+  sessionStorage.setItem("otp_data", JSON.stringify(params));
+  sessionStorage.setItem("otp_expire_tstamp", otp_expire_tstamp);
 
-    console.log("otp_data:", sessionStorage.getItem("otp_data"));
-    console.log("otp_expiration_time:", sessionStorage.getItem("otp_expiration_time"));
-    router.push({ name: "verify-otp" });
- 
+  console.log("otp_data:", sessionStorage.getItem("otp_data"));
+  console.log("otp_expire_tstamp:", sessionStorage.getItem("otp_expire_tstamp"));
+  router.push({ name: "verify-otp" });
+
   return;
 };
-
-
-
-// Menghitung waktu kedaluwarsa OTP dalam format epoch
-function calculateOTPExpirationTime() {
-  return Math.floor(Date.now() / 1000) + 2 * 60; // Waktu sekarang + 2 menit (dalam detik)
-}
-
 
 
 </script>
@@ -448,18 +514,20 @@ function calculateOTPExpirationTime() {
 
 /* Styling for the loading spinner */
 .loading-spinner {
-  position: absolute;
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 10;
-  /* Ensure it stays on top of other elements */
+  z-index: 1000;
+  /* Pastikan di atas elemen lain */
 }
+
 
 /* Disable interactions when isLoading is true */
 .disable-interactions * {
   pointer-events: none;
 }
+
 
 /* Optional: Add an overlay to make it clear that the screen is in loading state */
 .disable-interactions {
@@ -477,5 +545,19 @@ function calculateOTPExpirationTime() {
   /* Semi-transparent overlay */
   z-index: 5;
   /* Ensure it overlays on top of the content */
+}
+
+
+/* Pastikan PopUpBox tetap bisa diinteraksi */
+.popup-container {
+  position: fixed;
+  /* Tetap di atas layar */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1100;
+  /* Lebih tinggi dari overlay */
+  pointer-events: auto;
+  /* Aktifkan interaksi */
 }
 </style>

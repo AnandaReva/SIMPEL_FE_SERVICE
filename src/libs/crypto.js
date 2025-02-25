@@ -7,6 +7,7 @@ import CryptoJS from "crypto-js";
  * @returns {[string, string]} - [hashed value, error message]
  */
 export function GenerateHMAC(text, key) {
+    
     if (!text || !key) {
         return ["", "Missing Text or Key"];
     }

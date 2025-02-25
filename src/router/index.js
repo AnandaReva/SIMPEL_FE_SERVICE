@@ -38,11 +38,15 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     const isAuthenticated = localStorage.getItem("session_id") && localStorage.getItem("session_hash");
     const otpEmail = sessionStorage.getItem("otp_data");
-    const otpExpirationTime = parseInt(sessionStorage.getItem("otp_expiration_time"), 10) || 0;
-    const currentTime = Math.floor(Date.now() / 1000);
+    const expireTstamp = parseInt(sessionStorage.getItem("otp_expire_tstamp"), 10) || 0;
 
-    const hasOTPSession = otpEmail && otpExpirationTime;
-    const isOTPExpired = otpExpirationTime > 0 && currentTime > otpExpirationTime;
+    const currentTime = Math.floor(Date.now() / 1000);
+    const RemainingTime = expireTstamp - currentTime;
+
+
+    
+    const hasOTPSession = otpEmail && expireTstamp;
+    const isOTPExpired = RemainingTime === 0 || RemainingTime < 0;
 
     // Jika sudah login dan mencoba ke /login, redirect ke /dashboard
     if (to.name === 'login' && isAuthenticated) {
@@ -59,6 +63,8 @@ router.beforeEach((to, from, next) => {
         console.warn("OTP tidak valid atau sudah kadaluarsa. Mengembalikan ke halaman sebelumnya.");
         return next(from.fullPath && from.fullPath !== '/verify-otp' ? from.fullPath : '/');
     }
+
+    
 
      // Jika path tidak terdaftar dalam router, kembali ke halaman sebelumnya atau ke `/`
      if (to.matched.length === 0) {

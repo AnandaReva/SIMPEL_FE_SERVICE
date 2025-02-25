@@ -1,36 +1,47 @@
 <template>
-    <v-progress-circular v-if="isLoading" color="primary" indeterminate class="loading-spinner"></v-progress-circular>
 
-    <v-card class="form-card pa-8" elevation="0" max-width="600">
-        <v-card-title class="text-center text-h5 font-weight-bold mb-2">
-            Selamat Datang
-        </v-card-title>
 
-        <v-card-subtitle class="text-center text-body-1 mb-6">
-            Masukkan kode OTP yang telah dikirimkan ke alamat email: <strong>{{ email }}</strong>
-        </v-card-subtitle>
+    <v-row class="fill-height">
+        <v-progress-circular v-if="isLoading" color="primary" indeterminate
+            class="loading-spinner"></v-progress-circular>
 
-        <v-alert v-if="isExpired" type="error" class="mb-4">
-            Kode OTP telah kedaluwarsa. Silakan minta kode baru.
-        </v-alert>
+        <v-card class="form-card pa-8" elevation="0" max-width="600">
+            <v-card-title class="text-center text-h5 font-weight-bold mb-2">
+                VERIFIKASI KODE OTP
+            </v-card-title>
 
-        <v-form ref="otpForm" @submit.prevent="submitOtp">
-            <v-text-field v-model="otp" label="OTP" outlined dense prepend-inner-icon="mdi-lock" class="mb-4"
-                :rules="otpRules" required type="number"></v-text-field>
+            <v-card-subtitle class="text-center text-body-1 mb-6">
+                Masukkan kode OTP yang telah dikirimkan ke alamat email: <strong>{{ otpData.email || "N/A" }}</strong>
+            </v-card-subtitle>
 
-            <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="0"
-                :disabled="isDisabledOtp || isExpired">
-                Konfirmasi
-            </v-btn>
-        </v-form>
-    </v-card>
+            <v-card-subtitle class="text-center text-body-1 mb-6">
+                Sisa waktu <strong>{{ remainingTime }}</strong> detik
+            </v-card-subtitle>
 
-    <PopUpBox v-if="popupVisible" :status="popUpProps.status" :errorMessage="popUpProps.errorMessage"
-        :errorCode="popUpProps.errorCode" :visible="popupVisible" @close="closePopup" />
+            <v-alert v-if="isExpired" type="error" class="mb-4">
+                Kode OTP telah kedaluwarsa. Silakan minta kode baru.
+            </v-alert>
+
+            <v-form ref="otpForm" @submit.prevent="submitOtp">
+                <v-text-field maxlength="6" v-model="otp" label="OTP" outlined dense prepend-inner-icon="mdi-lock"
+                    class="mb-4" :rules="otpRules" required type="number"></v-text-field>
+
+                <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="0"
+                    :disabled="isDisabledOtp || isExpired">
+                    Konfirmasi
+                </v-btn>
+            </v-form>
+        </v-card>
+
+        <PopUpBox v-if="popupVisible" :status="popUpProps.status" :errorMessage="popUpProps.errorMessage"
+            :errorCode="popUpProps.errorCode" :visible="popupVisible" @close="closePopup" />
+
+    </v-row>
+
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { getAuthUrl, Auth_Process } from "@/utils/requestHelper";
 import { GenerateHMAC } from "@/libs/crypto";
@@ -38,13 +49,13 @@ import { GenerateHMAC } from "@/libs/crypto";
 const router = useRouter();
 const otp = ref("");
 const otpSignature = ref("");
-const email = ref("");
-const username = ref("");
-const password = ref("");
-const fullName = ref("");
-const expireTime = ref(0);
+const otpData = ref({}); // ✅ Data dinamis dari sessionStorage
 const isLoading = ref(false);
 const popupVisible = ref(false);
+
+const expireTstamp = ref(0);
+const remainingTime = ref(0);
+let countdownInterval = null;
 
 const popUpProps = ref({
     status: "",
@@ -52,48 +63,76 @@ const popUpProps = ref({
     errorCode: "",
 });
 
-// ✅ Tambahkan closePopup untuk menangani popup
 const closePopup = () => {
     popupVisible.value = false;
 };
 
-// Menghitung apakah OTP sudah kedaluwarsa
+// ✅ Hitung apakah OTP sudah kedaluwarsa
 const isExpired = computed(() => {
-    const currentTime = Math.floor(Date.now() / 1000);
-    return currentTime > expireTime.value;
+    return Math.floor(Date.now() / 1000) > expireTstamp.value;
 });
 
-// Memastikan OTP memiliki 6 digit angka
+// ✅ Cek apakah OTP valid (6 digit angka)
 const isDisabledOtp = computed(() => {
     return !otp.value || otp.value.length !== 6 || isNaN(otp.value);
 });
 
-// Aturan validasi OTP
+// ✅ Aturan validasi OTP
 const otpRules = [
     (v) => !!v || "Kode OTP harus diisi",
     (v) => /^\d{6}$/.test(v) || "Kode OTP harus 6 angka",
 ];
 
-// 🔹 Debugging Request sebelum submit
+// ✅ Menghitung OTP Signature secara otomatis dari `otpData`
+const calculateOTYPSignature = async () => {
+    if (Object.keys(otpData.value).length === 0) {
+        console.error("Data OTP kosong!");
+        return "";
+    }
+
+    // 🔹 Urutkan berdasarkan nama field (key) dari A-Z sebelum digabungkan
+    let sortedMessage = Object.keys(otpData.value)
+        .sort() // Urutkan key secara alfabetis
+        .map(key => otpData.value[key]) // Ambil nilai berdasarkan key yang sudah diurutkan
+        .join("|"); // Gabungkan nilai dengan pemisah "|"
+
+    console.log("🔹 Pesan untuk HMAC:", sortedMessage);
+
+
+    // Generate HMAC
+    const [otpSignature, hmacError] = GenerateHMAC(
+        sortedMessage,
+        otp.value.toString()
+    );
+
+    if (hmacError) {
+        console.error("Error generating HMAC:", hmacError);
+        return "";
+    }
+
+    return otpSignature;
+
+
+};
+
+
+// 🚀 Submit OTP
 const submitOtp = async () => {
     if (isExpired.value) {
         console.error("OTP sudah kedaluwarsa.");
         return;
     }
 
-    console.log("🔹 Verifikasi OTP dengan:", otp.value);
-
     try {
         isLoading.value = true;
 
-        // 🚀 Hitung signature OTP
-        otpSignature.value = await calculateOTYPSignature(username.value, email.value, password.value, fullName.value);
+        otpSignature.value = await calculateOTYPSignature();
 
-        if (!otpSignature.value) {
-            throw new Error("Gagal menghitung OTP Signature.");
-        }
+        console.log("🔐 Hasil kalkulasi OTP Signature: ", otpSignature.value);
+        if (!otpSignature.value) throw new Error("Gagal menghitung OTP Signature.");
 
-        await verifyOTP(otpSignature.value);
+        // ✅ Pastikan otpSignature berupa string
+        await verifyOTP(otpSignature.value.toString());
     } catch (error) {
         console.error("Verifikasi OTP gagal:", error);
     } finally {
@@ -101,53 +140,18 @@ const submitOtp = async () => {
     }
 };
 
-/*  
-    Backend Go (Referensi BE):
-    message := fmt.Sprintf("%s|%s|%s|%s", username, email, password, fullName)
-    otpSignature, err := crypto.GenerateHMAC(message, strconv.Itoa(otp))
-*/
-const calculateOTYPSignature = async (usernameParam, emailParam, passwordParam, fullNameParam) => {
-    if (!usernameParam || !emailParam || !passwordParam || !fullNameParam) {
-        console.error("Data untuk OTP Signature tidak lengkap!");
-        return "";
-    }
-
-    console.log(
-        "🔹 Generate OTP Signature untuk:",
-        "Username:", usernameParam,
-        "Email:", emailParam,
-        "Password:", passwordParam,
-        "Full Name:", fullNameParam
-    );
-
-    let message = `${usernameParam}|${emailParam}|${passwordParam}|${fullNameParam}`;
-    console.log("🔹 Pesan untuk HMAC:", message);
-
-    try {
-        const otpSignature = await GenerateHMAC(message, otp.value.toString());
-
-        // **Tambahkan validasi untuk memastikan hasilnya string, bukan array**
-        if (Array.isArray(otpSignature)) {
-            console.warn("⚠️ OTP Signature berbentuk array, mengambil elemen pertama!");
-            return otpSignature[0] || "";
-        }
-
-        console.log("✅ OTP Signature:", otpSignature);
-        return otpSignature;
-    } catch (error) {
-        console.error("❌ Gagal membuat OTP Signature:", error);
-        return "";
-    }
-};
 
 
-// 🚀 Proses verifikasi OTP ke backend
+// 🚀 Verifikasi OTP ke backend
 const verifyOTP = async (otpSignatureParam) => {
-    const baseUrl = getAuthUrl();
-    const operation = "verify-otp";
+    console.log("🔄 otpSignature Sebelum Dikirim:", otpSignature.value);
 
-    // **Pastikan yang dikirim adalah string, bukan array**
-    const params = { otp_signature: Array.isArray(otpSignatureParam) ? otpSignatureParam[0] : otpSignatureParam };
+
+
+    const baseUrl = getAuthUrl();
+    const operation = "register/verify-otp";
+
+    const params = { otp_signature: otpSignatureParam };
 
     console.log("📡 Request ke:", `${baseUrl}/${operation}`);
     console.log("🔄 Parameters:", params);
@@ -177,38 +181,53 @@ const verifyOTP = async (otpSignatureParam) => {
     }
 };
 
-
-// 🚀 Mengambil data dari session storage saat halaman dimuat
+// 🚀 Ambil data dari session storage saat halaman dimuat
 onMounted(() => {
-    const otpData = JSON.parse(sessionStorage.getItem("otp_data") || "{}");
-    email.value = otpData.email || "";
-    username.value = otpData.username || "";
-    password.value = otpData.password || "";
-    fullName.value = otpData.full_name || "";
-    expireTime.value = parseInt(sessionStorage.getItem("otp_expiration_time"), 10) || 0;
+    otpData.value = JSON.parse(sessionStorage.getItem("otp_data") || "{}");
+    expireTstamp.value = parseInt(sessionStorage.getItem("otp_expire_tstamp"), 10) || 0;
 
-    console.log("username:", username.value);
-    console.log("email:", email.value);
-    console.log("password:", password.value);
-    console.log("full name:", fullName.value);
-    console.log("expire time:", expireTime.value);
-    
+    console.log("🔹 Data OTP:", otpData.value);
 
-    // Debugging waktu kadaluwarsa
+    // ✅ Hitung sisa waktu OTP
     const currentTime = Math.floor(Date.now() / 1000);
-    const remainingTime = expireTime.value - currentTime;
+    remainingTime.value = expireTstamp.value - currentTime;
 
-    console.log(
-        "⏰ Waktu Kedaluwarsa:",
-        new Date(expireTime.value * 1000).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })
-    );
+    countdownInterval = setInterval(() => {
+        const now = Math.floor(Date.now() / 1000);
+        remainingTime.value = expireTstamp.value - now;
 
-    if (remainingTime > 0) {
-        const minutes = Math.floor(remainingTime / 60);
-        const seconds = remainingTime % 60;
-        console.log(`⏳ Sisa waktu OTP: ${minutes} menit ${seconds} detik`);
-    } else {
-        console.log("⚠️ OTP sudah kedaluwarsa.");
+        if (remainingTime.value <= 0) {
+            // remainingTime.value = 0;
+            // clearInterval(countdownInterval);
+            // console.log("�� OTP sudah kedaluwarsa!");
+            // sessionStorage.removeItem("otp_data");
+            // sessionStorage.removeItem("otp_expire_tstamp");
+
+            // router.push({ name: "login" });
+        }
+    }, 1000);
+});
+
+// **Pastikan interval dihentikan saat komponen dilepas**
+onUnmounted(() => {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
     }
 });
 </script>
+
+
+<style>
+/* Untuk WebKit (Chrome, Safari, Edge) */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Untuk Firefox */
+input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+</style>
