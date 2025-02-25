@@ -7,6 +7,7 @@ const logout = () => {
         name: 'login'
     }).then(() => {
         localStorage.clear()
+        sessionStorage.clear()
         window.location.reload(true)
     })
 }

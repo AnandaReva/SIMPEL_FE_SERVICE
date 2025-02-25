@@ -7,22 +7,11 @@
           Daftar Perangkat Aktif
         </p>
         <v-card class="pa-3" color="blue-lighten-4" elevation="1">
-          <v-infinite-scroll
-            :key="scrollKeyActiveDevices"
-            id="activeDevicesBox"
-            ref="activeDevicesBox"
-            height="400"
-            side="end"
-            @load="loadDevices"
-            class="overflow-auto"
-          >
+          <v-infinite-scroll :key="scrollKeyActiveDevices" id="activeDevicesBox" ref="activeDevicesBox" height="400"
+            side="end" @load="loadDevices" class="overflow-auto">
             <!-- Active Device Panel -->
-            <ActiveDevicesList
-              :activeDevices="activeDevices"
-              :currActiveDeviceId="currActiveDeviceId"
-              :totalActiveDevices="totalActiveDevices"
-              @select-activeDevice="handleDeviceSelection"
-            />
+            <ActiveDevicesList :activeDevices="activeDevices" :currActiveDeviceId="currActiveDeviceId"
+              :totalActiveDevices="totalActiveDevices" @select-activeDevice="handleDeviceSelection" />
           </v-infinite-scroll>
         </v-card>
       </v-col>
@@ -35,18 +24,14 @@
             <div class="d-flex justify-space-between align-center">
               <div>
                 <strong>
-                  <span v-if="currActiveDeviceId"
-                    >Perangkat saat ini: {{ currActiveDeviceId }}</span
-                  >
+                  <span v-if="currActiveDeviceId">Perangkat saat ini: {{ currActiveDeviceId }}</span>
                   <span v-else>Tidak ada perangkat dipilih</span>
                 </strong>
               </div>
               <div>
                 <strong>
-                  <span
-                    >Zona Waktu:
-                    {{ Intl.DateTimeFormat().resolvedOptions().timeZone }}</span
-                  >
+                  <span>Zona Waktu:
+                    {{ Intl.DateTimeFormat().resolvedOptions().timeZone }}</span>
                 </strong>
               </div>
             </div>
@@ -60,11 +45,7 @@
         <v-row justify="space-around" class="mt-4">
           <v-col cols="auto">
             <div class="text-center" align-center>
-              <div
-                class="border-xl"
-                color="blue-lighten-4"
-                style="height: 70px; width: 70px; align-content: center"
-              >
+              <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
                 <p class="text-caption">
                   {{ formatValue(currDeviceData.Energy) }}
                 </p>
@@ -74,11 +55,7 @@
           </v-col>
           <v-col cols="auto">
             <div class="text-center" align-center>
-              <div
-                class="border-xl"
-                color="blue-lighten-4"
-                style="height: 70px; width: 70px; align-content: center"
-              >
+              <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
                 <p class="text-caption">
                   {{ formatValue(currDeviceData.Voltage) }}
                 </p>
@@ -89,11 +66,7 @@
 
           <v-col cols="auto">
             <div class="text-center">
-              <div
-                class="border-xl"
-                color="blue-lighten-4"
-                style="height: 70px; width: 70px; align-content: center"
-              >
+              <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
                 <p class="text-caption">
                   {{ formatValue(currDeviceData.Current) }}
                 </p>
@@ -104,11 +77,7 @@
 
           <v-col cols="auto">
             <div class="text-center">
-              <div
-                class="border-xl"
-                color="blue-lighten-4"
-                style="height: 70px; width: 70px; align-content: center"
-              >
+              <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
                 <p class="text-caption">
                   {{ formatValue(currDeviceData.Frequency) }}
                 </p>
@@ -119,11 +88,7 @@
 
           <v-col cols="auto">
             <div class="text-center">
-              <div
-                class="border-xl"
-                color="blue-lighten-4"
-                style="height: 70px; width: 70px; align-content: center"
-              >
+              <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
                 <p class="text-caption">
                   {{ formatValue(currDeviceData.Power_factor) }}
                 </p>
@@ -139,6 +104,10 @@
 
     <!--  {{ convertEpochToUserTimezone(currDeviceData.Tstamp)}} -->
   </v-card>
+
+  <PopUpBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
+      :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
+      @close="closePopup" />
 </template>
 
 <style scoped>
@@ -152,15 +121,43 @@
   height: 350px;
   width: 100%;
 }
+
+/* Pastikan PopUpBox tetap bisa diinteraksi */
+.popup-container {
+  position: fixed;
+  /* Tetap di atas layar */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1100;
+  /* Lebih tinggi dari overlay */
+  pointer-events: auto;
+  /* Aktifkan interaksi */
+}
+
 </style>
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from "vue";
-import { Process, getApiUrl } from "@/utils/requestHelper";
-import { connectWebSocket } from "@/utils/websocket";
+import { Process } from "@/utils/requestHelper";
+import { BASE_API_URL , WS_API_URL } from "@/configs/config";
+
+import { createSocketConnection } from "@/utils/wsHelper";
+
 import CanvasJS, { addTheme } from "@canvasjs/charts";
 
 import ActiveDevicesList from "./monitoring/ActiveDevicesList.vue";
+
+
+const popUpProps = ref({
+  status: "",
+  errorMessage: "",
+  errorCode: "",
+});
+const popupVisible = ref(false);
+const closePopup = () => {
+  popupVisible.value = false;
+};
 
 // ** Deklarasi Variabel Reaktif **
 const currActiveDeviceId = ref(null); // ✅ Menambahkan deklarasi yang hilang
@@ -255,8 +252,7 @@ const initChart = () => {
 };
 
 
-
-const startWebSocket = () => {
+const startWebSocket = async () => {
   if (!currActiveDeviceId.value) return;
 
   // Pastikan WebSocket lama ditutup sebelum membuka yang baru
@@ -267,35 +263,53 @@ const startWebSocket = () => {
   }
 
   console.log("🌐 Membuka koneksi WebSocket baru...");
-  socket = connectWebSocket(currActiveDeviceId.value);
 
-  socket.onopen = () => {
-    console.log("✅ WebSocket connected:", socket.url);
-    if (!chart) {
-      console.log("Reinitializing chart...");
-      initChart();
+  const operation = "connect_user";
+  const baseUrl = WS_API_URL;
+  const params = { device_id: currActiveDeviceId.value };
+
+  console.log("createSocketConnection params:", params);
+
+  try {
+    const result = await createSocketConnection(baseUrl, operation, params);
+
+    if (result?.error) {
+      console.error("⚠️ WebSocket gagal terhubung:", result.error);
+      return;
     }
-  };
 
-  socket.onerror = (err) => console.error("⚠️ WebSocket error:", err);
-  socket.onclose = () => console.warn("❌ WebSocket disconnected.");
+    socket = result; // WebSocket instance
 
-  socket.onmessage = (event) => {
-    try {
-      const message = JSON.parse(event.data);
-      console.log("📡 Data received:", message);
-      console.log("📡 Data received current:", message.Current);
-      console.log("📡 Data received tstamp:", message.Tstamp);
-      console.log("📡 Data received Power:", message.Power);
-
-      if (message.Device_Id === currActiveDeviceId.value) {
-        currDeviceData.value = message;
-        updateChart(message);
+    socket.onopen = () => {
+      console.log("✅ WebSocket connected:", socket.url);
+      if (!chart) {
+        console.log("Reinitializing chart...");
+        initChart();
       }
-    } catch (error) {
-      console.error("❌ Error parsing WebSocket message:", error);
-    }
-  };
+    };
+
+    socket.onerror = (err) => console.error("⚠️ WebSocket error:", err);
+    socket.onclose = () => console.warn("❌ WebSocket disconnected.");
+
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        console.log("📡 Data received:", message);
+        console.log("📡 Data received current:", message.Current);
+        console.log("📡 Data received tstamp:", message.Tstamp);
+        console.log("📡 Data received Power:", message.Power);
+
+        if (message.Device_Id === currActiveDeviceId.value) {
+          currDeviceData.value = message;
+          updateChart(message);
+        }
+      } catch (error) {
+        console.error("❌ Error parsing WebSocket message:", error);
+      }
+    };
+  } catch (error) {
+    console.error("❌ Gagal membuat koneksi WebSocket:", error);
+  }
 };
 
 onMounted(() => {
@@ -408,7 +422,7 @@ async function getActiveDevices(pageNumber) {
   try {
     const operation = "get_active_devices";
     //  const operation = "get_dummy_active_devices";
-    const baseUrl = getApiUrl();
+    const baseUrl = BASE_API_URL;
     const params = {
       page_number: pageNumber,
       page_size: page_size.value,
@@ -421,11 +435,15 @@ async function getActiveDevices(pageNumber) {
 
     if (response_be.status != "success") {
       console.error("getActiveDevices FAILED!!:", response_be.error_message);
-      /*  popUpProps.value = {
-                 status: response_be.status,
-                 errorMessage: response_be.error_message,
-                 errorCode: response_be.error_code,
-             }; */
+
+      let popUpMessage = "Gagal Mendapatkan Data Perangkat Aktif";
+
+      popUpProps.value = {
+        status: response_be.status,
+        errorMessage: popUpMessage,
+        errorCode: response_be.error_code,
+      };
+      popupVisible.value = true;
       return;
     }
 
@@ -477,115 +495,3 @@ async function getActiveDevices(pageNumber) {
 </script>
 
 <style scoped></style>
-
-<!-- 
-/* {
-
-exp data: 
-  "Device_Id": 1,
-  "Tstamp": 1739877414000,  // ms
-  "Voltage": 290.5,
-  "Current": 2.3,
-  "Power": 510.15,
-  "Energy": 1560.75,
-  "Frequency": 50.1,
-  "Power_factor": 0.98
-  
-} */
-
-
-//////////////////// REALTIME CHART ////////////////////
-const dataPoints = ref([]);
-const currDeviceData = ref({});
-let chart = null;
-const maxDataLength = ref(50);
-
-// Define the current date
-const currentDate = new Date();
-const month_name_ind = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Desember']
-
-// Function to format value
-const formatValue = (value) => {
-    if (value === undefined || value === null) {
-        return '-'; // Show '-' if value is missing
-    }
-    return value.toFixed(2); // Format number to 2 decimal places
-};
-
-// **Fungsi untuk mengupdate chart**
-const updateChart = (newData) => {
-    // Add new data point
-    console.log("--- updateChart() ----");
-    dataPoints.value.push({
-        x: new Date(newData.Tstamp),
-        y: newData.Power
-    });
-
-    console.log("dataPoints:", dataPoints.value);
-
-    // Remove old data if there are more than maxDataLength
-    if (dataPoints.value.length > maxDataLength.value) {
-        dataPoints.value.shift(); // Remove the first element
-    }
-
-    // Re-render the chart
-    if (chart) {
-        chart.render();
-    }
-};
-
-// **Fungsi untuk inisialisasi chart**
-const initChart = () => {
-    chart = new CanvasJS.Chart("chartContainer", {
-        title: {
-            text: `${currentDate.getDate()} ${month_name_ind[currentDate.getMonth()]} ${currentDate.getFullYear()}`
-        },
-        axisX: {
-            title: "Waktu (j:m:d:ms)",  // Axis X title
-            valueFormatString: "H:msH:mm:ss"  // Time format
-        },
-        axisY: {
-            title: "Power (W)"
-        },
-        data: [{
-            type: "line",
-            dataPoints: dataPoints.value
-        }]
-    });
-
-    chart.render();
-};
-
-// **Fungsi untuk menangani WebSocket**
-let socket = null;
-
-const startWebSocket = () => {
-    if (currActiveDeviceId.value !== 0 && currActiveDeviceId.value !== null) {  
-        socket = connectWebSocket(currActiveDeviceId.value);
-
-        socket.onmessage = (event) => {
-            try {
-                const message = JSON.parse(event.data);
-                console.log("📡 Data received:", message);
-
-                updateChart(message);
-                currDeviceData.value = message;
-                console.log("Device message:", currDeviceData.value);
-            } catch (error) {
-                console.error("❌ Error parsing WebSocket message:", error);
-            }
-        };
-    }
-};
-
-onMounted(() => {
-    initChart();
-    startWebSocket();
-});
-
-onUnmounted(() => {
-    if (socket) {
-        socket.disconnect();
-    }
-});
- -->

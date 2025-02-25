@@ -50,7 +50,8 @@
   
   <script setup>
   import { ref, onMounted } from "vue";
-  import { Auth_Process, getAuthUrl } from "@/utils/requestHelper"; // Sesuaikan path import jika perlu
+  import { Auth_Process } from "@/utils/requestHelper"; // Sesuaikan path import jika perlu
+  import { BASE_AUTH_URL} from "@/configs/config"
   
   const user = ref({
     full_name: "Guest",
@@ -101,7 +102,7 @@
       return;
     }
   
-    const baseUrl = getAuthUrl();
+    const baseUrl = BASE_AUTH_URL;
     const operation = "logout";
     const params = {
       session_id: sessionId,

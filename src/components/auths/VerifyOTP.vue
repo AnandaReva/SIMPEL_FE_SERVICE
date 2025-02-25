@@ -43,7 +43,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import { getAuthUrl, Auth_Process } from "@/utils/requestHelper";
+import { Auth_Process } from "@/utils/requestHelper";
+import { BASE_AUTH_URL } from "@/configs/config"
 import { GenerateHMAC } from "@/libs/crypto";
 
 const router = useRouter();
@@ -148,7 +149,7 @@ const verifyOTP = async (otpSignatureParam) => {
 
 
 
-    const baseUrl = getAuthUrl();
+    const baseUrl = BASE_AUTH_URL;
     const operation = "register/verify-otp";
 
     const params = { otp_signature: otpSignatureParam };
@@ -162,10 +163,17 @@ const verifyOTP = async (otpSignatureParam) => {
         if (!response_be || response_be.status !== "success") {
             console.error("❌ VERIFIKASI OTP GAGAL:", response_be?.error_message || "Unknown error");
 
+            const popUpMessage = "";
+
+            if (response_be?.status === "401") {
+                popUpMessage = "Kode OTP tidak valid";
+            } else {
+                popUpMessage = response_be?.error_message || "Verifikasi OTP gagal";
+            }
             popUpProps.value = {
-                status: response_be?.status || "failed",
-                errorMessage: response_be?.error_message || "Verifikasi OTP gagal",
-                errorCode: response_be?.error_code || "Unknown",
+                status: response_be?.status || "Gagal",
+                errorMessage: popUpMessage,
+                errorCode: "", // jangan tampilan error code
             };
 
             popupVisible.value = true;
@@ -197,13 +205,12 @@ onMounted(() => {
         remainingTime.value = expireTstamp.value - now;
 
         if (remainingTime.value <= 0) {
-            // remainingTime.value = 0;
-            // clearInterval(countdownInterval);
-            // console.log("�� OTP sudah kedaluwarsa!");
-            // sessionStorage.removeItem("otp_data");
-            // sessionStorage.removeItem("otp_expire_tstamp");
+            remainingTime.value = 0;
+            clearInterval(countdownInterval);
+            console.log("�� OTP sudah kedaluwarsa!");
+            sessionStorage.clear();
 
-            // router.push({ name: "login" });
+            router.push({ name: "login" });
         }
     }, 1000);
 });

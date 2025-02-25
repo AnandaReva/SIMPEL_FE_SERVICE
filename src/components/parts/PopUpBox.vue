@@ -31,7 +31,7 @@ const properties = {
 };
 
 
-console.log("properties from parent: " , properties);
+//console.log("properties from parent: " , properties);
 
 // Props dari parent
 const props = defineProps({

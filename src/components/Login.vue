@@ -76,7 +76,7 @@
 
         <v-card-actions class="justify-center">
           <div class="h-auto w-50">
-            <v-btn type="button" block class="mt-0 text-caption" size="small" elevation="0"
+            <v-btn  @click="toResetPassword" type="button" block class="mt-0 text-caption" size="small" elevation="0"
               style="background-color: #F3E5F5; color: black;">
               Lupa Password
             </v-btn>
@@ -105,7 +105,10 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 
 import { ref, computed, watch } from "vue";
-import { Auth_Process, getAuthUrl } from "@/utils/requestHelper";
+import { Auth_Process } from "@/utils/requestHelper";
+import { BASE_AUTH_URL , PBKDF2IterationTIme} from "@/configs/config"; 
+
+
 import { RandomStringGenerator } from "@/utils/utils";
 import { GeneratePBKDF2, GenerateHMAC } from "@/libs/crypto";
 
@@ -175,9 +178,7 @@ const passwordRules = [
 
 const emailRules = [
   (v) => !!v || "Email harus diisi",
-  (v) =>
-  emailRegrex.value.test(v) ||
-    "Format email tidak valid",
+  (v) =>emailRegrex.value.test(v) ||"Format email tidak valid",
 ];
 
 const fullNameRules = [
@@ -197,7 +198,7 @@ const isDisabledLogin = computed(
     username.value > 30 ||
     !password.value ||
     password.value.length < 8 ||
-    password.value.length > 30
+    password.value.length > 30 
 );
 
 // Fungsi untuk toggle visibilitas password
@@ -206,7 +207,7 @@ const togglePasswordVisibility = () => {
 };
 
 const submitLogin = async () => {
-  console.log("isLoading:", isLoading.value);
+ // console.log("isLoading:", isLoading.value);
   console.log("🔹 Logging in with:", username.value, password.value);
 
   // Generate half_nonce
@@ -251,7 +252,7 @@ const submitLogin = async () => {
 
 
 const login = async (usernameParam, passwordParam, halfNonceParam) => {
-  const baseUrl = getAuthUrl();
+  const baseUrl = BASE_AUTH_URL;
   const operation = "login";
   const params = {
     username: usernameParam,
@@ -297,7 +298,7 @@ const calculateToken = async (fullNonce, saltParam) => {
     password.value,
     saltParam,
     32,
-    5000
+    PBKDF2IterationTIme
   );
 
   if (error) {
@@ -324,7 +325,7 @@ const calculateToken = async (fullNonce, saltParam) => {
 };
 
 const verifyToken = async () => {
-  const baseUrl = getAuthUrl();
+  const baseUrl = BASE_AUTH_URL;
   const operation = "verify-token";
   const params = { token: token.value };
 
@@ -433,7 +434,7 @@ const register = async (
   emailParam,
   fullNameParam
 ) => {
-  const baseUrl = getAuthUrl();
+  const baseUrl = BASE_AUTH_URL;
   const operation = "register";
   const params = {
     username: usernameParam,
@@ -486,7 +487,14 @@ const register = async (
   console.log("otp_expire_tstamp:", sessionStorage.getItem("otp_expire_tstamp"));
   router.push({ name: "verify-otp" });
 
-  return;
+  return;f
+};
+
+
+
+const toResetPassword = () => {
+  localStorage.clear();
+  router.push({ name: "reset-password" });
 };
 
 

@@ -1,6 +1,7 @@
 // src/utils/requestHelper.js
 
 import axios from "axios";
+import { HmacSHA256 } from "crypto-js";
 import { BASE_AUTH_URL } from "@/configs/config";
 import { BASE_API_URL } from "@/configs/config";
 
@@ -8,13 +9,13 @@ import { BASE_API_URL } from "@/configs/config";
  * Mengembalikan base URL otentikasi.
  * @returns {string} - URL otentikasi.
  */
-export function getAuthUrl() {
-  return BASE_AUTH_URL;
-}
+// export function getAuthUrl() {
+//   return BASE_AUTH_URL;
+// }
 
-export function getApiUrl() {
-  return BASE_API_URL;
-}
+// export function getApiUrl() {
+//   return BASE_API_URL;
+// }
 
 /**
  * Template request handler untuk komunikasi dengan backend.
@@ -92,7 +93,6 @@ export async function Auth_Process(baseUrl, process_name, params = {}) {
 
 ////////////////////////////////////////////////////////////////
 
-import { HmacSHA256 } from "crypto-js";
 /* 
     send request  format
     header: session_id : localStorage.get('session_id')
@@ -104,9 +104,6 @@ import { HmacSHA256 } from "crypto-js";
     get response fromat:
 
     hmac-sha256
-
-
-
 
 
     body exp : 
@@ -198,6 +195,8 @@ export async function Process(apiUrl, process_name, params = {}) {
       localStorage.removeItem("session_id");
       localStorage.removeItem("session_hash");
       localStorage.removeItem("user_data");
+      sessionStorage.removeItem("otp_data");
+      sessionStorage.removeItem("otp_expire_tstamp");
 
       router.push({ name: "login" });
     }

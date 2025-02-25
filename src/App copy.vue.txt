@@ -19,21 +19,10 @@ import AppFooter from './components/parts/AppFooter.vue';
 const showHeaderFooter = ref(true);
 const route = useRoute();
 
-const checkLocalStorage = () => {
-  const userData = localStorage.getItem('user_data');
-  const sessionId = localStorage.getItem('session_id');
-  const sessionHash = localStorage.getItem('session_hash');
-
-  return userData && sessionId && sessionHash;
-};
-
-
 // Watch perubahan route
 watch(route, (newRoute) => {
   console.log("Current route:", newRoute.path);
-  //showHeaderFooter.value = newRoute.name !== 'login' && newRoute.name !== 'verify-otp' && newRoute.name !== 'reset-password'; 
-
-  showHeaderFooter.value = newRoute.name !== 'login' && newRoute.name !== 'verify-otp' &&newRoute.name !== 'reset-password'  && checkLocalStorage()
+  showHeaderFooter.value = newRoute.name !== 'login' && newRoute.name !== 'verify-otp' && newRoute.name !== 'reset-password'; // Hanya sembunyikan di halaman login dan verify-otp
 }, { immediate: true }); // immediate: true agar dijalankan saat pertama kali komponen dimuat
 
 </script>
