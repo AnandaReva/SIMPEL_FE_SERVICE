@@ -1,4 +1,5 @@
 import CryptoJS from "crypto-js";
+import { ca } from "vuetify/locale";
 
 /**
  * Generate HMAC-SHA256
@@ -7,7 +8,7 @@ import CryptoJS from "crypto-js";
  * @returns {[string, string]} - [hashed value, error message]
  */
 export function GenerateHMAC(text, key) {
-    
+
     if (!text || !key) {
         return ["", "Missing Text or Key"];
     }
@@ -28,7 +29,7 @@ export function GenerateHMAC(text, key) {
  * @param {number} iterations - Iteration count
  * @returns {[string, string]} - [hashed value, error message]
  */
-export function GeneratePBKDF2(text, salt, length, iterations ) {
+export function GeneratePBKDF2(text, salt, length, iterations) {
     if (!text || !salt || !length || !iterations) {
         return ["", "Missing text or salt"];
     }
@@ -44,4 +45,26 @@ export function GeneratePBKDF2(text, salt, length, iterations ) {
     } catch (err) {
         return ["", err.message];
     }
+}
+
+
+export function XorDecode(input, key) {
+    let decoded = '';
+
+    if (!input || !key) {
+
+        return ["", "Missing input or key"];;
+
+    }
+    try {
+        for (let i = 0; i < input.length; i++) {
+            decoded += String.fromCharCode(input.charCodeAt(i) ^ key.charCodeAt(0));
+        }
+        return [decoded, ""];
+    } catch (err) {
+        return ["", err.message];
+    }
+
+
+
 }
