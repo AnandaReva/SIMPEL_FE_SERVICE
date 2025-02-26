@@ -77,4 +77,9 @@ const close = () => {
     font-size: 100px;
     margin: 10px 20px;
 }
+
+
+
+
+
 </style>
