@@ -1,17 +1,67 @@
 <template>
   <v-card class="pa-4 elevation-2 fill-height">
     <v-row>
-      <!-- LEFT: Active Devices -->
+      <!-- LEFT:  Devices -->
       <v-col cols="12" md="4">
         <p class="text-subtitle-5 font-weight-bold mb-3">
-          Daftar Perangkat Aktif
+          Daftar Perangkat
         </p>
-        <v-card class="pa-3" color="blue-lighten-4" elevation="1">
-          <v-infinite-scroll :key="scrollKeyActiveDevices" id="activeDevicesBox" ref="activeDevicesBox" height="400"
-            side="end" @load="loadDevices" class="overflow-auto">
-            <!-- Active Device Panel -->
-            <ActiveDevicesList :activeDevices="activeDevices" :currActiveDeviceId="currActiveDeviceId"
-              :totalActiveDevices="totalActiveDevices" @select-activeDevice="handleDeviceSelection" />
+        <v-card class="pa-3 fill-height" color="blue-lighten-4" elevation="1">
+          <v-infinite-scroll :key="scrollKeyDevices" id="DevicesBox" ref="DevicesBox" height="550" side="end"
+            @load="loadDevices" class="overflow-auto">
+
+
+            <!-- filter -->
+
+            <v-row class="px-2" style="max-height: 70px;">
+              <!-- Pilihan Pengurutan -->
+              <!-- Filter Status -->
+              <v-col cols="6">
+                <v-select v-model="tempSelectedStatus" :items="[
+                  { title: 'Semua', value: '' },
+                  { title: 'Aktif', value: 1 },
+                  { title: 'Tidak Aktif', value: 0 }
+                ]" density="compact" label="Status" variant="outlined"></v-select>
+              </v-col>
+
+              <!-- Pilihan Pengurutan -->
+              <v-col cols="6" class="pr-2">
+                <v-select v-model="tempSelectedSort" :items="[
+                  { title: 'Waktu terakhir', value: 'last_tstamp' },
+                  { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
+                  { title: 'Nama perangkat', value: 'name' }
+                ]" density="compact" label="Pengurutan" variant="outlined"></v-select>
+              </v-col>
+
+
+            </v-row>
+
+
+
+
+
+
+            <!-- Serach Device -->
+            <v-col class="d-flex justify-center align-center fill-width pa-0 " style="max-height: 70px;">
+              <!-- Field untuk input pencarian -->
+              <v-text-field v-model="filter" label="Search" placeholder="Masukkan Nama device" variant="solo" clearable
+                class="px-2" style="max-height: 50px;" maxlength="50"
+                :rules="[v => v.length <= 30 || 'Maksimal 30 karakter']"
+                @input="filter = filter.slice(0, 30)"></v-text-field>
+
+
+              <!-- Tombol Search -->
+              <v-btn color="primary" @click="searchDevices"
+                class="search-button rounded-circle d-flex justify-center align-center"
+                style="max-height: 50px; width: 50px; min-width: 50px;">
+                <v-icon>mdi-magnify</v-icon>
+              </v-btn>
+            </v-col>
+
+
+            <!-- Device List Panel -->
+            <DeviceList :devices="devices" :currDeviceId="currDeviceId" :currDeviceName="currDeviceName"
+              :totalDevices="totalDevices" @select-Device="handleDeviceSelection" />
           </v-infinite-scroll>
         </v-card>
       </v-col>
@@ -23,10 +73,10 @@
           <div class="mb-2">
             <div class="d-flex justify-space-between align-center">
               <div>
-                <strong>
-                  <span v-if="currActiveDeviceId">Perangkat saat ini: {{ currActiveDeviceId }}</span>
-                  <span v-else>Tidak ada perangkat dipilih</span>
-                </strong>
+
+                <span v-if="currDeviceId">Perangkat saat ini: <strong>{{ currDeviceName }} </strong> </span>
+                <span v-else>Tidak ada perangkat dipilih</span>
+
               </div>
               <div>
                 <strong>
@@ -47,7 +97,7 @@
             <div class="text-center" align-center>
               <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
                 <p class="text-caption">
-                  {{ formatValue(currDeviceData.Energy) }}
+                  {{ formatValue(currDeviceSensorData.Energy) }}
                 </p>
               </div>
               <div class="text-caption">Energy (kWh)</div>
@@ -57,7 +107,7 @@
             <div class="text-center" align-center>
               <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
                 <p class="text-caption">
-                  {{ formatValue(currDeviceData.Voltage) }}
+                  {{ formatValue(currDeviceSensorData.Voltage) }}
                 </p>
               </div>
               <div class="text-caption">Voltage (V)</div>
@@ -68,7 +118,7 @@
             <div class="text-center">
               <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
                 <p class="text-caption">
-                  {{ formatValue(currDeviceData.Current) }}
+                  {{ formatValue(currDeviceSensorData.Current) }}
                 </p>
               </div>
               <div class="text-caption">Current (A)</div>
@@ -79,7 +129,7 @@
             <div class="text-center">
               <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
                 <p class="text-caption">
-                  {{ formatValue(currDeviceData.Frequency) }}
+                  {{ formatValue(currDeviceSensorData.Frequency) }}
                 </p>
               </div>
               <div class="text-caption">Frequency (Hz)</div>
@@ -90,7 +140,7 @@
             <div class="text-center">
               <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
                 <p class="text-caption">
-                  {{ formatValue(currDeviceData.Power_factor) }}
+                  {{ formatValue(currDeviceSensorData.Power_factor) }}
                 </p>
               </div>
               <div class="text-caption">Power Factor</div>
@@ -100,14 +150,13 @@
       </v-col>
     </v-row>
 
-    <!-- {{ currDeviceData.value.Tstamp   }} -->
+    <!-- {{ currDeviceSensorData.value.Tstamp   }} -->
 
-    <!--  {{ convertEpochToUserTimezone(currDeviceData.Tstamp)}} -->
+    <!--  {{ convertEpochToUserTimezone(currDeviceSensorData.Tstamp)}} -->
   </v-card>
 
-  <PopUpBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
-      :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
-      @close="closePopup" />
+  <PopUpBox v-if="popupVisible" class="popup-container" :st="popUpProps.st" :errorMessage="popUpProps.errorMessage"
+    :errorCode="popUpProps.errorCode" :visible="popupVisible" @close="closePopup" />
 </template>
 
 <style scoped>
@@ -134,19 +183,18 @@
   pointer-events: auto;
   /* Aktifkan interaksi */
 }
-
 </style>
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { Process } from "@/utils/requestHelper";
-import { BASE_API_URL , WS_API_URL } from "@/configs/config";
+import { BASE_API_URL, WS_API_URL } from "@/configs/config";
 
 import { createSocketConnection } from "@/utils/wsHelper";
 
 import CanvasJS, { addTheme } from "@canvasjs/charts";
 
-import ActiveDevicesList from "./monitoring/ActiveDevicesList.vue";
+import DeviceList from "./monitoring/DeviceList.vue";
 
 
 const popUpProps = ref({
@@ -160,8 +208,8 @@ const closePopup = () => {
 };
 
 // ** Deklarasi Variabel Reaktif **
-const currActiveDeviceId = ref(null); // ✅ Menambahkan deklarasi yang hilang
-const currDeviceData = ref({});
+const currDeviceId = ref(null);
+const currDeviceSensorData = ref({});
 const dataPoints = ref([]);
 const maxDataLength = ref(50);
 let chart = null;
@@ -253,7 +301,7 @@ const initChart = () => {
 
 
 const startWebSocket = async () => {
-  if (!currActiveDeviceId.value) return;
+  if (!currDeviceId.value) return;
 
   // Pastikan WebSocket lama ditutup sebelum membuka yang baru
   if (socket) {
@@ -264,9 +312,9 @@ const startWebSocket = async () => {
 
   console.log("🌐 Membuka koneksi WebSocket baru...");
 
-  const operation = "connect_user";
+  const operation = "user-connect";
   const baseUrl = WS_API_URL;
-  const params = { device_id: currActiveDeviceId.value };
+  const params = { device_id: currDeviceId.value };
 
   console.log("createSocketConnection params:", params);
 
@@ -299,8 +347,8 @@ const startWebSocket = async () => {
         console.log("📡 Data received tstamp:", message.Tstamp);
         console.log("📡 Data received Power:", message.Power);
 
-        if (message.Device_Id === currActiveDeviceId.value) {
-          currDeviceData.value = message;
+        if (message.Device_Id === currDeviceId.value) {
+          currDeviceSensorData.value = message;
           updateChart(message);
         }
       } catch (error) {
@@ -314,6 +362,7 @@ const startWebSocket = async () => {
 
 onMounted(() => {
   // initChart();
+  getDeviceList(1);
   startWebSocket();
 });
 
@@ -321,46 +370,49 @@ onUnmounted(() => {
   socket?.close();
 });
 
-watch(currActiveDeviceId, (newDeviceId) => {
+watch(currDeviceId, (newDeviceId) => {
   console.log(`🔄 Device berubah: ${newDeviceId}, reinit chart!`);
   dataPoints.value = []; // Reset data saat ganti device
   initChart();
 });
 
-/* watchEffect(() => {
-    if (currActiveDeviceId.value) {
-        console.log("🔄 Reconnecting WebSocket...");
-        startWebSocket();
-    }
-});
- */
 
-//////////////////// ACTIVE DEVICES////////////////////
 
-const activeDevices = ref([]);
+
+
+
+//////////////////// DEVICES////////////////////
+
+const selectedSort = ref("last_tstamp"); // Default: Waktu terakhir
+const selectedStatus = ref(1); // Default: Semua perangkat aktif
+
+
+const filter = ref('');
+const devices = ref([]);
 const page_size = ref(10);
-const totalPagesActiveDevices = ref(0);
-const totalActiveDevices = ref();
+const totalPagesDevices = ref(0);
+const totalDevices = ref();
+const currDeviceName = ref('')
 
-const lastFetchedPageActiveDevices = ref(0);
-//const newActiveDevice = ref()
+const lastFetchedPageDevices = ref(0);
+//const newDevice = ref()
 
-const scrollKeyActiveDevices = ref(0);
+const scrollKeyDevices = ref(0);
 
-function resetScrollActiveDevices() {
-  scrollKeyActiveDevices.value += 1;
+function resetScrollDevices() {
+  scrollKeyDevices.value += 1;
 }
 
-const isFetchingActiveDevices = ref(false); // mencegah race condition
+const isFetchingDevices = ref(false); // mencegah race condition
 
-function handleDeviceSelection(deviceId) {
-  if (deviceId == currActiveDeviceId.value) {
+function handleDeviceSelection(deviceId, deviceName) {
+  if (deviceId == currDeviceId.value) {
     console.log(`Device id: ${deviceId} already selected`);
     return;
   }
 
   // Resetkan data yang terkait dengan perangkat yang sebelumnya
-  currDeviceData.value = {};
+  currDeviceSensorData.value = {};
   dataPoints.value = [];
 
   // Reset chart dengan data kosong
@@ -370,10 +422,11 @@ function handleDeviceSelection(deviceId) {
     console.log("📈 Chart updated:", dataPoints.value.length);
   }
 
-  console.log("Selected Device ID:", deviceId);
+  console.log("Selected Device:", deviceId, deviceName);
 
   // Set device yang aktif
-  currActiveDeviceId.value = deviceId;
+  currDeviceId.value = deviceId;
+  currDeviceName.value = deviceName;
 
   // Mulai koneksi WebSocket dengan device baru
   startWebSocket();
@@ -382,13 +435,20 @@ function handleDeviceSelection(deviceId) {
 function loadDevices({ done }) {
   console.log("--- loadDevices() ---");
 
-  const fetchedPageNumber = lastFetchedPageActiveDevices.value + 1;
-  console.log("last page:", lastFetchedPageActiveDevices.value);
+  if (totalPagesDevices.value === 0) {
+    done("empty");
+    return;
+  }
+
+
+  const fetchedPageNumber = lastFetchedPageDevices.value + 1;
+  console.log("last page:", lastFetchedPageDevices.value);
   console.log("Fetched page number:", fetchedPageNumber);
 
   setTimeout(async () => {
-    await getActiveDevices(fetchedPageNumber);
-    if (fetchedPageNumber < totalPagesActiveDevices.value) {
+    await getDeviceList(fetchedPageNumber);
+
+    if (fetchedPageNumber < totalPagesDevices.value) {
       done("done");
     } else {
       done("empty");
@@ -396,45 +456,70 @@ function loadDevices({ done }) {
   }, 1000);
 }
 
-function appendActiveDevices(activeDevices, additionalDevices) {
+function appendDevices(devices, additionalDevices) {
   const deviceMap = new Map();
-  activeDevices.forEach((device) => {
+  devices.forEach((device) => {
     deviceMap.set(device.device_id, device);
   });
 
-  additionalDevices.forEach((newActiveDevice) => {
-    if (!deviceMap.has(newActiveDevice.device_id)) {
-      activeDevices.push(newActiveDevice);
-      deviceMap.set(newActiveDevice.device_id, newActiveDevice);
+  additionalDevices.forEach((newDevice) => {
+    if (!deviceMap.has(newDevice.device_id)) {
+      devices.push(newDevice);
+      deviceMap.set(newDevice.device_id, newDevice);
     }
   });
 
-  return activeDevices;
+  return devices;
+}
+const tempSelectedSort = ref(selectedSort.value);
+const tempSelectedStatus = ref(selectedStatus.value);
+
+function searchDevices() {
+  // Update nilai utama saat tombol search ditekan
+  selectedSort.value = tempSelectedSort.value;
+  selectedStatus.value = tempSelectedStatus.value;
+
+  resetScrollDevices();
+  lastFetchedPageDevices.value = 0;
+  devices.value = []; // Reset daftar perangkat sebelum pencarian baru
+  getDeviceList(1); // Fetch data dengan parameter baru
 }
 
+
+// function searchDevices() {
+//   resetScrollDevices();
+//   lastFetchedPageDevices.value = 0;
+//   devices.value = []; // Reset kontak sebelum pencarian baru
+//   getDeviceList(1); // Mulai dari halaman pertama
+// }
+
 // data akan di fecth dengan triger gulir
-async function getActiveDevices(pageNumber) {
-  if (isFetchingActiveDevices == true) {
-    console.log("Fething active devices already in progress...");
+async function getDeviceList(pageNumber) {
+  if (isFetchingDevices == true) {
+    console.log("Fething devices already in progress...");
     await new Promise((resolve) => setTimeout(resolve, 200)); // delay
   }
 
   try {
-    const operation = "get_active_devices";
-    //  const operation = "get_dummy_active_devices";
+    //rules param fields a to z
+    const operation = "get_device_list";
+    //  const operation = "get_dummy__devices";
     const baseUrl = BASE_API_URL;
     const params = {
+      filter: filter.value,
+      order_by: selectedSort.value,
       page_number: pageNumber,
       page_size: page_size.value,
+      st: selectedStatus.value
     };
 
-    console.log("getActiveDevices params:", params);
+    console.log("getDeviceList params:", params);
     const response_be = await Process(baseUrl, operation, params);
 
     //  console.log("login response_be:", response_be);
 
     if (response_be.status != "success") {
-      console.error("getActiveDevices FAILED!!:", response_be.error_message);
+      console.error("getDeviceList FAILED!!:", response_be.error_message);
 
       let popUpMessage = "Gagal Mendapatkan Data Perangkat Aktif";
 
@@ -451,32 +536,35 @@ async function getActiveDevices(pageNumber) {
       let responseBE = response_be.payload;
 
       if (responseBE.devices) {
-        console.log("getActiveDevices SUCCESS!!:");
+        console.log("getDeviceList SUCCESS!!:");
 
-        activeDevices.value = appendActiveDevices(
-          activeDevices.value,
+        devices.value = appendDevices(
+          devices.value,
           responseBE.devices
         );
-        totalActiveDevices.value = responseBE.total_data;
+        totalDevices.value = responseBE.total_data;
 
-        totalPagesActiveDevices.value = Math.ceil(
+        totalPagesDevices.value = Math.ceil(
           responseBE.total_data / Number(page_size.value)
         );
 
-        console.log("totalPagesActiveDevices: ", totalPagesActiveDevices.value);
-        console.log("totalActiveDevices: ", totalActiveDevices.value);
+        console.log("totalPagesDevices: ", totalPagesDevices.value);
+        console.log("totalDevices: ", totalDevices.value);
 
-        lastFetchedPageActiveDevices.value = pageNumber;
+        lastFetchedPageDevices.value = pageNumber;
       } else {
-        console.log("Active device list is empty");
+        console.log(" device list is empty");
       }
     } else {
-      console.error("get_active_devices FAILED!!:", response_be.error_message);
+      console.error("get__devices FAILED!!:", response_be.error_message);
     }
   } catch (err) {
-    console.log("ERROR WHILE GETTING ACTIVE DEVICES: " + err);
+    console.log("ERROR WHILE GETTING  DEVICES: " + err);
   }
 }
+
+
+
 
 /* 
 

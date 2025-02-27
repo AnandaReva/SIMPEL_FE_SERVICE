@@ -1,6 +1,9 @@
 import CryptoJS from "crypto-js";
 
 
+
+
+
 function generateToken(device_id) {
     const session_id = localStorage.getItem("session_id") || "";
     const session_hash = localStorage.getItem("session_hash") || "";
@@ -12,7 +15,6 @@ function generateToken(device_id) {
 
     const message = session_id + device_id;
     const token = CryptoJS.HmacSHA256(message, session_hash).toString();
-
     return token;
 }
 
@@ -28,7 +30,7 @@ export async function createSocketConnection(base_url, process_name, params = {}
         const token = generateToken(device_id);
         if (!token) throw new Error("Invalid token. WebSocket connection aborted.");
 
-        const socketUrl = `${base_url}/${process_name}?token=${encodeURIComponent(token)}&session_id=${encodeURIComponent(session_id)}&device_id=${encodeURIComponent(device_id)}`;
+        const socketUrl = `${base_url}${process_name}?token=${encodeURIComponent(token)}&session_id=${encodeURIComponent(session_id)}&device_id=${encodeURIComponent(device_id)}`;
         const socket = new WebSocket(socketUrl);
 
         socket.onopen = () => {
