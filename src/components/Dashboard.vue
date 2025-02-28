@@ -7,8 +7,16 @@
           Daftar Perangkat
         </p>
         <v-card class="pa-3 fill-height" color="blue-lighten-4" elevation="1">
-          <v-infinite-scroll :key="scrollKeyDevices" id="DevicesBox" ref="DevicesBox" height="550" side="end"
-            @load="loadDevices" class="overflow-auto">
+                     <!-- hanya system master atau admin -->
+                     <v-row v-if="user_role === 'system admin' || user_role === 'system master'" class="px-2"
+              style="max-height: 70px;">
+              <span>Tambah Perangkat</span>
+              <v-btn @click="toAddDevice">
+                <v-icon>mdi-plus</v-icon>
+              </v-btn>
+            </v-row>
+
+
 
 
             <!-- filter -->
@@ -17,7 +25,7 @@
               <!-- Pilihan Pengurutan -->
               <!-- Filter Status -->
               <v-col cols="6">
-                <v-select v-model="tempSelectedStatus" :items="[
+                <v-select v-model="selectedStatus" :items="[
                   { title: 'Semua', value: '' },
                   { title: 'Aktif', value: 1 },
                   { title: 'Tidak Aktif', value: 0 }
@@ -26,20 +34,14 @@
 
               <!-- Pilihan Pengurutan -->
               <v-col cols="6" class="pr-2">
-                <v-select v-model="tempSelectedSort" :items="[
+                <v-select v-model="selectedSort" :items="[
                   { title: 'Waktu terakhir', value: 'last_tstamp' },
                   { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
                   { title: 'Nama perangkat', value: 'name' }
                 ]" density="compact" label="Pengurutan" variant="outlined"></v-select>
               </v-col>
 
-
             </v-row>
-
-
-
-
-
 
             <!-- Serach Device -->
             <v-col class="d-flex justify-center align-center fill-width pa-0 " style="max-height: 70px;">
@@ -57,6 +59,14 @@
                 <v-icon>mdi-magnify</v-icon>
               </v-btn>
             </v-col>
+         
+         
+         
+          <v-infinite-scroll :key="scrollKeyDevices" id="DevicesBox" ref="DevicesBox" height="550" side="end"
+            @load="loadDevices" class="overflow-auto">
+            <!-- Manajemen Perangkat -->
+
+
 
 
             <!-- Device List Panel -->
@@ -155,8 +165,10 @@
     <!--  {{ convertEpochToUserTimezone(currDeviceSensorData.Tstamp)}} -->
   </v-card>
 
-  <PopUpBox v-if="popupVisible" class="popup-container" :st="popUpProps.st" :errorMessage="popUpProps.errorMessage"
-    :errorCode="popUpProps.errorCode" :visible="popupVisible" @close="closePopup" />
+
+  <PopUpBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
+    :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
+    @close="closePopup" />
 </template>
 
 <style scoped>
@@ -169,19 +181,6 @@
 .chart-container {
   height: 350px;
   width: 100%;
-}
-
-/* Pastikan PopUpBox tetap bisa diinteraksi */
-.popup-container {
-  position: fixed;
-  /* Tetap di atas layar */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1100;
-  /* Lebih tinggi dari overlay */
-  pointer-events: auto;
-  /* Aktifkan interaksi */
 }
 </style>
 
@@ -196,16 +195,37 @@ import CanvasJS, { addTheme } from "@canvasjs/charts";
 
 import DeviceList from "./monitoring/DeviceList.vue";
 
-
 const popUpProps = ref({
   status: "",
   errorMessage: "",
   errorCode: "",
 });
+
 const popupVisible = ref(false);
 const closePopup = () => {
   popupVisible.value = false;
 };
+
+//////////////////  //////////////////
+
+const user_role = ref("");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////////  MONITORING VUE COMPONENT //////////////////
 
 // ** Deklarasi Variabel Reaktif **
 const currDeviceId = ref(null);
@@ -215,13 +235,13 @@ const maxDataLength = ref(50);
 let chart = null;
 let socket = null;
 
-const deviceMetrics = {
-  Energy: "Energy (kWh)",
-  Voltage: "Voltage (V)",
-  Current: "Current (A)",
-  Frequency: "Frequency (Hz)",
-  Power_factor: "Power Factor",
-};
+// const deviceMetrics = {
+//   Energy: "Energy (kWh)",
+//   Voltage: "Voltage (V)",
+//   Current: "Current (A)",
+//   Frequency: "Frequency (Hz)",
+//   Power_factor: "Power Factor",
+// };
 
 const epochMs = 1740107571694;
 const date = new Date(epochMs);
@@ -323,6 +343,14 @@ const startWebSocket = async () => {
 
     if (result?.error) {
       console.error("⚠️ WebSocket gagal terhubung:", result.error);
+
+      let popUpMessage = "Gagal terhubung ke perangkat ";
+
+      popUpProps.value = {
+        status: "error",
+        errorMessage: popUpMessage,
+        errorCode: "",
+      };
       return;
     }
 
@@ -337,7 +365,19 @@ const startWebSocket = async () => {
     };
 
     socket.onerror = (err) => console.error("⚠️ WebSocket error:", err);
-    socket.onclose = () => console.warn("❌ WebSocket disconnected.");
+    socket.onclose = () => {
+      console.warn("❌ WebSocket disconnected.")
+
+      let popUpMessage = "Koneksi dengan perangkat terputus.";
+
+      popUpProps.value = {
+        status: "error",
+        errorMessage: popUpMessage,
+        errorCode: "",
+      };
+
+
+    }
 
     socket.onmessage = (event) => {
       try {
@@ -353,17 +393,35 @@ const startWebSocket = async () => {
         }
       } catch (error) {
         console.error("❌ Error parsing WebSocket message:", error);
+
       }
     };
   } catch (error) {
     console.error("❌ Gagal membuat koneksi WebSocket:", error);
+    let popUpMessage = "Gagal terhubung ke perangkat ";
+    popUpProps.value = {
+      status: "error",
+      errorMessage: popUpMessage,
+      errorCode: "",
+    };
   }
 };
 
 onMounted(() => {
-  // initChart();
-  getDeviceList(1);
-  startWebSocket();
+
+
+  // get user role
+  const user_data = JSON.parse(localStorage.getItem('user_data'));
+  //  console.log('user_data', user_data);
+  user_role.value = user_data?.role;
+  console.log('user_role', user_role.value);
+
+
+
+  searchDevices();
+
+
+  // startWebSocket();
 });
 
 onUnmounted(() => {
@@ -375,6 +433,9 @@ watch(currDeviceId, (newDeviceId) => {
   dataPoints.value = []; // Reset data saat ganti device
   initChart();
 });
+
+
+
 
 
 
@@ -393,6 +454,19 @@ const page_size = ref(10);
 const totalPagesDevices = ref(0);
 const totalDevices = ref();
 const currDeviceName = ref('')
+
+
+
+watch(selectedSort, (newSort) => {
+  console.log(`��� Sorting berubah: ${newSort}`);
+  searchDevices();
+});
+
+watch(selectedStatus, (newStatus) => {
+  console.log(`��� Status perangkat berubah: ${newStatus}`);
+  searchDevices();
+});
+
 
 const lastFetchedPageDevices = ref(0);
 //const newDevice = ref()
@@ -486,15 +560,61 @@ function searchDevices() {
 }
 
 
-// function searchDevices() {
-//   resetScrollDevices();
-//   lastFetchedPageDevices.value = 0;
-//   devices.value = []; // Reset kontak sebelum pencarian baru
-//   getDeviceList(1); // Mulai dari halaman pertama
-// }
+async function getDeviceList(pageNumber) {
+  if (isFetchingDevices) {
+    console.log("Fetching devices already in progress...");
+    await new Promise((resolve) => setTimeout(resolve, 200)); // delay
+  }
+
+  try {
+    const operation = "get_device_list";
+    const baseUrl = BASE_API_URL;
+    const params = {
+      filter: filter.value,
+      order_by: selectedSort.value,
+      page_number: pageNumber,
+      page_size: page_size.value,
+      st: selectedStatus.value,
+    };
+
+    console.log("getDeviceList params:", params);
+    const response_be = await Process(baseUrl, operation, params);
+
+    if (response_be.status !== "success") {
+      console.error("getDeviceList FAILED!!:", response_be.error_message);
+      let popUpMessage = "Gagal Mendapatkan Data Perangkat Aktif";
+
+
+      popUpProps.value = {
+        status: "error",
+        errorMessage: popUpMessage,
+        errorCode: response_be.error_code,
+      };
+      popupVisible.value = true;
+      return;
+    }
+
+    const responseBE = response_be.payload;
+    if (!responseBE.devices) {
+      console.log("Device list is empty");
+      return;
+    }
+
+    console.log("getDeviceList SUCCESS!!");
+    devices.value = appendDevices(devices.value, responseBE.devices);
+    totalDevices.value = responseBE.total_data;
+    totalPagesDevices.value = Math.ceil(responseBE.total_data / Number(page_size.value));
+    lastFetchedPageDevices.value = pageNumber;
+
+    console.log("totalPagesDevices: ", totalPagesDevices.value);
+    console.log("totalDevices: ", totalDevices.value);
+  } catch (err) {
+    console.error("ERROR WHILE GETTING DEVICES:", err);
+  }
+}
 
 // data akan di fecth dengan triger gulir
-async function getDeviceList(pageNumber) {
+/* async function getDeviceList(pageNumber) {
   if (isFetchingDevices == true) {
     console.log("Fething devices already in progress...");
     await new Promise((resolve) => setTimeout(resolve, 200)); // delay
@@ -557,12 +677,25 @@ async function getDeviceList(pageNumber) {
       }
     } else {
       console.error("get__devices FAILED!!:", response_be.error_message);
+
+
+      let popUpMessage = "Gagal Mendapatkan Data Perangkat Aktif";
+      popUpProps.value = {
+        status: response_be.status,
+        errorMessage: popUpMessage,
+        errorCode: response_be.error_code,
+      };
+      popupVisible.value = true;
+
+
+
+
     }
   } catch (err) {
     console.log("ERROR WHILE GETTING  DEVICES: " + err);
   }
 }
-
+ */
 
 
 

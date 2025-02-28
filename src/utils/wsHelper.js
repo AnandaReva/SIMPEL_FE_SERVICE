@@ -19,7 +19,7 @@ function generateToken(device_id) {
 }
 
 
-export async function createSocketConnection(base_url, process_name, params = {}) {
+            export async function createSocketConnection(base_url, process_name, params = {}) {
     try {
         const session_id = localStorage.getItem("session_id") || "";
         if (!session_id) throw new Error("Missing session_id. WebSocket connection aborted.");

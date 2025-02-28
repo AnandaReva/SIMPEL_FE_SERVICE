@@ -151,6 +151,7 @@ const popUpProps = ref({
   errorCode: "",
 });
 
+
 const isLoading = ref(false);
 
 watch(isLoading, (newValue) => {
@@ -268,7 +269,7 @@ const login = async (usernameParam, passwordParam, halfNonceParam) => {
   if (response_be.status != "success") {
     console.error("LOGIN FAILED!!:", response_be.error_message); //////////
     popUpProps.value = {
-      status: response_be.status,
+      status: "error",
       errorMessage: response_be.error_message,
       errorCode: response_be.error_code,
     };
@@ -337,7 +338,7 @@ const verifyToken = async () => {
   if (response_be.status != "success") {
     console.error("VERIFY TOKEN FAILED!! :", response_be.error_message);
     popUpProps.value = {
-      status: response_be.status,
+      status: "error",
       errorMessage: response_be.error_message,
       errorCode: response_be.error_code,
     };
@@ -451,7 +452,7 @@ const register = async (
   if (response_be.status != "success") {
     console.error("REGISTER FAILED!!:", response_be.error_message); //////////
     popUpProps.value = {
-      status: response_be.status,
+      status: "error",
       errorMessage: response_be.error_message,
       errorCode: response_be.error_code,
     };

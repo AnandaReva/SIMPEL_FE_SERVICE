@@ -3,17 +3,23 @@
 <template>
     <div v-if="visible" class="popup-overlay">
         <v-card class="popup-card">
-            <v-card-title class="text-h5 font-weight-bold text-center">  {{ props.status.charAt(0).toUpperCase() + props.status.slice(1) }}</v-card-title>
-            
-            <!-- <v-icon :name="properties[props.status]?.[1]" class="status-icon"></v-icon> -->
+            <v-card-title class="text-h5 font-weight-bold text-center">
+                {{ props.status ? props.status.charAt(0).toUpperCase() + props.status.slice(1) : "-" }}
+            </v-card-title>
 
 
-            <v-icon color="properties.status" class="popUp-icon .w-50"  >{{ properties[props.status]?.[1] }}</v-icon>
 
 
-            
 
-            <p v-if="props.status === 'error'" class="text-subtitle">{{ props.errorCode }}</p>
+            <v-icon color="properties.status" class="popUp-icon .w-50">
+                {{ properties[props.status]?.[1] }}
+            </v-icon>
+
+
+
+
+
+            <p class="text-subtitle"> <strong>{{ props.errorCode }}</strong> </p>
             <p class="text-body">{{ props.errorMessage }}</p>
 
             <v-btn @click="close" color="primary" class="mt-4">Close</v-btn>
@@ -23,9 +29,10 @@
 
 <script setup>
 import { ref } from 'vue';
+import { stringifyQuery } from 'vue-router';
 
 const properties = {
-    success: [ 'primary', 'mdi-check-circle'],
+    success: ['primary', 'mdi-check-circle'],
     error: ['error', 'mdi-alert-circle'],
     info: ['info', 'mdi-information']
 };
@@ -40,6 +47,18 @@ const props = defineProps({
     errorCode: String,
     visible: Boolean
 });
+
+
+
+
+console.log("Status received:", stringifyQuery(props.status));
+console.log("Error message:", props.errorMessage);
+console.log("Error code:", props.errorCode);
+console.log("Icon class:", properties[props.status]?.[1]);
+
+
+console.log("props received:", props);
+
 
 const emit = defineEmits(['close']);
 
@@ -77,9 +96,4 @@ const close = () => {
     font-size: 100px;
     margin: 10px 20px;
 }
-
-
-
-
-
 </style>
