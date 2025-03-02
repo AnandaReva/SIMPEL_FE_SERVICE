@@ -2,13 +2,13 @@
 
 
 <template>
-<v-card class="pa-4 elevation-2 fill-height" style="min-height: 100px;">
+  <v-card class="pa-4 elevation-2 fill-height" style="min-height: 100px;">
 
     <v-row>
 
 
 
-  
+
       <!-- LEFT:  Devices -->
       <v-col cols="12" md="4">
         <p class="text-subtitle-5 font-weight-bold mb-3">
@@ -39,20 +39,33 @@
               <!-- Pilihan Pengurutan -->
               <!-- Filter Status -->
               <v-col cols="6">
+                <!-- <v-select v-model="selectedStatus" :items="[
+                  { title: 'Semua', value: '' },
+                  { title: 'Aktif', value: 1 },
+                  { title: 'Tidak Aktif', value: 0 }
+                ]" density="compact" label="Status" variant="outlined"></v-select> -->
                 <v-select v-model="selectedStatus" :items="[
                   { title: 'Semua', value: '' },
                   { title: 'Aktif', value: 1 },
                   { title: 'Tidak Aktif', value: 0 }
-                ]" density="compact" label="Status" variant="outlined"></v-select>
+                ]" density="compact" label="Status" variant="outlined"
+                  @update:modelValue="(val) => console.log('Selected Status:', val)"></v-select>
+
               </v-col>
 
               <!-- Pilihan Pengurutan -->
               <v-col cols="6" class="pr-2">
-                <v-select v-model="selectedSort" :items="[
+                <!-- <v-select v-model="selectedSort" :items="[
                   { title: 'Waktu terakhir', value: 'last_tstamp' },
                   { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
                   { title: 'Nama perangkat', value: 'name' }
                 ]" density="compact" label="Pengurutan" variant="outlined"></v-select>
+                 --><v-select v-model="selectedSort" :items="[
+                  { title: 'Waktu terakhir', value: 'last_tstamp' },
+                  { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
+                  { title: 'Nama perangkat', value: 'name' }
+                ]" density="compact" label="Pengurutan" variant="outlined"
+                  @update:modelValue="(val) => console.log('Selected Sort:', val)"></v-select>
               </v-col>
             </v-row>
 
@@ -86,7 +99,7 @@
           <!-- DONT REMOVE COMENTS -->
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 2">
             <!-- Konten untuk state 3 (register device) -->
-            <RegisterDevice @toogle-add-device-state="toogleAddDeviceState"/>
+            <RegisterDevice @toogle-add-device-state="toogleAddDeviceState" />
           </v-container>
         </v-card>
       </v-col>
@@ -180,7 +193,7 @@
   </v-card>
 
 
-  <PopUpBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
+  <PopUpInfoBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
     :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
     @close="closePopup" />
 </template>
@@ -210,7 +223,7 @@ import CanvasJS from "@canvasjs/charts";
 
 import DeviceList from "@/components/monitoring/DeviceList.vue";
 import RegisterDevice from "@/components/device_management/RegisterDevice.vue";
-import PopUpBox from "@/components/parts/PopUpBox.vue";
+import PopUpInfoBox from "@/components/parts/PopUpInfoBox.vue";
 
 const popUpProps = ref({
   status: "",
@@ -464,6 +477,7 @@ onMounted(() => {
 
 
 
+  
   searchDevices();
 
 
@@ -591,13 +605,10 @@ function appendDevices(devices, additionalDevices) {
 
   return devices;
 }
-const tempSelectedSort = ref(selectedSort.value);
-const tempSelectedStatus = ref(selectedStatus.value);
+
 
 function searchDevices() {
-  // Update nilai utama saat tombol search ditekan
-  selectedSort.value = tempSelectedSort.value;
-  selectedStatus.value = tempSelectedStatus.value;
+
 
   resetScrollDevices();
   lastFetchedPageDevices.value = 0;
@@ -607,10 +618,12 @@ function searchDevices() {
 
 
 async function getDeviceList(pageNumber) {
-  if (isFetchingDevices) {
+  if (isFetchingDevices.value == true) {
     console.log("Fetching devices already in progress...");
-    await new Promise((resolve) => setTimeout(resolve, 200)); // delay
+    return;
   }
+
+  isFetchingDevices.value = true;
 
   try {
     const operation = "get_device_list";
@@ -656,6 +669,9 @@ async function getDeviceList(pageNumber) {
     console.log("totalDevices: ", totalDevices.value);
   } catch (err) {
     console.error("ERROR WHILE GETTING DEVICES:", err);
+  } finally {
+
+    isFetchingDevices.value = false;
   }
 }
 

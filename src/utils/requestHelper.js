@@ -66,11 +66,11 @@ export async function Auth_Process(baseUrl, process_name, params = {}) {
     return errorCode === "000"
       ? { error_code: "000", error_message: "", payload, status: "success" }
       : {
-          error_code: errorCode,
-          error_message: errorMessage,
-          payload,
-          status: "error",
-        };
+        error_code: errorCode,
+        error_message: errorMessage,
+        payload,
+        status: "error",
+      };
   } catch (error) {
     console.error("🚨 Request error:", error);
 
@@ -128,7 +128,18 @@ export async function Process(apiUrl, process_name, params = {}) {
   try {
     const fullUrl = `${apiUrl}process`;
     console.log("📡 Request ke:", fullUrl);
-    console.log("🔄 Parameters:", params);
+   // console.log("🔄 Parameters:", params);
+
+
+    // Urutkan params berdasarkan huruf a-z
+    params = Object.keys(params)
+      .sort()
+      .reduce((sortedObj, key) => {
+        sortedObj[key] = params[key];
+        return sortedObj;
+      }, {});
+
+    console.log("🔄 Parameters (sorted):", params);
 
     // Ambil session_id dan session_hash dari localStorage
     const session_id = localStorage.getItem("session_id") || "";
@@ -136,12 +147,13 @@ export async function Process(apiUrl, process_name, params = {}) {
 
     // Stringify body untuk enkripsi
     const bodyString = JSON.stringify(params);
-    console.log("HMAC message: ", bodyString);
-    console.log("HMAC key: ", session_hash);
+  //  console.log("HMAC message: ", bodyString);
+   // console.log("HMAC key: ", session_hash);
 
     // Generate HMAC-SHA256 hash
     const signature = HmacSHA256(bodyString, session_hash).toString();
 
+    console.log("HMAC signature: ", signature);
     // Konfigurasi headers
     const headers = {
       "Content-Type": "application/json",
@@ -149,7 +161,7 @@ export async function Process(apiUrl, process_name, params = {}) {
       signature: signature,
       process: process_name,
     };
-    console.log("headers: ", headers);
+  //  console.log("headers: ", headers);
 
     // Kirim request ke backend
     const { data } = await axios.post(fullUrl, params, { headers });

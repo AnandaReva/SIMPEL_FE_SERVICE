@@ -91,7 +91,7 @@
 
     </v-col>
 
-    <PopUpBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
+    <PopUpInfoBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
       :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
       @close="closePopup" />
 
@@ -99,7 +99,7 @@
 </template>
 
 <script setup>
-import PopUpBox from "@/components/parts/PopUpBox.vue";
+import PopUpInfoBox from "@/components/parts/PopUpInfoBox.vue";
 
 import { useRouter } from "vue-router";
 const router = useRouter();
@@ -557,7 +557,7 @@ const toResetPassword = () => {
 }
 
 
-/* Pastikan PopUpBox tetap bisa diinteraksi */
+/* Pastikan PopUpInfoBox tetap bisa diinteraksi */
 .popup-container {
   position: fixed;
   /* Tetap di atas layar */

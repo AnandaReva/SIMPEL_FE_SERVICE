@@ -44,8 +44,9 @@
                                 class="border ma-0 px-1">
                                 <v-row>
                                     <v-col cols="6" class="px-1">
-                                        <v-text-field v-model="container.title" label="Judul (Lokasi, Spesifikasi dll)"
-                                            outlined required :rules="[requiredIfData(container)]">
+                                        <v-text-field v-model="container.title"
+                                            label="Judul (Lokasi, Alamat IP, Spesifikasi dll)" outlined required
+                                            :rules="[requiredIfData(container)]">
                                         </v-text-field>
                                     </v-col>
 
@@ -90,7 +91,7 @@
             </v-col>
         </v-row>
 
-        <PopUpBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
+        <PopUpInfoBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
             :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
             @close="closePopup" />
     </v-col>
@@ -246,57 +247,105 @@ const requiredIfTitle = (container) => {
 };
 
 
+
 function validateDeviceData(deviceData) {
     return deviceData.filter(container => container.title.trim() && container.data.trim());
 }
+
+
+const formatDataContainers = (dataContainers) => {
+    let formattedData = {};
+    dataContainers.forEach(container => {
+        if (container.title && container.data) {
+            formattedData[container.title] = container.data;
+        }
+    });
+    return formattedData;
+};
 
 
 
 
 ///////////////////// //////////////////////
 
+
 const submitRegisterDevice = async () => {
-
     console.log("dataContainers before validate: ", dataContainers.value);
-    dataContainers.value = validateDeviceData(dataContainers.value);
 
+    // Validasi dataContainers sebelum dikirim
+    dataContainers.value = validateDeviceData(dataContainers.value);
+    const formattedData = formatDataContainers(dataContainers.value);
+
+    // Jika tidak ada device image, set base64 ke string kosong
+    if (!device_image.value) {
+        device_image_base64.value = "";
+    }
 
     console.log("Submitting register device...");
     console.log("device_name: ", device_name.value);
     console.log("password: ", password.value);
+    console.log("device_image: ", device_image.value); // Perbaikan typo
     console.log("device_image_base64: ", device_image_base64.value);
     console.log("dataContainers after validate: ", dataContainers.value);
+    console.log("formattedDataContainers: ", formattedData);
+
+    isLoading.value = true;
+
+    // Kirim data ke backend
+    const success = await registerDevice(
+        device_name.value,
+        password.value,
+        device_image_base64.value,
+        formattedData
+    );
 
 
 
-    /*   isLoading.value = true;
-      const success = await registerDevice(device_name.value, password.value, device_image_base64.value);
-      isLoading.value = false;
-  
-      if (success) {
-          device_name.value = "";
-          password.value = "";
-          device_image.value = null;
-          device_image_base64.value = "";
-          dataContainers.value = [{ title: "", data: "" }];
-      } */
+    // Jika sukses, reset form
+    if (success) {
+        device_name.value = "";
+        password.value = "";
+        device_image.value = null;
+        device_image_base64.value = "";
+        dataContainers.value = [{ title: "", data: "" }];
+
+        popUpProps.value = {
+            status: "success",
+            errorMessage: "Perangkat berhasil ditambahkan",
+            errorCode: "DEVICE_REGISTERED",
+        };
+        popupVisible.value = true; 
+    }
+
+
+    isLoading.value = false;
 };
 
-const registerDevice = async (deviceNameParam, passwordParam, imageBase64) => {
-
-
-
+const registerDevice = async (deviceNameParam, passwordParam, deviceImageBase64Param, deviceDataParam) => {
     const baseUrl = BASE_API_URL;
     const operation = "register_device";
+
+    // Buat parameter request
     const params = {
         name: deviceNameParam,
         password: passwordParam,
-        image: imageBase64, // Kirim Base64 ke backend
-        data: dataContainers.value.map((container) => ({ title: container.title, data: container.data })), // Kirim data ke backend
     };
+
+    // Hanya tambahkan attachment jika ada
+    if (deviceImageBase64Param) {
+        params.attachment = deviceImageBase64Param;
+    }
+
+    // Hanya tambahkan data jika tidak kosong
+    if (deviceDataParam && Object.keys(deviceDataParam).length > 0) {
+        params.data = deviceDataParam;
+    }
+
+    console.log("Final params:", params);
 
     const response_be = await Process(baseUrl, operation, params);
 
+    // Jika gagal, tampilkan error popup
     if (response_be.status !== "success") {
         popUpProps.value = {
             status: "error",
@@ -306,6 +355,7 @@ const registerDevice = async (deviceNameParam, passwordParam, imageBase64) => {
         popupVisible.value = true;
         return false;
     }
+
     return true;
 };
 
@@ -318,12 +368,38 @@ const backToContactList = () => {
 
 <style scoped>
 .loading-spinner {
-    position: absolute;
+    position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    z-index: 1000;
+    /* Pastikan di atas elemen lain */
 }
 
+
+/* Disable interactions when isLoading is true */
+.disable-interactions * {
+    pointer-events: none;
+}
+
+
+/* Optional: Add an overlay to make it clear that the screen is in loading state */
+.disable-interactions {
+    position: relative;
+}
+
+.disable-interactions::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    /* Semi-transparent overlay */
+    z-index: 5;
+    /* Ensure it overlays on top of the content */
+}
 
 .scrollable-container {
     max-height: 300px;
