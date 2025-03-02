@@ -2,82 +2,95 @@
 
 
 <template>
-  <v-card class="pa-4 elevation-2 fill-height">
+<v-card class="pa-4 elevation-2 fill-height" style="min-height: 100px;">
+
     <v-row>
+
+
+
+  
       <!-- LEFT:  Devices -->
       <v-col cols="12" md="4">
         <p class="text-subtitle-5 font-weight-bold mb-3">
           Daftar Perangkat
         </p>
-        <v-card class="pa-3 fill-height" color="blue-lighten-4" elevation="1">
+        <v-card class="pa-3" color="blue-lighten-4" elevation="1">
           <!-- hanya system master atau admin -->
-          <v-row v-if="user_role === 'system admin' || user_role === 'system master'" class="px-2"
-            style="max-height: 70px;">
-            <span>Tambah Perangkat</span>
-            <v-btn @click="toAddDevice">
-              <v-icon>mdi-plus</v-icon>
-            </v-btn>
-          </v-row>
 
+          <!-- DONT REMOVE COMENTS -->
+          <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 0">
+            <!-- Konten untuk state 0 (device list) -->
+            <v-row v-if="(user_role === 'system admin' || user_role === 'system master')"
+              class=" d-flex justify-end align-center pa-0" style="max-height: 70px;">
+              <v-col cols="auto" class="d-flex align-center ">
+                <v-container class="pr-3">
+                  <span>Tambah Perangkat</span>
+                </v-container>
+                <v-btn @click="toogleAddDeviceState" color="primary"
+                  class="search-button rounded-circle d-flex justify-center align-center"
+                  style="max-height: 50px; width: 50px; min-width: 50px;">
+                  <v-icon>mdi-plus</v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
 
+            <!-- filter -->
+            <v-row class="px-2" style="max-height: 70px;">
+              <!-- Pilihan Pengurutan -->
+              <!-- Filter Status -->
+              <v-col cols="6">
+                <v-select v-model="selectedStatus" :items="[
+                  { title: 'Semua', value: '' },
+                  { title: 'Aktif', value: 1 },
+                  { title: 'Tidak Aktif', value: 0 }
+                ]" density="compact" label="Status" variant="outlined"></v-select>
+              </v-col>
 
+              <!-- Pilihan Pengurutan -->
+              <v-col cols="6" class="pr-2">
+                <v-select v-model="selectedSort" :items="[
+                  { title: 'Waktu terakhir', value: 'last_tstamp' },
+                  { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
+                  { title: 'Nama perangkat', value: 'name' }
+                ]" density="compact" label="Pengurutan" variant="outlined"></v-select>
+              </v-col>
+            </v-row>
 
-          <!-- filter -->
+            <!-- Serach Device -->
+            <v-col class="d-flex justify-center align-center fill-width pa-0 " style="max-height: 70px;">
+              <!-- Field untuk input pencarian -->
+              <v-text-field v-model="filter" label="Search" placeholder="Masukkan Nama device" variant="solo" clearable
+                class="px-2" style="max-height: 50px;" maxlength="50"
+                :rules="[v => v.length <= 30 || 'Maksimal 30 karakter']"
+                @input="filter = filter.slice(0, 30)"></v-text-field>
 
-          <v-row class="px-2" style="max-height: 70px;">
-            <!-- Pilihan Pengurutan -->
-            <!-- Filter Status -->
-            <v-col cols="6">
-              <v-select v-model="selectedStatus" :items="[
-                { title: 'Semua', value: '' },
-                { title: 'Aktif', value: 1 },
-                { title: 'Tidak Aktif', value: 0 }
-              ]" density="compact" label="Status" variant="outlined"></v-select>
+              <!-- Tombol Search -->
+              <v-btn color="primary" @click="searchDevices"
+                class="search-button rounded-circle d-flex justify-center align-center"
+                style="max-height: 50px; width: 50px; min-width: 50px;">
+                <v-icon>mdi-magnify</v-icon>
+              </v-btn>
             </v-col>
 
-            <!-- Pilihan Pengurutan -->
-            <v-col cols="6" class="pr-2">
-              <v-select v-model="selectedSort" :items="[
-                { title: 'Waktu terakhir', value: 'last_tstamp' },
-                { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
-                { title: 'Nama perangkat', value: 'name' }
-              ]" density="compact" label="Pengurutan" variant="outlined"></v-select>
+            <v-col class="px-0">
+              <!-- Manajemen Perangkat -->
+              <!-- Device List Panel -->
+              <v-infinite-scroll :key="scrollKeyDevices" id="DevicesBox" ref="DevicesBox" height="550" side="end"
+                @load="loadDevices" class="overflow-auto">
+                <DeviceList :devices="devices" :currDeviceId="currDeviceId" :currDeviceName="currDeviceName"
+                  :totalDevices="totalDevices" @select-Device="handleDeviceSelection" />
+              </v-infinite-scroll>
             </v-col>
+          </v-container>
 
-          </v-row>
-
-          <!-- Serach Device -->
-          <v-col class="d-flex justify-center align-center fill-width pa-0 " style="max-height: 70px;">
-            <!-- Field untuk input pencarian -->
-            <v-text-field v-model="filter" label="Search" placeholder="Masukkan Nama device" variant="solo" clearable
-              class="px-2" style="max-height: 50px;" maxlength="50"
-              :rules="[v => v.length <= 30 || 'Maksimal 30 karakter']"
-              @input="filter = filter.slice(0, 30)"></v-text-field>
-
-
-            <!-- Tombol Search -->
-            <v-btn color="primary" @click="searchDevices"
-              class="search-button rounded-circle d-flex justify-center align-center"
-              style="max-height: 50px; width: 50px; min-width: 50px;">
-              <v-icon>mdi-magnify</v-icon>
-            </v-btn>
-          </v-col>
-
-
-
-          <v-infinite-scroll :key="scrollKeyDevices" id="DevicesBox" ref="DevicesBox" height="550" side="end"
-            @load="loadDevices" class="overflow-auto">
-            <!-- Manajemen Perangkat -->
-
-
-
-
-            <!-- Device List Panel -->
-            <DeviceList :devices="devices" :currDeviceId="currDeviceId" :currDeviceName="currDeviceName"
-              :totalDevices="totalDevices" @select-Device="handleDeviceSelection" />
-          </v-infinite-scroll>
+          <!-- DONT REMOVE COMENTS -->
+          <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 2">
+            <!-- Konten untuk state 3 (register device) -->
+            <RegisterDevice @toogle-add-device-state="toogleAddDeviceState"/>
+          </v-container>
         </v-card>
       </v-col>
+
 
       <!-- RIGHT SIDE: Live Monitoring -->
       <v-col cols="12" md="8">
@@ -163,9 +176,7 @@
       </v-col>
     </v-row>
 
-    <!-- {{ currDeviceSensorData.value.Tstamp   }} -->
 
-    <!--  {{ convertEpochToUserTimezone(currDeviceSensorData.Tstamp)}} -->
   </v-card>
 
 
@@ -194,9 +205,12 @@ import { BASE_API_URL, WS_API_URL } from "@/configs/config";
 
 import { createSocketConnection } from "@/utils/wsHelper";
 
-import CanvasJS, { addTheme } from "@canvasjs/charts";
+import CanvasJS from "@canvasjs/charts";
+//import CanvasJS, { addTheme } from "@canvasjs/charts";
 
-import DeviceList from "./monitoring/DeviceList.vue";
+import DeviceList from "@/components/monitoring/DeviceList.vue";
+import RegisterDevice from "@/components/device_management/RegisterDevice.vue";
+import PopUpBox from "@/components/parts/PopUpBox.vue";
 
 const popUpProps = ref({
   status: "",
@@ -234,6 +248,7 @@ function toogleAddDeviceState() {
     curr_devicePage_state.value = curr_devicePage_state.value = 2;
   }
 }
+
 
 
 
