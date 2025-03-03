@@ -26,8 +26,8 @@
           </v-card-subtitle>
 
           <v-form ref="loginForm" @submit.prevent="submitLogin">
-            <v-text-field maxlength="51" v-model="username" label="Username" outlined dense prepend-inner-icon="mdi-account"
-              class="mb-4" :rules="usernameRules" required></v-text-field>
+            <v-text-field maxlength="51" v-model="user_data" label="username atau email" outlined dense
+              prepend-inner-icon="mdi-account" class="mb-4" :rules="userDataRules" required></v-text-field>
             <v-text-field v-model="password" :type="showPassword ? 'text' : 'password'" label="Password" outlined dense
               prepend-inner-icon="mdi-lock" :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
               @click:append-inner="togglePasswordVisibility" class="mb-4" :rules="passwordRules"
@@ -43,12 +43,12 @@
           </v-card-subtitle>
 
           <v-form ref="registerForm" @submit.prevent="submitRegister">
-            <v-text-field maxlength="51" v-model="username" label="Username" outlined dense prepend-inner-icon="mdi-account"
-              class="mb-4" :rules="usernameRules" required></v-text-field>
-            <v-text-field maxlength="51" v-model="full_name" label="Nama lengkap" outlined dense prepend-inner-icon="mdi-account"
-              class="mb-4" :rules="fullNameRules" required></v-text-field>
-            <v-text-field  maxlength="51" v-model="password" :type="showPassword ? 'text' : 'password'" label="Password" outlined dense
-              prepend-inner-icon="mdi-lock" :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+            <v-text-field maxlength="51" v-model="username" label="Username" outlined dense
+              prepend-inner-icon="mdi-account" class="mb-4" :rules="usernameRules" required></v-text-field>
+            <v-text-field maxlength="51" v-model="full_name" label="Nama lengkap" outlined dense
+              prepend-inner-icon="mdi-account" class="mb-4" :rules="fullNameRules" required></v-text-field>
+            <v-text-field maxlength="51" v-model="password" :type="showPassword ? 'text' : 'password'" label="Password"
+              outlined dense prepend-inner-icon="mdi-lock" :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
               @click:append-inner="togglePasswordVisibility" class="mb-4" :rules="passwordRules"
               required></v-text-field>
             <v-text-field v-model="email" label="Email" outlined dense prepend-inner-icon="mdi-email" class="mb-4"
@@ -76,7 +76,7 @@
 
         <v-card-actions class="justify-center">
           <div class="h-auto w-50">
-            <v-btn  @click="toResetPassword" type="button" block class="mt-0 text-caption" size="small" elevation="0"
+            <v-btn @click="toResetPassword" type="button" block class="mt-0 text-caption" size="small" elevation="0"
               style="background-color: #F3E5F5; color: black;">
               Lupa Password
             </v-btn>
@@ -106,7 +106,7 @@ const router = useRouter();
 
 import { ref, computed, watch } from "vue";
 import { Auth_Process } from "@/utils/requestHelper";
-import { BASE_AUTH_URL , PBKDF2IterationTIme} from "@/configs/config"; 
+import { BASE_AUTH_URL, PBKDF2IterationTIme } from "@/configs/config";
 
 
 import { RandomStringGenerator } from "@/utils/utils";
@@ -131,6 +131,7 @@ const full_name = ref("");
 const email = ref("");
 
 // login input var
+const user_data = ref("");
 const saltedPassword = ref("");
 const half_nonce = ref("");
 const full_nonce = ref("");
@@ -166,9 +167,13 @@ const usernameRegrex = ref(/^[A-Za-z0-9~!@#$%^&*()_+<>?/':=.,-]+$/);
 const usernameRules = [
   (v) => !!v || "Username harus diisi",
   (v) => v.length >= 6 || "Username minimal 6 karakter",
-  (v) => v.length <=30  || "Username maksimal 50 karakter",
+  (v) => v.length <= 30 || "Username maksimal 50 karakter",
   (v) => usernameRegrex.value.test(v) || "Username hanya boleh mengandung huruf, angka, dan simbol '~!@#$%^&*()_+<>?/':=.,-'"
 
+];
+
+const userDataRules = [
+  (v) => !!v || "Username atau email harus diisi",
 ];
 
 const passwordRules = [
@@ -179,7 +184,7 @@ const passwordRules = [
 
 const emailRules = [
   (v) => !!v || "Email harus diisi",
-  (v) =>emailRegrex.value.test(v) ||"Format email tidak valid",
+  (v) => emailRegrex.value.test(v) || "Format email tidak valid",
 ];
 
 const fullNameRules = [
@@ -194,12 +199,10 @@ const fullNameRules = [
 // Computed untuk menonaktifkan tombol submit_login jika username atau password kosong
 const isDisabledLogin = computed(
   () =>
-    !username.value ||
-    username.value < 6 ||
-    username.value > 30 ||
+    !user_data.value ||
     !password.value ||
     password.value.length < 8 ||
-    password.value.length > 30 
+    password.value.length > 30
 );
 
 // Fungsi untuk toggle visibilitas password
@@ -208,8 +211,8 @@ const togglePasswordVisibility = () => {
 };
 
 const submitLogin = async () => {
- // console.log("isLoading:", isLoading.value);
-  console.log("🔹 Logging in with:", username.value, password.value);
+  // console.log("isLoading:", isLoading.value);
+  console.log("🔹 Logging in with:", user_data.value, password.value);
 
   // Generate half_nonce
   half_nonce.value = RandomStringGenerator(8);
@@ -219,7 +222,7 @@ const submitLogin = async () => {
     isLoading.value = true;
 
     const isLoginSuccess = await login(
-      username.value,
+      user_data.value,
       password.value,
       half_nonce.value
     );
@@ -252,11 +255,11 @@ const submitLogin = async () => {
 
 
 
-const login = async (usernameParam, passwordParam, halfNonceParam) => {
+const login = async (userDataParam, passwordParam, halfNonceParam) => {
   const baseUrl = BASE_AUTH_URL;
   const operation = "login";
   const params = {
-    username: usernameParam,
+    user_data: userDataParam,
     password: passwordParam,
     half_nonce: halfNonceParam,
   };
@@ -488,7 +491,7 @@ const register = async (
   console.log("otp_expire_tstamp:", sessionStorage.getItem("otp_expire_tstamp"));
   router.push({ name: "verify-otp" });
 
-  return;f
+  return; f
 };
 
 
