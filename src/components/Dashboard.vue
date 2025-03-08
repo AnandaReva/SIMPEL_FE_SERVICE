@@ -297,27 +297,82 @@ const maxDataLength = ref(50);
 let chart = null;
 let socket = null;
 
-// const deviceMetrics = {
-//   Energy: "Energy (kWh)",
-//   Voltage: "Voltage (V)",
-//   Current: "Current (A)",
-//   Frequency: "Frequency (Hz)",
-//   Power_factor: "Power Factor",
-// };
 
-const epochMs = 1740107571694;
-const date = new Date(epochMs);
-
-console.log("UTC Time:", date.toISOString());
-console.log(
-  "Local Time:",
-  date.toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })
-);
 
 const formatValue = (value) =>
   value === undefined || value === null ? "-" : value.toFixed(2);
 
-import { computed } from "vue";
+
+
+// function convertTstampToLocal(tstamp) {
+//   if (!tstamp) return "-";
+
+//   // Format ulang agar bisa diparsing oleh Date (tambahkan 'T' di tengah)
+//   const formattedTstamp = tstamp.replace(" ", "T"); // "2025-03-08 15:51:45" -> "2025-03-08T15:51:45"
+
+//   // Konversi ke objek Date (anggap sebagai UTC)
+//   const utcDate = new Date(formattedTstamp + "Z"); // Tambahkan 'Z' agar dianggap UTC
+
+//   // Pastikan timestamp valid
+//   if (isNaN(utcDate.getTime())) {
+//     console.warn("❌ Invalid timestamp:", tstamp);
+//     return "-";
+//   }
+
+//   // Konversi ke zona waktu lokal (Asia/Jakarta UTC+7)
+//   const offset = 7 * 60 * 60 * 1000; // Offset 7 jam dalam milidetik
+//   const localDate = new Date(utcDate.getTime() + offset);
+
+//   // Format tanggal dan waktu lengkap
+//   return localDate.toLocaleString("id-ID", {
+//     hour12: false, // Format 24 jam
+//     year: "numeric",
+//     month: "2-digit",
+//     day: "2-digit",
+//     hour: "2-digit",
+//     minute: "2-digit",
+//     second: "2-digit",
+//   });
+// }
+
+
+const getLocalTimezoneOffset = () => {
+  const now = new Date();
+  return now.getTimezoneOffset() * 60 * 1000; // Konversi menit ke milidetik
+};
+
+function convertTstampToLocal(tstamp) {
+  if (!tstamp) return "-";
+
+  // Format ulang agar bisa diparsing oleh Date (tambahkan 'T' di tengah)
+  const formattedTstamp = tstamp.replace(" ", "T"); // "2025-03-08 15:51:45" -> "2025-03-08T15:51:45"
+
+  // Konversi ke objek Date (anggap sebagai UTC)
+  const utcDate = new Date(formattedTstamp + "Z"); // Tambahkan 'Z' agar dianggap UTC
+
+  // Pastikan timestamp valid
+  if (isNaN(utcDate.getTime())) {
+    console.warn("❌ Invalid timestamp:", tstamp);
+    return "-";
+  }
+
+  // Dapatkan offset zona waktu lokal
+  const localOffset = getLocalTimezoneOffset();
+
+  // Konversi ke zona waktu lokal
+  const localDate = new Date(utcDate.getTime() - localOffset);
+
+  // Format tanggal dan waktu lengkap
+  return localDate.toLocaleString("id-ID", {
+    hour12: false, // Format 24 jam
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
 
 const updateChart = (newData) => {
   console.log("updateChart(), newData:", newData);
@@ -326,10 +381,15 @@ const updateChart = (newData) => {
     return;
   }
 
-  // Konversi Tstamp (string) menjadi objek Date
-  const parsedDate = new Date(newData.Tstamp);
+  // Konversi Tstamp ke waktu lokal
+  const localDate = new Date(newData.Tstamp.replace(" ", "T") + "Z");
+  const localOffset = getLocalTimezoneOffset();
+  const localDateWithOffset = new Date(localDate.getTime() - localOffset);
 
-  const newPoint = { x: parsedDate, y: newData.Power };
+  console.log("Local tstamp:", localDateWithOffset);
+
+  // Buat titik data baru
+  const newPoint = { x: localDateWithOffset, y: newData.Power };
   dataPoints.value.push(newPoint);
 
   if (dataPoints.value.length > maxDataLength.value) {
@@ -355,13 +415,12 @@ const initChart = () => {
     theme: "dark2",
     animationEnabled: true,
     axisX: {
-      title: "Waktu (jam:mnt:dtk.milidtk)",
-      valueFormatString: "HH:mm:ss.SSS", // Format waktu dengan milidetik
+      title: "Waktu (jam:mnt:dtk)",
+      valueFormatString: "HH:mm:ss", // Format waktu tanpa milidetik
       labelFormatter: function (e) {
-        return e.value.toISOString().slice(11, 23); // Mengambil HH:mm:ss.SSS dari UTC
+        return e.value.toISOString().slice(11, 19); // Mengambil HH:mm:ss
       },
     },
-
     axisY: {
       title: "Power (W)",
     },
