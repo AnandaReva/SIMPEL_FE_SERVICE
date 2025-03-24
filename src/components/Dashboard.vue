@@ -2,11 +2,12 @@
 
 
 <template>
-  <v-card class="pa-4 elevation-2 fill-height" style="min-height: 100px;">
+  <v-card class="pa-4 elevation-2 fill-height" style="min-height: 100px;"
+    :class="{ 'disable-interactions': isLoading }">
+
+    <v-progress-circular v-if="isLoading" color="primary" indeterminate class="loading-spinner"></v-progress-circular>
 
     <v-row>
-
-
 
 
       <!-- LEFT:  Devices -->
@@ -91,7 +92,8 @@
               <v-infinite-scroll :key="scrollKeyDevices" id="DevicesBox" ref="DevicesBox" height="550" side="end"
                 @load="loadDevices" class="overflow-auto">
                 <DeviceList :devices="devices" :currDeviceId="currDeviceId" :currDeviceName="currDeviceName"
-                  :totalDevices="totalDevices" @select-Device="handleDeviceSelection" />
+                  :totalDevices="totalDevices" @select-Device="handleDeviceSelection"
+                  @view-device-detail="handleDeviceDetail" />
               </v-infinite-scroll>
             </v-col>
           </v-container>
@@ -99,8 +101,15 @@
           <!-- DONT REMOVE COMENTS -->
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 2">
             <!-- Konten untuk state 3 (register device) -->
-            <RegisterDevice @toogle-add-device-state="toogleAddDeviceState" />
+            <RegisterDevice @toogle-add-device-state="toogleAddDeviceState" @register-device="registerDevice" />
           </v-container>
+
+          <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 1">
+            <!-- Konten untuk state 1 (detail device) -->
+            <DetailDevice @toogle-detail-device-state="toogleDetailDeviceState" :deviceData="currDeviceSensorData" />
+          </v-container>
+
+
         </v-card>
       </v-col>
 
@@ -125,74 +134,93 @@
               </div>
             </div>
           </div>
-
-          <!--  <div id="chartContainer" class="chart-container"></div> -->
-
           <div ref="chartContainer" id="chartContainer" style="height: 300px; width: 100%;"></div>
 
         </v-card>
 
         <!-- Qunatity value -->
 
-        <v-row justify="space-around" class="mt-4">
-          <v-col cols="auto">
-            <div class="text-center" align-center>
-              <div class="border-xl " color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
-                <p class="text-caption">
-                  {{ formatValue(currDeviceSensorData.Energy) }}
-                </p>
-              </div>
-              <div class="text-caption">Energy (kWh)</div>
-            </div>
-          </v-col>
-          <v-col cols="auto">
-            <div class="text-center" align-center>
-              <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
-                <p class="text-caption">
-                  {{ formatValue(currDeviceSensorData.Voltage) }}
-                </p>
-              </div>
-              <div class="text-caption">Voltage (V)</div>
-            </div>
-          </v-col>
 
-          <v-col cols="auto">
-            <div class="text-center">
-              <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
-                <p class="text-caption">
-                  {{ formatValue(currDeviceSensorData.Current) }}
-                </p>
+        <br>
+        <v-card class="pa-4" color="blue-lighten-4" elevation="1">
+          <v-row justify="space-around" class="mt-4">
+            <v-col cols="auto">
+              <div class="text-center">
+                <div
+                  style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  <p class="text-caption font-weight-bold">
+                    {{ formatValue(currDeviceSensorData.Energy) }}
+                  </p>
+                </div>
+                <div class="text-caption mt-2">Energy (kWh)</div>
               </div>
-              <div class="text-caption">Current (A)</div>
-            </div>
-          </v-col>
+            </v-col>
 
-          <v-col cols="auto">
-            <div class="text-center">
-              <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
-                <p class="text-caption">
-                  {{ formatValue(currDeviceSensorData.Frequency) }}
-                </p>
+            <v-col cols="auto">
+              <div class="text-center">
+                <div
+                  style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  <p class="text-caption font-weight-bold">
+                    {{ formatValue(currDeviceSensorData.Voltage) }}
+                  </p>
+                </div>
+                <div class="text-caption mt-2">Voltage (V)</div>
               </div>
-              <div class="text-caption">Frequency (Hz)</div>
-            </div>
-          </v-col>
+            </v-col>
 
-          <v-col cols="auto">
-            <div class="text-center">
-              <div class="border-xl" color="blue-lighten-4" style="height: 70px; width: 70px; align-content: center">
-                <p class="text-caption">
-                  {{ formatValue(currDeviceSensorData.Power_factor) }}
-                </p>
+            <v-col cols="auto">
+              <div class="text-center">
+                <div
+                  style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  <p class="text-caption font-weight-bold">
+                    {{ formatValue(currDeviceSensorData.Current) }}
+                  </p>
+                </div>
+                <div class="text-caption mt-2">Current (A)</div>
               </div>
-              <div class="text-caption">Power Factor</div>
-            </div>
-          </v-col>
-        </v-row>
+            </v-col>
+
+            <v-col cols="auto">
+              <div class="text-center">
+                <div
+                  style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  <p class="text-caption font-weight-bold">
+                    {{ formatValue(currDeviceSensorData.Frequency) }}
+                  </p>
+                </div>
+                <div class="text-caption mt-2">Frequency (Hz)</div>
+              </div>
+            </v-col>
+
+            <v-col cols="auto">
+              <div class="text-center">
+                <div
+                  style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  <p class="text-caption font-weight-bold">
+                    {{ formatValue(currDeviceSensorData.Power_factor) }}
+                  </p>
+                </div>
+                <div class="text-caption mt-2">Power Factor</div>
+              </div>
+            </v-col>
+          </v-row>
+
+
+          <v-div>
+            <v-row class="pa-2" justify="end" align="center">
+              <span class="mr-4 text-subtitle-1 font-weight-medium">
+                Detail Laporan Penggunaan
+              </span>
+
+              <v-btn @click="toReportPage" color="primary" class="rounded-circle d-flex justify-center align-center"
+                style="max-height: 50px; width: 50px; min-width: 50px;">
+                <v-icon>mdi-arrow-right</v-icon>
+              </v-btn>
+            </v-row>
+          </v-div>
+        </v-card>
       </v-col>
     </v-row>
-
-
   </v-card>
 
 
@@ -205,12 +233,6 @@
 /* Memastikan list device scrollable */
 .overflow-auto {
   overflow-y: auto;
-}
-
-/* Ukuran chart */
-.chart-container {
-  height: 350px;
-  width: 100%;
 }
 </style>
 
@@ -226,6 +248,7 @@ import CanvasJS from "@canvasjs/charts";
 
 import DeviceList from "@/components/monitoring/DeviceList.vue";
 import RegisterDevice from "@/components/device_management/RegisterDevice.vue";
+import DetailDevice from "./device_management/DetailDevice.vue";
 import PopUpInfoBox from "@/components/parts/PopUpInfoBox.vue";
 
 const popUpProps = ref({
@@ -238,6 +261,13 @@ const popupVisible = ref(false);
 const closePopup = () => {
   popupVisible.value = false;
 };
+
+const isLoading = ref(false);
+
+watch(isLoading, (newValue) => {
+  console.log("isLoading changed to:", newValue);
+});
+
 
 //////////////////  //////////////////
 
@@ -255,6 +285,8 @@ function toogleDetailDeviceState() {
     curr_devicePage_state.value = curr_devicePage_state.value = 1;
   }
 }
+
+
 function toogleAddDeviceState() {
   console.log("toogleAddDeviceState curr_devicePage_state:", curr_devicePage_state.value);
   if (curr_devicePage_state.value === 2) {
@@ -301,40 +333,6 @@ let socket = null;
 
 const formatValue = (value) =>
   value === undefined || value === null ? "-" : value.toFixed(2);
-
-
-
-// function convertTstampToLocal(tstamp) {
-//   if (!tstamp) return "-";
-
-//   // Format ulang agar bisa diparsing oleh Date (tambahkan 'T' di tengah)
-//   const formattedTstamp = tstamp.replace(" ", "T"); // "2025-03-08 15:51:45" -> "2025-03-08T15:51:45"
-
-//   // Konversi ke objek Date (anggap sebagai UTC)
-//   const utcDate = new Date(formattedTstamp + "Z"); // Tambahkan 'Z' agar dianggap UTC
-
-//   // Pastikan timestamp valid
-//   if (isNaN(utcDate.getTime())) {
-//     console.warn("❌ Invalid timestamp:", tstamp);
-//     return "-";
-//   }
-
-//   // Konversi ke zona waktu lokal (Asia/Jakarta UTC+7)
-//   const offset = 7 * 60 * 60 * 1000; // Offset 7 jam dalam milidetik
-//   const localDate = new Date(utcDate.getTime() + offset);
-
-//   // Format tanggal dan waktu lengkap
-//   return localDate.toLocaleString("id-ID", {
-//     hour12: false, // Format 24 jam
-//     year: "numeric",
-//     month: "2-digit",
-//     day: "2-digit",
-//     hour: "2-digit",
-//     minute: "2-digit",
-//     second: "2-digit",
-//   });
-// }
-
 
 const getLocalTimezoneOffset = () => {
   const now = new Date();
@@ -553,7 +551,6 @@ onMounted(() => {
 
 
 
-
   searchDevices();
 
 
@@ -614,6 +611,7 @@ function resetScrollDevices() {
 }
 
 const isFetchingDevices = ref(false); // mencegah race condition
+const isFetchingDeviceData = ref(false);
 
 function handleDeviceSelection(deviceId, deviceName) {
   if (deviceId == currDeviceId.value) {
@@ -640,6 +638,15 @@ function handleDeviceSelection(deviceId, deviceName) {
 
   // Mulai koneksi WebSocket dengan device baru
   startWebSocket();
+}
+
+
+function handleDeviceDetail(deviceId) {
+
+  
+  console.log("handleDeviceDetail - device id: ", deviceId);
+  
+  toogleDetailDeviceState();
 }
 
 function loadDevices({ done }) {
@@ -752,6 +759,129 @@ async function getDeviceList(pageNumber) {
 }
 
 
+
+
+async function getDeviceData(deviceIdParam) {
+
+  if (isFetchingDeviceData.value == true) {
+    console.log("Fetching device data already in progress...");
+    return;
+  }
+
+  console.log("getDeviceData - device id: ", deviceId); s
+
+  try {
+    const operation = "get_device_data";
+    const baseUrl = BASE_API_URL;
+    const params = {
+      device_id: deviceIdParam,
+    };
+
+    console.log("getDeviceData params:", params);
+    const response_be = await Process(baseUrl, operation, params);
+
+    if (response_be.status !== "success") {
+      console.error("getDeviceData FAILED!!:", response_be.error_message);
+      let popUpMessage = "Gagal Mendapatkan Data Perangkat";
+
+
+      popUpProps.value = {
+        status: "error",
+        errorMessage: popUpMessage,
+        errorCode: response_be.error_code,
+      };
+      popupVisible.value = true;
+      return;
+    }
+
+    const responseBE = response_be.payload;
+    if (!responseBE.device_data) {
+      console.log("Device data is empty");
+      return;
+    }
+
+    console.log("getDeviceData SUCCESS!!");
+
+
+  } catch (err) {
+    console.error("ERROR WHILE GETTING DEVICE DATA:", err);
+  } finally {
+
+    isFetchingDeviceData.value = false;
+  }
+}
+
+
+//////
+
+const registerDevice = async (
+  deviceNameParam,
+  passwordParam,
+  deviceImageBase64Param,
+  deviceDataParam,
+  deviceIntervalReadParam,
+) => {
+  const baseUrl = BASE_API_URL;
+  const operation = "register_device";
+
+  console.log("registerDevice - deviceNameParam:", deviceDataParam);
+  console.log("registerDevice - passwordParam:", passwordParam);
+  console.log("registerDevice - deviceImageBase64Param:", deviceImageBase64Param);
+  console.log("registerDevice - deviceDataParam:", deviceDataParam);
+  console.log("registerDevice - deviceIntervalReadParam:", deviceIntervalReadParam);
+
+
+  // Buat parameter request
+  const params = {
+    name: deviceNameParam,
+    password: passwordParam,
+    read_interval: deviceIntervalReadParam,
+  };
+
+  // Tambahkan attachment jika ada
+  if (deviceImageBase64Param) {
+    params.attachment = deviceImageBase64Param;
+  }
+
+  // Tambahkan data perangkat jika ada
+  if (deviceDataParam && Object.keys(deviceDataParam).length > 0) {
+    params.data = deviceDataParam;
+  }
+
+  console.log("Final params:", params);
+
+  try {
+    const response_be = await Process(baseUrl, operation, params);
+
+    if (response_be?.status === "success") {
+      popUpProps.value = {
+        status: "success",
+        errorMessage: "Perangkat berhasil ditambahkan",
+        errorCode: "DEVICE_REGISTERED",
+      };
+
+
+
+
+
+    } else {
+      throw new Error(response_be?.error_message || "Gagal mendaftarkan perangkat");
+    }
+  } catch (error) {
+    console.error("Error registering device:", error);
+
+    // Tampilkan error popup
+    popUpProps.value = {
+      status: "error",
+      errorMessage: error.message || "Terjadi kesalahan saat registrasi perangkat",
+      errorCode: error.code || "REGISTER_DEVICE_ERROR",
+    };
+  }
+
+  popupVisible.value = true; // Popup selalu muncul setelah proses selesai
+};
+
+
 /* 
 
     exp data: {    "Device_Id": 1,
@@ -768,4 +898,39 @@ async function getDeviceList(pageNumber) {
 */
 </script>
 
-<style scoped></style>
+<style scoped>
+/* Styling for the loading spinner */
+.loading-spinner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  /* Pastikan di atas elemen lain */
+}
+
+
+/* Disable interactions when isLoading is true */
+.disable-interactions * {
+  pointer-events: none;
+}
+
+
+/* Optional: Add an overlay to make it clear that the screen is in loading state */
+.disable-interactions {
+  position: relative;
+}
+
+.disable-interactions::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  /* Semi-transparent overlay */
+  z-index: 5;
+  /* Ensure it overlays on top of the content */
+}
+</style>

@@ -351,7 +351,7 @@ const verifyToken = async () => {
 
   console.log("VERIFY TOKEN SUCCESSFUL!");
   console.log(
-    `username: ${response_be.payload.username}, full_name: ${response_be.payload.full_name}, role: ${response_be.payload.role}`
+    `username: ${response_be.payload.username}, full_name: ${response_be.payload.full_name}, role: ${response_be.payload.role}, email : ${response_be.payload.email}`
   );
   console.log(
     `session_id: ${response_be.payload.session_id}, session_hash: ${response_be.payload.session_hash}`
@@ -360,6 +360,7 @@ const verifyToken = async () => {
   const userData = {
     username: response_be.payload.username,
     full_name: response_be.payload.full_name,
+    email : response_be.payload.email,
     role: response_be.payload.role,
     data: response_be.payload.data,
   };

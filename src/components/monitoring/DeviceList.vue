@@ -4,47 +4,63 @@
 
         <v-list bg-color="white" dense class="rounded-lg elevation-2">
             <template v-if="devices && devices.length > 0">
-                <template v-for="(device, index) in devices" :key="device.device_id">
-                    <v-list-item 
-                        @click="selectDevice(device)" 
-                        class="device-item"
-                        :disabled="device.device_st === 0"
-                        :class="{ 
-                            'selected-device': device.device_id === currDeviceId,
-                            'disabled-device': device.device_st === 0
-                        }"
-                    >
-                        <v-row align="center" no-gutters>
-                            <!-- Icon -->
-                            <v-col cols="2" class="d-flex justify-center">
-                                <v-img :src="IoTIcon" class="device-icon" max-width="24" height="24" contain />
+                <v-container v-for="(device, index) in devices" :key="device.device_id" class="pa-0 ma-0">
+                    <v-col>
+                        <v-row align="center" no-gutters class="d-flex justify-between align-center">
+                            <!-- Konten List Item -->
+                            <v-col cols="11">
+                                <v-list-item @click="selectDevice(device)" class="device-item"
+                                    :disabled="device.device_st === 0" :class="{
+                                        'selected-device': device.device_id === currDeviceId,
+                                        'disabled-device': device.device_st === 0,
+                                    }">
+                                    <v-row align="center" no-gutters>
+                                        <!-- Icon -->
+                                        <v-col cols="1" class="d-flex justify-center">
+                                            <v-img :src="IoTIcon" class="device-icon" max-width="24" height="24"
+                                                contain />
+                                        </v-col>
+
+                                        <!-- Nama Device -->
+                                        <v-col cols="5">
+                                            <v-list-item-title class="text-body-2 font-weight-medium">
+                                                {{ device.device_name }}
+                                            </v-list-item-title>
+                                        </v-col>
+
+                                        <!-- Status -->
+                                        <v-col cols="3" class="d-flex align-center">
+                                            <v-icon v-if="device.device_st === 1" color="green" class="mr-1" size="16">
+                                                mdi-checkbox-blank-circle
+                                            </v-icon>
+                                            <span :class="device.device_st === 1 ? 'text-green' : 'text-grey'">
+                                                {{ device.device_st === 1 ? 'Aktif' : 'Non-aktif' }}
+                                            </span>
+                                        </v-col>
+
+                                        <!-- Aktivitas Terakhir -->
+                                        <v-col cols="3" class="text-right text-caption text-grey-darken-1">
+                                            {{ formatTimestamp(device.device_last_tstamp) || '-' }}
+                                        </v-col>
+                                    </v-row>
+                                </v-list-item>
                             </v-col>
 
-                            <!-- Nama Device -->
-                            <v-col cols="5">
-                                <v-list-item-title class="text-body-2 font-weight-medium">
-                                    {{ device.device_name }}
-                                </v-list-item-title>
-                            </v-col>
-
-                            <!-- st -->
-                            <v-col cols="3" class="d-flex align-center">
-                                <v-icon v-if="device.device_st == 1" color="green" class="mr-1" size="16">
-                                    mdi-checkbox-blank-circle
-                                </v-icon>
-                                <span :class="device.device_st == 1 ? 'text-green' : 'text-grey'">
-                                    {{ device.device_st == 1 ? 'Aktif' : 'Non-aktif' }}
-                                </span>
-                            </v-col>
-
-                            <!-- Aktivitas Terakhir -->
-                            <v-col cols="2" class="text-right text-caption text-grey-darken-1">
-                                {{ formatTimestamp(device.device_last_tstamp) || '-' }}
+                            <!-- Tombol Detail -->
+                            <v-col cols="1" class="d-flex align-center justify-center">
+                                <v-btn @click.stop="viewDeviceDetail(device)" color="primary"
+                                    class="rounded-circle detail-btn"
+                                    style="max-height: 30px; width: 30px; min-width: 30px;" :disabled="false">
+                                    <v-icon>mdi-eye</v-icon>
+                                </v-btn>
                             </v-col>
                         </v-row>
-                    </v-list-item>
+                    </v-col>
+
                     <v-divider class="mx-4" />
-                </template>
+
+
+                </v-container>
             </template>
 
             <!-- Jika Tidak Ada Device -->
@@ -58,27 +74,33 @@
 </template>
 
 <script setup>
-import IoTIcon from '@/assets/images/IoTIcon.png';
+import IoTIcon from "@/assets/images/IoTIcon.png";
 
-const props = defineProps(['devices', 'currDeviceId', 'totalDevices']);
-const emit = defineEmits(['select-device']);
+const props = defineProps(["devices", "currDeviceId", "totalDevices"]);
+const emit = defineEmits(["select-device", "view-device-detail"]);
 
-function selectDevice(data) {
-    if (data.device_st === 0) return; // Cegah pemilihan jika non-aktif
-    console.log(`Device Selected: ${data.device_id} - ${data.device_name}`);
-    emit('select-device', data.device_id, data.device_name);
+function selectDevice(deviceData) {
+    if (deviceData.device_st === 0) return; // Cegah pemilihan jika non-aktif
+    console.log(`Device Selected: ${deviceData.device_id} - ${deviceData.device_name}`);
+    emit("select-device", deviceData.device_id, deviceData.device_name);
+}
+
+// Fungsi untuk navigasi ke halaman detail
+function viewDeviceDetail(deviceDataDetail) {
+    console.log(`Navigating to details for: ${deviceDataDetail.device_id} - ${deviceDataDetail.device_name}`);
+    emit("view-device-detail", deviceDataDetail.device_id);
 }
 
 // Fungsi untuk mengonversi epoch timestamp ke format waktu lokal
 const formatTimestamp = (epoch) => {
-    if (!epoch) return '-';
+    if (!epoch) return "-";
     const date = new Date(epoch * 1000);
-    return date.toLocaleString('id-ID', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+    return date.toLocaleString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
     });
 };
 </script>
@@ -102,10 +124,25 @@ const formatTimestamp = (epoch) => {
     background-color: rgba(33, 150, 243, 0.25) !important;
 }
 
-/* Perangkat yang non-aktif menjadi lebih gelap dan tidak bisa dipilih */
+/* Perangkat yang non-aktif tidak memiliki perubahan opacity */
 .disabled-device {
-    opacity: 0.5;
     pointer-events: none;
+}
+
+/* Pastikan tombol detail tidak terpengaruh oleh disabled-device */
+.detail-btn {
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    background-color: rgb(var(--v-theme-primary)) !important;
+}
+
+.detail-btn:hover {
+    background-color: rgb(var(--v-theme-primary)) !important;
+    opacity: 0.9 !important;
+}
+
+.detail-btn:active {
+    background-color: rgb(var(--v-theme-primary)) !important;
 }
 
 .device-icon {

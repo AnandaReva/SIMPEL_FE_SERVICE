@@ -7,13 +7,11 @@
             </v-btn>
         </v-col>
 
-        <v-row class="fill-height" :class="{ 'disable-interactions': isLoading }">
+        <v-row class="fill-height">
             <v-col class="mx-auto px-0">
                 <p class="text-h6 font-weight-medium ma-0 text-center">Tambah Perangkat Baru</p>
 
                 <v-container class="pa-4 elevation-1">
-                    <v-progress-circular v-if="isLoading" color="primary" indeterminate
-                        class="loading-spinner"></v-progress-circular>
 
                     <v-form ref="registerDeviceForm" @submit.prevent="submitRegisterDevice" class="d-flex flex-column">
                         <v-text-field maxlength="50" v-model="device_name" label="Nama Perangkat" outlined dense
@@ -30,6 +28,12 @@
                             prepend-inner-icon="mdi-image" class="mb-4" accept="image/png, image/jpeg"
                             @change="handleFileUpload">
                         </v-file-input>
+
+
+                        <v-number-input v-model="device_read_interval" control-variant="split"
+                            label="Interval Pembacaan Data Sensor (Detik)" :min="1" :max="60" required
+                            :rules="readIntervalRules">
+                        </v-number-input>
 
 
                         <v-row class="pa-4">
@@ -65,9 +69,7 @@
                                     </v-col>
                                 </v-row>
                             </v-container>
-
                         </div>
-
                         <v-col cols="auto" class="d-flex align-center">
                             <v-btn @click="addDataContainer" color="primary"
                                 class="search-button rounded-circle d-flex justify-center align-center"
@@ -76,12 +78,6 @@
                                 <v-icon>mdi-plus</v-icon>
                             </v-btn>
                         </v-col>
-
-
-
-
-
-
                         <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="2"
                             :disabled="isDisableRegisterDevice">
                             Tambah Perangkat
@@ -90,34 +86,23 @@
                 </v-container>
             </v-col>
         </v-row>
-
-        <PopUpInfoBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
-            :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
-            @close="closePopup" />
     </v-col>
 </template>
 
+
 <script setup>
 import { ref, computed } from "vue";
-import { BASE_API_URL } from "@/configs/config";
-import { Process } from "@/utils/requestHelper";
 
-const popupVisible = ref(false);
-const closePopup = () => {
-    popupVisible.value = false;
-};
+import { VNumberInput } from 'vuetify/labs/VNumberInput'
+import JSZip from "jszip";
 
-const popUpProps = ref({
-    status: "",
-    errorMessage: "",
-    errorCode: "",
-});
+const emit = defineEmits(["toogle-add-device-state", "register-device"]);
 
-const isLoading = ref(false);
 const device_name = ref("");
 const password = ref("");
 const device_image = ref(null);
 const device_image_base64 = ref("");
+const device_read_interval = ref(0)
 
 const deviceNameRules = [
     (v) => !!v || "Nama perangkat harus diisi",
@@ -131,22 +116,37 @@ const passwordRules = [
     (v) => v.length <= 30 || "Password maksimal 30 karakter",
 ];
 
+
+const readIntervalRules = [
+    (v) => !!v || "Interval harus diisi",
+    (v) => (v >= 1 && v <= 60) || "Interval harus antara 1 hingga 60 detik",
+];
+
+
+
+
 const isDisableRegisterDevice = computed(() => {
-    // Cek apakah nama perangkat dan password valid
+    // Cek apakah nama perangkat valid (6-50 karakter)
     const isDeviceNameValid = device_name.value && device_name.value.length >= 6 && device_name.value.length <= 50;
+
+    // Cek apakah password valid (8-30 karakter)
     const isPasswordValid = password.value && password.value.length >= 8 && password.value.length <= 30;
+
+    // Cek apakah interval pembacaan valid (1-60 detik)
+    const isReadIntervalValid = device_read_interval.value >= 1 && device_read_interval.value <= 60;
 
     // Cek apakah semua dataContainers valid
     const isDeviceDataValid = dataContainers.value.every(container => {
-        return (!container.data.trim() || container.title.trim()) &&
-            (!container.title.trim() || container.data.trim());
+        return (container.data.trim() && container.title.trim()); // Pastikan keduanya tidak kosong
     });
 
-    return !(isDeviceNameValid && isPasswordValid && isDeviceDataValid);
+    // Jika salah satu tidak valid, maka tombol register harus disable
+    return !(isDeviceNameValid && isPasswordValid && isReadIntervalValid && isDeviceDataValid);
 });
 
 
-const handleFileUpload = (event) => {
+
+const handleFileUpload = async (event) => {
     const file = event.target?.files?.[0] || event;
 
     if (!file) {
@@ -170,9 +170,21 @@ const handleFileUpload = (event) => {
         return;
     }
 
-    convertImageToBase64(file);
+    try {
+        const compressedFile = await compressToZip(file, file.name);
+        convertImageToBase64(compressedFile);
+    } catch (error) {
+        console.error("Compression error:", error);
+    }
 };
 
+const compressToZip = async (file, fileName) => {
+    const zip = new JSZip();
+    zip.file(fileName, file);
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    return zipBlob;
+};
 
 const convertImageToBase64 = (file) => {
     const reader = new FileReader();
@@ -190,6 +202,7 @@ const convertImageToBase64 = (file) => {
         popupVisible.value = true;
     };
 };
+
 
 
 
@@ -281,6 +294,8 @@ const submitRegisterDevice = async () => {
         device_image_base64.value = "";
     }
 
+
+
     console.log("Submitting register device...");
     console.log("device_name: ", device_name.value);
     console.log("password: ", password.value);
@@ -288,127 +303,49 @@ const submitRegisterDevice = async () => {
     console.log("device_image_base64: ", device_image_base64.value);
     console.log("dataContainers after validate: ", dataContainers.value);
     console.log("formattedDataContainers: ", formattedData);
-
-    isLoading.value = true;
+    console.log("device_read_interval: ", device_read_interval.value);
 
     // Kirim data ke backend
-    const success = await registerDevice(
+    // emit("register-device", {
+    //     name: device_name.value,
+    //     password: password.value,
+    //     image: device_image_base64.value,
+    //     data: formattedData,
+    //     read_interval: device_read_interval.value,
+
+    // });
+
+
+    emit("register-device",
         device_name.value,
         password.value,
         device_image_base64.value,
-        formattedData
+        formattedData,
+        device_read_interval.value
     );
 
+    clearForm();
 
 
-    // Jika sukses, reset form
-    if (success) {
-        device_name.value = "";
-        password.value = "";
-        device_image.value = null;
-        device_image_base64.value = "";
-        dataContainers.value = [{ title: "", data: "" }];
-
-        popUpProps.value = {
-            status: "success",
-            errorMessage: "Perangkat berhasil ditambahkan",
-            errorCode: "DEVICE_REGISTERED",
-        };
-        popupVisible.value = true; 
-    }
-
-
-    isLoading.value = false;
 };
 
-const registerDevice = async (deviceNameParam, passwordParam, deviceImageBase64Param, deviceDataParam) => {
-    const baseUrl = BASE_API_URL;
-    const operation = "register_device";
 
-    // Buat parameter request
-    const params = {
-        name: deviceNameParam,
-        password: passwordParam,
-    };
+function clearForm() {
+    console.log("Clearing form...");
+    device_name.value = "";
+    password.value = "";
+    device_image.value = null;
+    device_image_base64.value = "";
+    device_read_interval.value = 0;
+    dataContainers.value = [{ title: "", data: "" }];
+}
 
-    // Hanya tambahkan attachment jika ada
-    if (deviceImageBase64Param) {
-        params.attachment = deviceImageBase64Param;
-    }
 
-    // Hanya tambahkan data jika tidak kosong
-    if (deviceDataParam && Object.keys(deviceDataParam).length > 0) {
-        params.data = deviceDataParam;
-    }
 
-    console.log("Final params:", params);
-
-    const response_be = await Process(baseUrl, operation, params);
-
-    // Jika gagal, tampilkan error popup
-    if (response_be.status !== "success") {
-        popUpProps.value = {
-            status: "error",
-            errorMessage: response_be.error_message,
-            errorCode: response_be.error_code,
-        };
-        popupVisible.value = true;
-        return false;
-    }
-
-    return true;
-};
-
-const emit = defineEmits(["toogle-add-device-state"]);
 
 const backToContactList = () => {
     emit("toogle-add-device-state");
 };
 </script>
 
-<style scoped>
-.loading-spinner {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
-    /* Pastikan di atas elemen lain */
-}
-
-
-/* Disable interactions when isLoading is true */
-.disable-interactions * {
-    pointer-events: none;
-}
-
-
-/* Optional: Add an overlay to make it clear that the screen is in loading state */
-.disable-interactions {
-    position: relative;
-}
-
-.disable-interactions::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    /* Semi-transparent overlay */
-    z-index: 5;
-    /* Ensure it overlays on top of the content */
-}
-
-.scrollable-container {
-    max-height: 300px;
-    /* Ubah sesuai kebutuhan */
-    overflow-y: auto;
-    border: 2px solid white;
-    padding: 10px;
-    border-radius: 5px;
-
-
-}
-</style>
+<style scoped></style>
