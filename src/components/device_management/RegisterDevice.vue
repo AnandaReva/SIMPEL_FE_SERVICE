@@ -44,17 +44,19 @@
 
 
                         <div class="scrollable-container pa-0">
+                          
+
                             <v-container v-for="(container, index) in dataContainers" :key="index"
                                 class="border ma-0 px-1">
                                 <v-row>
-                                    <v-col cols="6" class="px-1">
+                                    <v-col cols="5.5" class="px-1 py-0">
                                         <v-text-field v-model="container.title"
                                             label="Judul (Lokasi, Alamat IP, Spesifikasi dll)" outlined required
                                             :rules="[requiredIfData(container)]">
                                         </v-text-field>
                                     </v-col>
 
-                                    <v-col cols="5" class="px-1">
+                                    <v-col cols="5.5" class="px-1 py-0">
                                         <v-text-field v-model="container.data" label="Isi data" outlined dense required
                                             :rules="[requiredIfTitle(container)]">
                                         </v-text-field>

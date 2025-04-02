@@ -92,7 +92,7 @@
               <v-infinite-scroll :key="scrollKeyDevices" id="DevicesBox" ref="DevicesBox" height="550" side="end"
                 @load="loadDevices" class="overflow-auto">
                 <DeviceList :devices="devices" :currDeviceId="currDeviceId" :currDeviceName="currDeviceName"
-                  :totalDevices="totalDevices" @select-Device="handleDeviceSelection"
+                  :totalDevices="totalDevices" @select-device="handleDeviceSelection"
                   @view-device-detail="handleDeviceDetail" />
               </v-infinite-scroll>
             </v-col>
@@ -106,7 +106,7 @@
 
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 1">
             <!-- Konten untuk state 1 (detail device) -->
-            <DetailDevice @toogle-detail-device-state="toogleDetailDeviceState" :deviceData="currDeviceSensorData" />
+            <DetailDevice @toogle-detail-device-state="toogleDetailDeviceState" :curr-device-data="currDeviceData" />
           </v-container>
 
 
@@ -161,10 +161,10 @@
                 <div
                   style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
-                    {{ formatValue(currDeviceSensorData.Voltage) }}
+                    {{ formatValue(currDeviceSensorData.voltage) }}
                   </p>
                 </div>
-                <div class="text-caption mt-2">Voltage (V)</div>
+                <div class="text-caption mt-2">voltage (V)</div>
               </div>
             </v-col>
 
@@ -173,10 +173,10 @@
                 <div
                   style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
-                    {{ formatValue(currDeviceSensorData.Current) }}
+                    {{ formatValue(currDeviceSensorData.current) }}
                   </p>
                 </div>
-                <div class="text-caption mt-2">Current (A)</div>
+                <div class="text-caption mt-2">current (A)</div>
               </div>
             </v-col>
 
@@ -197,16 +197,16 @@
                 <div
                   style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
-                    {{ formatValue(currDeviceSensorData.Power_factor) }}
+                    {{ formatValue(currDeviceSensorData.power_factor) }}
                   </p>
                 </div>
-                <div class="text-caption mt-2">Power Factor</div>
+                <div class="text-caption mt-2">power Factor</div>
               </div>
             </v-col>
           </v-row>
 
 
-          <v-div>
+          <div>
             <v-row class="pa-2" justify="end" align="center">
               <span class="mr-4 text-subtitle-1 font-weight-medium">
                 Detail Laporan Penggunaan
@@ -217,7 +217,7 @@
                 <v-icon>mdi-arrow-right</v-icon>
               </v-btn>
             </v-row>
-          </v-div>
+          </div>
         </v-card>
       </v-col>
     </v-row>
@@ -324,6 +324,7 @@ function toogleAddDeviceState() {
 // ** Deklarasi Variabel Reaktif **
 const currDeviceId = ref(null);
 const currDeviceSensorData = ref({});
+
 const dataPoints = ref([]);
 const maxDataLength = ref(50);
 let chart = null;
@@ -374,20 +375,20 @@ function convertTstampToLocal(tstamp) {
 
 const updateChart = (newData) => {
   console.log("updateChart(), newData:", newData);
-  if (!newData.Tstamp || newData.Power === undefined) {
+  if (!newData.tstamp || newData.power === undefined) {
     console.warn("❌ Data tidak valid untuk chart:", newData);
     return;
   }
 
-  // Konversi Tstamp ke waktu lokal
-  const localDate = new Date(newData.Tstamp.replace(" ", "T") + "Z");
+  // Konversi tstamp ke waktu lokal
+  const localDate = new Date(newData.tstamp.replace(" ", "T") + "Z");
   const localOffset = getLocalTimezoneOffset();
   const localDateWithOffset = new Date(localDate.getTime() - localOffset);
 
   console.log("Local tstamp:", localDateWithOffset);
 
   // Buat titik data baru
-  const newPoint = { x: localDateWithOffset, y: newData.Power };
+  const newPoint = { x: localDateWithOffset, y: newData.power };
   dataPoints.value.push(newPoint);
 
   if (dataPoints.value.length > maxDataLength.value) {
@@ -420,7 +421,7 @@ const initChart = () => {
       },
     },
     axisY: {
-      title: "Power (W)",
+      title: "power (W)",
     },
     data: [
       {
@@ -516,11 +517,11 @@ const startWebSocket = async () => {
       try {
         const message = JSON.parse(event.data);
         console.log("📡 Data received:", message);
-        console.log("📡 Data received current:", message.Current);
-        console.log("📡 Data received tstamp:", message.Tstamp);
-        console.log("📡 Data received Power:", message.Power);
+        console.log("📡 Data received current:", message.current);
+        console.log("📡 Data received tstamp:", message.tstamp);
+        console.log("📡 Data received power:", message.power);
 
-        if (message.Device_Id === currDeviceId.value) {
+        if (message.device_id === currDeviceId.value) {
           currDeviceSensorData.value = message;
           updateChart(message);
         }
@@ -587,6 +588,7 @@ const page_size = ref(10);
 const totalPagesDevices = ref(0);
 const totalDevices = ref();
 const currDeviceName = ref('')
+const currDeviceData = ref({});
 
 
 
@@ -641,13 +643,19 @@ function handleDeviceSelection(deviceId, deviceName) {
 }
 
 
-function handleDeviceDetail(deviceId) {
+async function handleDeviceDetail(deviceIdParam) {
+  console.log("handleDeviceDetail - device id: ", deviceIdParam);
 
-  
-  console.log("handleDeviceDetail - device id: ", deviceId);
-  
+  const isSuccess = await getDeviceData(deviceIdParam); // Tunggu hasil sebelum lanjut
+  if (!isSuccess) {
+    console.error("Failed to get device data");
+    return;
+  }
+
+  console.log("getDeviceData SUCCESS!!");
   toogleDetailDeviceState();
 }
+
 
 function loadDevices({ done }) {
   console.log("--- loadDevices() ---");
@@ -765,10 +773,10 @@ async function getDeviceData(deviceIdParam) {
 
   if (isFetchingDeviceData.value == true) {
     console.log("Fetching device data already in progress...");
-    return;
+    return false;
   }
 
-  console.log("getDeviceData - device id: ", deviceId); s
+  console.log("getDeviceData - device id: ", deviceIdParam);
 
   try {
     const operation = "get_device_data";
@@ -791,16 +799,20 @@ async function getDeviceData(deviceIdParam) {
         errorCode: response_be.error_code,
       };
       popupVisible.value = true;
-      return;
+      return false;
     }
 
     const responseBE = response_be.payload;
     if (!responseBE.device_data) {
       console.log("Device data is empty");
-      return;
-    }
+      return false;
+    } 
+    console.log("getDeviceData responseBE.device_data: ", responseBE.device_data);
+
+    currDeviceData.value = responseBE.device_data;
 
     console.log("getDeviceData SUCCESS!!");
+    return true;
 
 
   } catch (err) {
@@ -860,9 +872,7 @@ const registerDevice = async (
         errorCode: "DEVICE_REGISTERED",
       };
 
-
-
-
+      toogleAddDeviceState();
 
     } else {
       throw new Error(response_be?.error_message || "Gagal mendaftarkan perangkat");
@@ -884,18 +894,27 @@ const registerDevice = async (
 
 /* 
 
-    exp data: {    "Device_Id": 1,
-    "Tstamp": 1739882173782,  // ms
-    "Voltage": 290.5,
-    "Current": 2.3,
-    "Power": 510.15,
-    "Energy": 1560.75,
-    "Frequency": 50.1,
-    "Power_factor": 0.98}
+    exp data: {    "device_Id": 1,
+    "tstamp": 1739882173782,  // ms
+    "voltage": 290.5,
+    "current": 2.3,
+    "power": 510.15,
+    "energy": 1560.75,
+    "frequency": 50.1,
+    "power_factor": 0.98}
 
 
 
 */
+
+
+//////////
+
+function toReportPage (){
+  
+}
+
+
 </script>
 
 <style scoped>

@@ -1,0 +1,402 @@
+<template>
+    <v-col class="fill-height px-0">
+        <v-col cols="auto" class="d-flex align-center">
+            <v-btn @click="backToDeviceList" color="primary" class="d-flex justify-center align-center"
+                style="max-height: 50px">
+                <v-icon>mdi-arrow-left-bold</v-icon> <span>Kembali</span>
+            </v-btn>
+        </v-col>
+
+        <v-row class="fill-height">
+            <v-col class="mx-auto px-0">
+                <p class="text-h6 font-weight-medium ma-0 text-center">
+                    Detail Perangkat
+                </p>
+
+                <v-container class="pa-4 elevation-1">
+                    <v-form ref="registerDeviceForm" @submit.prevent="submitDeviceUpdate" class="d-flex flex-column">
+                        <v-text-field maxlength="50" v-model="currDeviceDataLocal.device_name" label="Nama Perangkat"
+                            outlined dense prepend-inner-icon="mdi-access-point-network" class="mb-4"
+                            :rules="deviceNameRules" required></v-text-field>
+
+
+                        <v-text-field maxlength="30" v-model="currDeviceDataLocal.device_password" label="Password"
+                            outlined dense prepend-inner-icon="mdi-lock" class="mb-4" :rules="passwordRules" required>
+
+                        </v-text-field>
+
+                        <v-number-input v-model="currDeviceDataLocal.device_read_interval" control-variant="split"
+                            label="Interval Pembacaan Data Sensor (Detik)" :min="1" :max="60" required
+                            :rules="readIntervalRules">
+                        </v-number-input>
+
+                        <!-- Menampilkan gambar yang sudah ada -->
+                        <v-img v-if="existingImageSrc" :src="existingImageSrc" class="mt-4 mb-5" max-height="200"
+                            contain />
+
+                        <!-- Update Gambar -->
+                        <v-file-input v-model="device_image" label="Ubah Gambar Perangkat (Opsional, max 5MB)" outlined
+                            dense prepend-inner-icon="mdi-image" class="mb-4" accept="image/png, image/jpeg"
+                            @change="handleFileUpload">
+                        </v-file-input>
+
+
+                        <div class="scrollable-container pa-0 border ma-0">
+                            <v-row>
+                                <v-col cols="5.5" class="d-flex flex-column align-center text-caption">
+                                    <p class="font-weight-light">Judul</p>
+                                </v-col>
+                                <v-col cols="5.5" class="d-flex flex-column align-center text-caption">
+                                    <p class="font-weight-light">Isi</p>
+                                </v-col>
+                                <v-col cols="1"></v-col>
+                            </v-row>
+
+
+                            <!-- ERROR DI KEY DEVICE_DATA -->
+                            <!-- Menampilkan existing device_data -->
+                            <v-container v-for="(value, key) in currDeviceDataLocal.device_data" :key="key">
+                                <v-row>
+                                    <v-col cols="5.5" class="px-1 py-0">
+                                        <v-text-field :value="key" outlined hide-details></v-text-field>
+                                    </v-col>
+                                    <v-col cols="5.5" class="px-1 py-0">
+                                        <v-text-field v-model="currDeviceDataLocal.device_data[key]" outlined
+                                            hide-details></v-text-field>
+                                    </v-col>
+                                    <v-col cols="1" class="d-flex align-center px-0">
+                                        <v-btn @click="removeCurrDataField(key)" color="error"
+                                            style="max-height: 30px; width: 30px; min-width: 30px" size="small">
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
+
+                            <!-- Form untuk menambahkan data baru -->
+                            <v-container v-for="(container, index) in newDataContainers" :key="'new-' + index">
+                                <v-row>
+                                    <v-col cols="5.5" class="px-1 py-0">
+                                        <v-text-field v-model="container.title"
+                                            label="Judul (Lokasi, Alamat IP, Spesifikasi dll)" outlined
+                                            :rules="[requiredIfData(container)]" hide-details></v-text-field>
+                                    </v-col>
+                                    <v-col cols="5.5" class="px-1 py-0">
+                                        <v-text-field v-model="container.data" label="Isi data" outlined
+                                            :rules="[requiredIfTitle(container)]" hide-details></v-text-field>
+                                    </v-col>
+                                    <v-col cols="1" class="d-flex align-center px-0">
+                                        <v-btn @click="removeNewContainer(index)" color="error"
+                                            style="max-height: 30px; width: 30px; min-width: 30px" size="small">
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
+                        </div>
+
+                        <v-col cols="auto" class="d-flex align-center">
+                            <v-btn @click="addDataContainer" color="primary"
+                                class="rounded-circle d-flex justify-center align-center"
+                                style="max-height: 50px; width: 50px; min-width: 50px"
+                                :disabled="isDisableAddContainer">
+                                <v-icon>mdi-plus</v-icon>
+                            </v-btn>
+                        </v-col>
+                    </v-form>
+
+                    <!--  -->
+
+
+                    <!-- Tabel Aktivitas -->
+                    <div class="mt-4">
+                        <p class="text-h6 font-weight-medium ma-0 text-center">
+                            Aktivitas Perangkat
+                        </p>
+                        <v-table>
+                            <thead>
+                                <tr>
+                                    <th>Tanggal/Waktu</th>
+                                    <th>Deskripsi</th>
+                                    <th>Aktor</th>
+                                    <th>Perubahan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(activity, index) in currDeviceDataLocal.device_activities" :key="index">
+                                    <td>{{ formatTimestamp(activity.activity_tstamp) }}</td>
+                                    <td>{{ activity.activity_description }}</td>
+                                    <td>{{ activity.actor_full_name }}</td>
+                                    <td>
+                                        <div v-if="activity.activity_before && activity.activity_after &&
+                                            activity.activity_before !== '{}' && activity.activity_after !== '{}'">
+                                            <v-table dense class="mt-2">
+                                                <thead>
+                                                    <tr>
+
+                                                        <th>Sebelum</th>
+                                                        <th>Sesudah</th>
+                                                    </tr>
+                                                </thead>
+                            <tbody>
+                                <tr v-for="(value, key) in JSON.parse(activity.activity_before)" :key="key">
+
+                                    <td> {{ key }} : {{ value }}</td>
+                                    <td>{{ key }}: {{ JSON.parse(activity.activity_after)[key] || '-' }}</td>
+                                </tr>
+                            </tbody>
+                        </v-table>
+                    </div>
+                    <span v-else> Tidak ada perubahan </span>
+                    </td>
+                    </tr>
+                    </tbody>
+                    </v-table>
+                    </div>
+
+
+                </v-container>
+            </v-col>
+        </v-row>
+    </v-col>
+</template>
+
+<script setup>
+/*
+dont remove comments
+{
+  "device_id": 28,
+  "change_fields": {
+    "read_interval": 1,
+    "name": "new device name",
+    "password" : ""new device password,
+    "data": {
+      "update": {
+        "updated_field1": "value1"
+      },
+      "insert": {
+        "new_field1": "value1",
+        "new_field2": "value2"
+      },
+      "delete": ["deleted_field1", "deleted_field2"]
+    } ,
+     "attachment": {
+          "attachemnt_id": 1,
+         "attachment_change_fields" : {
+                 "attachemnt_name": "new name",
+                 "attachment_data": "new data",
+        }
+     }
+  }
+}
+
+*/
+
+import { ref, reactive, onMounted, watch, computed } from "vue";
+import JSZip from "jszip";
+
+import { VNumberInput } from 'vuetify/labs/VNumberInput'
+
+const emit = defineEmits(["update-device", "toogle-detail-device-state"]);
+const props = defineProps(["currDeviceData"]);
+
+const imageSrc = ref("");
+const existingImageSrc = ref("");
+
+////////////// DEVICE DATA //////////////
+// Initialize local data with props
+const currDeviceDataLocal = reactive({
+    device_name: "",
+    device_password: "",
+    device_read_interval: 1,
+    device_data: {},
+    device_attachment: {},
+    device_activities: [],
+});
+const newDataContainers = ref([]);
+
+
+// Di dalam watch atau onMounted, konversi device_data dari object ke array
+if (props.currDeviceData.device_data) {
+    currDeviceDataLocal.device_data = Object.entries(props.currDeviceData.device_data).map(
+        ([key, value]) => ({ key, value })
+    );
+}
+
+
+const removeCurrDataField = (index) => {
+    currDeviceDataLocal.device_data.splice(index, 1);
+};
+
+// Fungsi untuk menambah container data baru
+const addDataContainer = () => {
+    // Jika ada container yang belum diisi, jangan tambahkan yang baru
+    if (newDataContainers.value.length > 0) {
+        const lastContainer =
+            newDataContainers.value[newDataContainers.value.length - 1];
+        if (!lastContainer.title.trim() || !lastContainer.data.trim()) {
+            return;
+        }
+    }
+    newDataContainers.value.push({ title: "", data: "" });
+};
+
+// Fungsi untuk menghapus container data baru
+const removeNewContainer = (index) => {
+    newDataContainers.value.splice(index, 1);
+};
+
+// Fungsi untuk mengecek apakah tombol tambah harus di-disable
+const isDisableAddContainer = computed(() => {
+    if (newDataContainers.value.length === 0) return false;
+    const lastContainer =
+        newDataContainers.value[newDataContainers.value.length - 1];
+    return !lastContainer.title.trim() || !lastContainer.data.trim();
+});
+
+// Validasi field
+const requiredIfData = (container) => {
+    return () => {
+        if (container.data.trim() && !container.title.trim()) {
+            return "Judul harus diisi jika isi data tidak kosong";
+        }
+        return true;
+    };
+};
+
+const requiredIfTitle = (container) => {
+    return () => {
+        if (container.title.trim() && !container.data.trim()) {
+            return "Isi data harus diisi jika judul tidak kosong";
+        }
+        return true;
+    };
+};
+
+// Fungsi untuk menambahkan data baru ke device_data
+const addDataField = () => {
+    // Tambahkan data dari newDataContainers ke currDeviceDataLocal.device_data
+    newDataContainers.value.forEach((container) => {
+        if (container.title.trim() && container.data.trim()) {
+            currDeviceDataLocal.device_data[container.title] = container.data;
+        }
+    });
+
+    // Kosongkan newDataContainers setelah ditambahkan
+    newDataContainers.value = [];
+};
+
+////////////// DEVICE ATTACHMENT //////////////
+
+// Function to extract image from base64 zip data
+const extractImageFromAttachment = async (base64Data) => {
+    try {
+        const zip = new JSZip();
+        const zipData = await zip.loadAsync(base64Data.split(",")[1], {
+            base64: true,
+        });
+
+        for (const fileName in zipData.files) {
+            if (fileName.match(/\.(jpeg|jpg|png)$/i)) {
+                const fileData = await zipData.files[fileName].async("base64");
+                existingImageSrc.value = `data:image/${fileName
+                    .split(".")
+                    .pop()};base64,${fileData}`;
+                break;
+            }
+        }
+    } catch (error) {
+        console.error("Error extracting image from attachment:", error);
+    }
+};
+
+
+
+// Watch to ensure data is properly assigned
+watch(
+    () => props.currDeviceData,
+    (newVal) => {
+        if (newVal) {
+            Object.assign(currDeviceDataLocal, {
+                device_name: newVal.device_name || "",
+                device_password: newVal.device_password || "",
+                device_read_interval: newVal.device_read_interval || 1,
+                device_data: newVal.device_data ? { ...newVal.device_data } : {},
+                device_attachment: newVal.device_attachment || {},
+                device_activities: newVal.device_activities || [],
+            });
+
+            // Extract image from existing attachment if available
+            if (newVal.device_attachment?.attachment_data) {
+                extractImageFromAttachment(newVal.device_attachment.attachment_data);
+            }
+        }
+    },
+    { immediate: true }
+);
+
+const handleZipUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        const zip = new JSZip();
+        const zipData = await zip.loadAsync(file);
+
+        for (const fileName in zipData.files) {
+            if (fileName.match(/\.(jpeg|jpg|png)$/i)) {
+                const fileData = await zipData.files[fileName].async("base64");
+                imageSrc.value = `data:image/${fileName
+                    .split(".")
+                    .pop()};base64,${fileData}`;
+                break;
+            }
+        }
+    } catch (error) {
+        console.error("Error processing zip file:", error);
+    }
+};
+
+const formatTimestamp = (epoch) => {
+    if (!epoch) return "-";
+    const date = new Date(epoch * 1000);
+    return date.toLocaleString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+};
+
+////////////// INPUT RULES //////////////
+const deviceNameRules = [
+    (v) => !!v || "Nama perangkat harus diisi",
+    (v) => v.length >= 6 || "Nama perangkat minimal 6 karakter",
+    (v) => v.length <= 50 || "Nama perangkat maksimal 50 karakter",
+];
+
+const passwordRules = [
+    (v) => !!v || "Password harus diisi",
+    (v) => v.length >= 8 || "Password minimal 8 karakter",
+    (v) => v.length <= 30 || "Password maksimal 30 karakter",
+];
+
+const readIntervalRules = [
+    (v) => !!v || "Interval harus diisi",
+    (v) => (v >= 1 && v <= 60) || "Interval harus antara 1 hingga 60 detik",
+];
+
+const submitDeviceUpdate = () => {
+    const updatedData = {
+        ...currDeviceDataLocal,
+        // Include the new image if uploaded
+        device_image: imageSrc.value || existingImageSrc.value,
+    };
+    emit("update-device", updatedData);
+};
+
+const backToDeviceList = () => {
+    emit("toogle-detail-device-state");
+};
+</script>
