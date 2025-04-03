@@ -13,7 +13,7 @@
                     Detail Perangkat
                 </p>
 
-                <v-container class="pa-4 elevation-1">
+                <v-container class="pa-4 flex-grow-1 overflow-y-auto" style="max-height: 624px;">
                     <v-form ref="registerDeviceForm" @submit.prevent="submitDeviceUpdate" class="d-flex flex-column">
                         <v-text-field maxlength="50" v-model="currDeviceDataLocal.device_name" label="Nama Perangkat"
                             outlined dense prepend-inner-icon="mdi-access-point-network" class="mb-4"
@@ -31,18 +31,27 @@
                         </v-number-input>
 
                         <!-- Menampilkan gambar yang sudah ada -->
-                        <v-img v-if="existingImageSrc" :src="existingImageSrc" class="mt-4 mb-5" max-height="200"
-                            contain />
+
+                        <v-row class="d-flex justify-center mt-1 mb-3">
+                            <v-img v-if="existingImageSrc" :src="existingImageSrc" class="mt-4 mb-5" max-height="200"
+                                contain />
+
+                        </v-row>
+                        
+                        
 
                         <!-- Update Gambar -->
                         <v-file-input v-model="device_image" label="Ubah Gambar Perangkat (Opsional, max 5MB)" outlined
                             dense prepend-inner-icon="mdi-image" class="mb-4" accept="image/png, image/jpeg"
                             @change="handleFileUpload">
                         </v-file-input>
+
+
                         <v-row class="pa-4">
 
                             <v-icon>mdi-information</v-icon>
                             <p class="text-subtitle-1 font-weight-medium ma-0">Data Perangkat (Optional)</p>
+
                         </v-row>
 
 
@@ -50,18 +59,19 @@
 
 
 
-                            <!-- ERROR DI KEY DEVICE_DATA -->
-                            <v-container v-for="(item, index) in existingDeviceData" :key="'existing-' + index">
-                                <!-- Existing
-                                {{ existingDeviceData }} -->
+                            
+                            <v-container v-for="(currData, index) in currDeviceDetailsData" :key="'existing-' + index">
+                                {{ currDeviceDetailsData }}
                                 <v-row>
                                     <v-col cols="5.5" class="px-1 py-0">
-                                        <v-text-field v-model="item.key" outlined hide-details
-                                            label="Judul (Lokasi, Alamat IP, Spesifikasi dll)" required></v-text-field>
+                                        <v-text-field v-model="currData.title" outlined hide-details
+                                            label="Judul (Lokasi, Alamat IP, Spesifikasi dll)" required :rules="[requiredifCurrData(currData),
+                                            () => noDuplicateTitles(currData, index, false)
+                                            ]"></v-text-field>
                                     </v-col>
                                     <v-col cols="5.5" class="px-1 py-0">
-                                        <v-text-field v-model="item.value" outlined hide-details label="Isi data"
-                                            required></v-text-field>
+                                        <v-text-field v-model="currData.data" outlined hide-details label="Isi data"
+                                            required :rules="[requiredifCurrTitle(currData)]"></v-text-field>
                                     </v-col>
                                     <v-col cols="1" class="d-flex align-center px-0">
                                         <v-btn @click="removeExistingDataField(index)" color="error"
@@ -72,20 +82,20 @@
                                 </v-row>
                             </v-container>
 
-                            <!-- Form untuk menambahkan data baru -->
-                            <v-container v-for="(item, index) in newDeviceData" :key="'new-' + index">
-                                <!-- New
 
-                                {{ newDeviceData }} -->
+                            <!-- Form untuk menambahkan data baru -->
+                            <v-container v-for="(newData, index) in newDeviceDetailsData" :key="'new-' + index">
+                                {{ newDeviceDetailsData }}
                                 <v-row>
                                     <v-col cols="5.5" class="px-1 py-0">
-                                        <v-text-field v-model="item.key"
-                                            label="Judul (Lokasi, Alamat IP, Spesifikasi dll)" outlined
-                                            :rules="[requiredIfValue(item)]" hide-details></v-text-field>
+                                        <v-text-field v-model="newData.title"
+                                            label="Judul (Lokasi, Alamat IP, Spesifikasi dll)" outlined :rules="[requiredifNewData(newData),
+                                            () => noDuplicateTitles(newData, index, newDeviceDetailsData)
+                                            ]"></v-text-field>
                                     </v-col>
                                     <v-col cols="5.5" class="px-1 py-0">
-                                        <v-text-field v-model="item.value" label="Isi data" outlined
-                                            :rules="[requiredIfKey(item)]" hide-details></v-text-field>
+                                        <v-text-field v-model="newData.data" label="Isi data" outlined
+                                            :rules="[requiredifNewTitle(newData)]"></v-text-field>
                                     </v-col>
                                     <v-col cols="1" class="d-flex align-center px-0">
                                         <v-btn @click="removeNewDataField(index)" color="error"
@@ -95,22 +105,22 @@
                                     </v-col>
                                 </v-row>
                             </v-container>
-                        </div>
 
+                        </div>
 
                         <!-- Tombol tambah data baru -->
                         <v-col cols="auto" class="d-flex align-center">
                             <v-btn @click="addNewDataField" color="primary"
                                 class="rounded-circle d-flex justify-center align-center"
-                                style="max-height: 50px; width: 50px; min-width: 50px" :disabled="isAddButtonDisabled">
+                                style="max-height: 50px; width: 50px; min-width: 50px"
+                                :disabled="isDisableAddContainer">
                                 <v-icon>mdi-plus</v-icon>
                             </v-btn>
                         </v-col>
 
-
-
-
-                        <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="2">
+                        {{ isDisableSubmitBtn }}
+                        <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="2"
+                            :disabled="isDisableSubmitBtn">
                             Perbarui Data Perangkat
                         </v-btn>
 
@@ -225,130 +235,222 @@ const currDeviceDataLocal = reactive({
     device_attachment: {},
     device_activities: [],
 });
-const existingDeviceData = ref([]); // Untuk data yang sudah ada (bisa diedit key dan value)
-const newDeviceData = ref([]);      // Untuk data baru yang akan ditambahkan
+const currDeviceDetailsData = ref([]); // Untuk data yang sudah ada (bisa diedit key dan value)
+const newDeviceDetailsData = ref([]);      // Untuk data baru yang akan ditambahkan
 
 
-const originalDeviceData = ref([])
-const updatedExistingDeviceData = ref([])
-const deletedExistingDeviceData = ref([])
-const addedExistingDeviceData = ref([])
+const originalDeviceDetailsData = ref([])
+const updatedCurrDeviceDetailsData = ref([])
+const deletedCurrDeviceData = ref([])
+const addedCurrDeviceData = ref([])
 // Methods for device data management
 const addNewDataField = () => {
-    // Only add if last field is filled or it's the first field
-    if (newDeviceData.value.length === 0 ||
-        (newDeviceData.value[newDeviceData.value.length - 1].key &&
-            newDeviceData.value[newDeviceData.value.length - 1].value)) {
-        newDeviceData.value.push({ key: "", value: "" });
+    if (newDeviceDetailsData.value.length === 0 ||
+        (newDeviceDetailsData.value[newDeviceDetailsData.value.length - 1].title &&
+            newDeviceDetailsData.value[newDeviceDetailsData.value.length - 1].data)) {
+        newDeviceDetailsData.value.push({ title: "", data: "" });
     }
 };
 
-
-
-// const removeExistingDataField = (index) => {
-//     const deletedItem = existingDeviceData.value[index];
-
-//     // Simpan data yang dihapus ke dalam daftar deleted
-//     deletedExistingDeviceData.value.push(deletedItem);
-
-//     // Hapus dari existingData
-//     existingDeviceData.value.splice(index, 1);
-
-//     // Cari dan hapus dari originalDeviceData agar jumlah data tetap sinkron
-//     const originalIndex = originalDeviceData.value.findIndex(item => item.key === deletedItem.key);
-//     if (originalIndex !== -1) {
-//         originalDeviceData.value.splice(originalIndex, 1);
-//     }
-
-//     console.log("deletedExistingDeviceData:", deletedExistingDeviceData.value);
-//     console.log("Updated originalDeviceData:", originalDeviceData.value);
-// };
 const removeExistingDataField = (index) => {
-    const deletedItem = existingDeviceData.value[index];
-    deletedExistingDeviceData.value.push(deletedItem);
-    existingDeviceData.value.splice(index, 1);
+    const deletedItem = currDeviceDetailsData.value[index];
+    deletedCurrDeviceData.value.push(deletedItem);
+    currDeviceDetailsData.value.splice(index, 1);
 };
-
 
 const removeNewDataField = (index) => {
-    newDeviceData.value.splice(index, 1);
+    newDeviceDetailsData.value.splice(index, 1);
 };
 
-// Validation rules
-const requiredIfValue = (item) => {
-    return () => !item.value || item.key.trim() || "Key harus diisi jika value ada";
+const requiredifNewData = (item) => {
+    if (!item.title.trim() && !item.data.trim()) {
+        return "Judul data tidak kosong";
+    }
+    if (item.data.trim() && !item.title.trim()) {
+        return "Judul data tidak kosong";
+    }
+    return true;
 };
 
-const requiredIfKey = (item) => {
-    return () => !item.key || item.value.trim() || "Value harus diisi jika key ada";
+const requiredifNewTitle = (item) => {
+    if (!item.title.trim() && !item.data.trim()) {
+        return "Isi data tidak kosong";
+    }
+    if (item.title.trim() && !item.data.trim()) {
+        return "Isi data tidak kosong";
+    }
+    return true;
 };
 
-function getEditedDeviceData(originalDataParam, existingDataParam) {
-    // Reset temporary arrays
+const requiredifCurrData = (item) => {
+    if (!item.title.trim() && !item.data.trim()) {
+        return "Judul data tidak kosong";
+    }
+    if (item.data.trim() && !item.title.trim()) {
+        return "Judul data tidak kosong";
+    }
+    return true;
+};
+
+const requiredifCurrTitle = (item) => {
+    if (!item.title.trim() && !item.data.trim()) {
+        return "Isi data tidak kosong";
+    }
+    if (item.title.trim() && !item.data.trim()) {
+        return "Isi data tidak kosong";
+    }
+    return true;
+};
+
+const noDuplicateTitles = (itemParam, index, isNewData) => {
+    // Gabungkan semua data yang ada (baik existing maupun new)
+    const allItems = [
+        ...currDeviceDetailsData.value,
+        ...newDeviceDetailsData.value
+    ];
+
+    // Cari apakah ada judul yang sama di container lain
+    const duplicate = allItems.some((otherItem, otherIndex) => {
+        // Skip item yang sedang dicek
+        if (isNewData && otherIndex >= currDeviceDetailsData.value.length) {
+            // Jika item baru, bandingkan hanya dengan index yang berbeda
+            return (
+                otherIndex !== (index + currDeviceDetailsData.value.length) &&
+                otherItem.title &&
+                otherItem.title.trim() === itemParam.title.trim()
+            );
+        } else if (!isNewData) {
+            // Jika item existing, bandingkan dengan index yang berbeda
+            return (
+                otherIndex !== index &&
+                otherItem.title &&
+                otherItem.title.trim() === itemParam.title.trim()
+            );
+        }
+        return false;
+    });
+
+    return !duplicate || "Judul tidak boleh sama dengan yang lain";
+};
+
+// Check if add button should be disabled
+const isDisableAddContainer = computed(() => {
+    if (newDeviceDetailsData.value.length === 0) return false;
+    const lastItem = newDeviceDetailsData.value[newDeviceDetailsData.value.length - 1];
+    return !lastItem.title.trim() || !lastItem.data.trim();
+});
+
+// Fungsi validasi untuk submit
+// function validateDeviceData(deviceData) {
+//     // Validasi tidak ada judul kosong dan tidak ada duplikat
+//     const titles = new Set();
+//     let isValid = true;
+
+//     const filteredData = deviceData.filter(container => {
+//         if (!container.title.trim() || !container.data.trim()) {
+//             return false;
+//         }
+
+//         if (titles.has(container.title.trim())) {
+//             isValid = false;
+//             return false;
+//         }
+
+//         titles.add(container.title.trim());
+//         return true;
+//     });
+
+//     return isValid ? filteredData : null;
+// }
+
+
+
+////////////////////
+
+function validateDeviceData() {
+    const allTitles = new Set();
+    let isValid = true;
+
+    // Validasi data existing
+    currDeviceDetailsData.value.forEach(item => {
+        if (!item.title.trim() || !item.data.trim()) {
+            isValid = false;
+            return;
+        }
+
+        if (allTitles.has(item.title.trim())) {
+            isValid = false;
+        } else {
+            allTitles.add(item.title.trim());
+        }
+    });
+
+    // Validasi data baru
+    newDeviceDetailsData.value.forEach(item => {
+        if (!item.title.trim() || !item.data.trim()) {
+            isValid = false;
+            return;
+        }
+
+        if (allTitles.has(item.title.trim())) {
+            isValid = false;
+        } else {
+            allTitles.add(item.title.trim());
+        }
+    });
+
+    return isValid;
+}
+const getEditedDeviceData = (originalDataParam, existingDataParam) => {
     const newDeleted = [];
     const newUpdated = [];
     const newAdded = [];
 
-    // Fungsi helper untuk mengecek duplikasi
-    const isDuplicate = (arr, key, value) => {
-        return arr.some(item => item.key === key && item.value === value);
+    const isDuplicate = (arr, title, data) => {
+        return arr.some(item => item.title === title && item.data === data);
     };
 
-    // 1. Cari data yang dihapus (ada di original tapi tidak ada di existing)
     originalDataParam.forEach(originalItem => {
-        const stillExists = existingDataParam.some(item => item.key === originalItem.key);
-        if (!stillExists && !isDuplicate(newDeleted, originalItem.key, originalItem.value)) {
+        const stillExists = existingDataParam.some(item => item.title === originalItem.title);
+        if (!stillExists && !isDuplicate(newDeleted, originalItem.title, originalItem.data)) {
             newDeleted.push(originalItem);
         }
     });
 
-    // 2. Proses existing data
     existingDataParam.forEach(existingItem => {
-        const originalItem = originalDataParam.find(item => item.key === existingItem.key);
+        const originalItem = originalDataParam.find(item => item.title === existingItem.title);
 
-        // Case 1: Key tidak ada di original (data baru)
         if (!originalItem) {
-            if (!isDuplicate(newAdded, existingItem.key, existingItem.value)) {
+            if (!isDuplicate(newAdded, existingItem.title, existingItem.data)) {
                 newAdded.push(existingItem);
             }
-        }
-        // Case 2: Key sama tapi value berbeda (data diupdate)
-        else if (originalItem.value !== existingItem.value) {
-            if (!isDuplicate(newUpdated, existingItem.key, existingItem.value)) {
+        } else if (originalItem.data !== existingItem.data) {
+            if (!isDuplicate(newUpdated, existingItem.title, existingItem.data)) {
                 newUpdated.push({
-                    key: existingItem.key,
-                    oldValue: originalItem.value,
-                    newValue: existingItem.value
+                    title: existingItem.title,
+                    data: existingItem.data
                 });
             }
-        }
-        // Case 3: Value sama tapi key berbeda (key diubah)
-        else {
-            const originalItemWithSameValue = originalDataParam.find(
-                item => item.value === existingItem.value && item.key !== existingItem.key
+        } else {
+            const originalItemWithSameData = originalDataParam.find(
+                item => item.data === existingItem.data && item.title !== existingItem.title
             );
 
-            if (originalItemWithSameValue &&
-                !isDuplicate(newDeleted, originalItemWithSameValue.key, originalItemWithSameValue.value) &&
-                !isDuplicate(newAdded, existingItem.key, existingItem.value)) {
-                newDeleted.push(originalItemWithSameValue);
+            if (originalItemWithSameData &&
+                !isDuplicate(newDeleted, originalItemWithSameData.title, originalItemWithSameData.data) &&
+                !isDuplicate(newAdded, existingItem.title, existingItem.data)) {
+                newDeleted.push(originalItemWithSameData);
                 newAdded.push(existingItem);
             }
         }
     });
 
-    // Update the refs
-    deletedExistingDeviceData.value = [...newDeleted];
-    updatedExistingDeviceData.value = [...newUpdated];
-    addedExistingDeviceData.value = [...newAdded];
-}
+    deletedCurrDeviceData.value = [...newDeleted];
+    updatedCurrDeviceDetailsData.value = [...newUpdated];
+    addedCurrDeviceData.value = [...newAdded];
+};
 
-// Check if add button should be disabled
-const isAddButtonDisabled = computed(() => {
-    if (newDeviceData.value.length === 0) return false;
-    const lastItem = newDeviceData.value[newDeviceData.value.length - 1];
-    return !lastItem.key.trim() || !lastItem.value.trim();
-});
+
 
 
 ////////////// DEVICE ATTACHMENT //////////////
@@ -412,25 +514,30 @@ watch(
                 device_activities: newVal.device_activities || [],
             });
 
-            // Convert existing device_data to array format
+            // Convert curr device_data to array format
             if (newVal.device_data) {
                 const newData = Object.entries(newVal.device_data)
-                    .map(([key, value]) => ({ key, value }));
+                    .map(([key, value]) => ({
+                        title: key,    // Mengganti 'key' dengan 'title'
+                        data: value    // Mengganti 'value' dengan 'data'
+                    }));
 
-                // Update existingDeviceData tanpa memicu watcher tambahan
-                existingDeviceData.value = newData;
+                // Update currDeviceDetailsData tanpa memicu watcher tambahan
+                currDeviceDetailsData.value = newData;
 
                 // Simpan original data untuk komparasi nanti
-                originalDeviceData.value = JSON.parse(JSON.stringify(newData));
+                originalDeviceDetailsData.value = JSON.parse(JSON.stringify(newData));
             } else {
-                existingDeviceData.value = [];
-                originalDeviceData.value = [];
+                currDeviceDetailsData.value = [];
+                originalDeviceDetailsData.value = [];
             }
+
+
 
             // Reset new data dan deleted data
 
-            deletedExistingDeviceData.value = [];
-            updatedExistingDeviceData.value = [];
+            deletedCurrDeviceData.value = [];
+            updatedCurrDeviceDetailsData.value = [];
 
             // Handle image
             if (newVal.device_attachment?.attachment_data) {
@@ -442,7 +549,7 @@ watch(
 );
 
 onMounted(() => {
-    originalDeviceData.value = JSON.parse(JSON.stringify(existingDeviceData.value));
+    originalDeviceDetailsData.value = JSON.parse(JSON.stringify(currDeviceDetailsData.value));
 });
 
 
@@ -458,7 +565,9 @@ const formatTimestamp = (epoch) => {
     });
 };
 
-////////////// INPUT RULES //////////////
+
+////////////////////
+
 const deviceNameRules = [
     (v) => !!v || "Nama perangkat harus diisi",
     (v) => v.length >= 6 || "Nama perangkat minimal 6 karakter",
@@ -471,83 +580,138 @@ const passwordRules = [
     (v) => v.length <= 30 || "Password maksimal 30 karakter",
 ];
 
+
 const readIntervalRules = [
     (v) => !!v || "Interval harus diisi",
     (v) => (v >= 1 && v <= 60) || "Interval harus antara 1 hingga 60 detik",
 ];
 
 
+const isDisableSubmitBtn = computed(() => {
+    // Cek apakah nama perangkat valid (6-50 karakter)
+    const isDeviceNameValid = currDeviceDataLocal.device_name && currDeviceDataLocal.device_name.length >= 6 && currDeviceDataLocal.device_name.length <= 50;
+
+    // Cek apakah password valid (8-30 karakter)
+    const isPasswordValid = currDeviceDataLocal.device_password && currDeviceDataLocal.device_password.length >= 8 && currDeviceDataLocal.device_password.length <= 30;
+
+    // Cek apakah interval pembacaan valid (1-60 detik)
+    const isReadIntervalValid = currDeviceDataLocal.device_read_interval >= 1 && currDeviceDataLocal.device_read_interval <= 60;
+
+    // Cek apakah semua data valid
+
+    // check lenght curr atau new data , jika curr data kosong maka hanya 
+
+
+    const isCurrDeviceDetailsDataValid = currDeviceDetailsData.value.every(item => {
+        return (item.data.trim() && item.title.trim()); // Pastikan keduanya tidak kosong
+    });
+
+    const isNewDeviceDetailsDataValid = newDeviceDetailsData.value.every(item => {
+        return (item.data.trim() && item.title.trim()); // Pastikan keduanya tidak kosong
+    });
+
+    console.log("ini 2 isCurrDeviceDetailsDataValid: ", isCurrDeviceDetailsDataValid)
+    console.log("ini 2 isNewDeviceDetailsDataValid: ", isNewDeviceDetailsDataValid)
+    // Jika salah satu tidak valid, maka tombol register harus disable
+    return !(isDeviceNameValid && isPasswordValid && isReadIntervalValid && isCurrDeviceDetailsDataValid && isNewDeviceDetailsDataValid);
+});
 
 
 const submitDeviceUpdate = () => {
-
     console.group("Submit Update");
+
+    if (!validateDeviceData()) {
+        alert("Terdapat judul yang sama atau field yang kosong");
+        return;
+    }
+
+    // Log informasi perangkat
     console.log("Device Name:", currDeviceDataLocal.device_name);
     console.log("Password:", currDeviceDataLocal.device_password);
     console.log("Read Interval:", currDeviceDataLocal.device_read_interval);
 
-    // 4. Log informasi gambar
+    // Log informasi gambar
     console.log("Existing Image:", existingImageSrc.value ? "Exists" : "None");
     console.log("New Image:", imageSrc.value ? "Uploaded" : "None");
 
+    // Reset tracking arrays sebelum pemrosesan data
+    deletedCurrDeviceData.value = [];
+    updatedCurrDeviceDetailsData.value = [];
+    addedCurrDeviceData.value = [];
 
-    // Reset tracking arrays
-    deletedExistingDeviceData.value = [];
-    updatedExistingDeviceData.value = [];
-    addedExistingDeviceData.value = [];
-    // newDeviceData.value = [];
+    // Proses perubahan data perangkat
+    getEditedDeviceData(originalDeviceDetailsData.value, currDeviceDetailsData.value);
 
-    // Process changes
-    getEditedDeviceData(originalDeviceData.value, existingDeviceData.value);
+    console.log("Original Data:", originalDeviceDetailsData.value);
+    console.log("Existing Data:", currDeviceDetailsData.value);
+    console.log("Updated Existing Data:", updatedCurrDeviceDetailsData.value);
+    console.log("Added Existing Data:", addedCurrDeviceData.value);
+    console.log("Deleted Data:", deletedCurrDeviceData.value);
+    console.log("Truly New Data:", newDeviceDetailsData.value);
 
-    console.log("Original Data:", originalDeviceData.value);
-    console.log("Existing Data:", existingDeviceData.value);
-    console.log("Updated Existing Data:", updatedExistingDeviceData.value);
-    console.log("Added Existing Data:", addedExistingDeviceData.value);
+    // Menggabungkan data baru dan data yang ditambahkan tanpa duplikasi
+    const combinedNewDeviceData = [...addedCurrDeviceData.value];
 
-    console.log("Deleted Data:", deletedExistingDeviceData.value);
-    console.log("Truly New Data:", newDeviceData.value);
-
-    // Combine both new and added data while avoiding duplicates
-    const combinedNewDeviceData = [...addedExistingDeviceData.value];
-
-    newDeviceData.value.forEach(item => {
-        // Check if item with same key and value already exists
+    newDeviceDetailsData.value.forEach(item => {
         const exists = combinedNewDeviceData.some(
             existingItem => existingItem.key === item.key && existingItem.value === item.value
         );
-        if (!exists && item.key && item.value) {  // Also ensure key and value aren't empty
+        if (!exists && item.key && item.value) {
             combinedNewDeviceData.push(item);
         }
     });
 
-    console.log("combinedNewDeviceData: ", combinedNewDeviceData);
+    console.log("Combined New Device Data:", combinedNewDeviceData);
+
+    // Buat objek `data` hanya jika ada update, insert, atau delete
+    let detaildDataPayload = {};
+    if (updatedCurrDeviceDetailsData.value.length > 0) {
+        detaildDataPayload.update = Object.fromEntries(updatedCurrDeviceDetailsData.value.map(item => [item.title, item.data]));
+    }
+    if (combinedNewDeviceData.length > 0) {
+        detaildDataPayload.insert = Object.fromEntries(combinedNewDeviceData.map(item => [item.title, item.data]));
+    }
+    if (deletedCurrDeviceData.value.length > 0) {
+        detaildDataPayload.delete = deletedCurrDeviceData.value.map(item => item.title);
+    }
+
+    detaildDataPayload = validateDeviceData(detaildDataPayload);
 
 
-    console.groupEnd();
 
+
+
+    // Pastikan `data` hanya ditambahkan jika ada isinya
+    const changeFields = {
+        name: currDeviceDataLocal.device_name,
+        password: currDeviceDataLocal.device_password,
+        read_interval: currDeviceDataLocal.device_read_interval,
+    };
+
+    if (Object.keys(detaildDataPayload).length > 0) {
+        changeFields.data = detaildDataPayload;
+    }
+
+    // Pastikan `attachment` hanya ditambahkan jika ada perubahan gambar
+    if (existingImageSrc.value) {
+        changeFields.attachment = {
+            attachement_id: currDeviceDataLocal.attachment_id,
+            attachment_change_fields: {
+                attachment_name: "new name", // Bisa diganti dengan nilai aktual
+                attachment_data: "new data"  // Bisa diganti dengan nilai aktual
+            }
+        };
+    }
+
+    // Susun payload akhir
     const updatedData = {
         device_id: currDeviceDataLocal.device_id,
-        change_fields: {
-            name: currDeviceDataLocal.device_name,
-            password: currDeviceDataLocal.device_password,
-            read_interval: currDeviceDataLocal.device_read_interval,
-            data: {
-                update: Object.fromEntries(updatedExistingDeviceData.value.map(item => [item.key, item.value])),
-                insert: Object.fromEntries(combinedNewDeviceData.map(item => [item.key, item.value])),
-                delete: deletedExistingDeviceData.value.map(item => item.key),
-            },
-            attachment: existingImageSrc.value ? {
-                attachement_id: currDeviceDataLocal.attachment_id,
-                attachment_change_fields: {
-                    attachment_name: "new name", // Bisa diganti dengan nilai aktual
-                    attachment_data: "new data"  // Bisa diganti dengan nilai aktual
-                }
-            } : null
-        }
+        change_fields: changeFields
     };
 
     console.log("Final Payload:", updatedData);
+
+    console.groupEnd();
 
 
     // emit("update-device", updatedData);

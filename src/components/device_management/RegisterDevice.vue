@@ -7,11 +7,14 @@
             </v-btn>
         </v-col>
 
-        <v-row class="fill-height">
+        <v-row class="fill-height ">
+
+
             <v-col class="mx-auto px-0">
                 <p class="text-h6 font-weight-medium ma-0 text-center">Tambah Perangkat Baru</p>
 
-                <v-container class="pa-4 elevation-1">
+                <v-container class="pa-4 flex-grow-1 overflow-y-auto" style="max-height: 624px;">
+                    
 
                     <v-form ref="registerDeviceForm" @submit.prevent="submitRegisterDevice" class="d-flex flex-column">
                         <v-text-field maxlength="50" v-model="device_name" label="Nama Perangkat" outlined dense
@@ -22,6 +25,12 @@
                         <v-text-field v-model="password" label="Password" outlined dense prepend-inner-icon="mdi-lock"
                             class="mb-4" :rules="passwordRules" required type="password">
                         </v-text-field>
+
+                        <!-- Menampilkan gambar yang sudah ada -->
+                        <v-row class="d-flex justify-center mt-1 mb-3">
+                            <v-img v-if="device_image_src && device_image" :src="device_image_src" class="d-flex"
+                                max-height="200" max-width="450" contain />
+                        </v-row>
 
                         <!-- Upload Gambar -->
                         <v-file-input v-model="device_image" label="Gambar Perangkat (Opsional, max 5MB)" outlined dense
@@ -43,35 +52,32 @@
                         </v-row>
 
 
-                        <div class="scrollable-container pa-0">
-                          
-
-                            <v-container v-for="(container, index) in dataContainers" :key="index"
-                                class="border ma-0 px-1">
+                        <div class="scrollable-container pa-0 border ma-0">
+                            <v-container v-for="(item, index) in dataContainers" :key="index">
                                 <v-row>
                                     <v-col cols="5.5" class="px-1 py-0">
-                                        <v-text-field v-model="container.title"
-                                            label="Judul (Lokasi, Alamat IP, Spesifikasi dll)" outlined required
-                                            :rules="[requiredIfData(container)]">
+                                        <v-text-field v-model="item.title"
+                                            label="Judul (Lokasi, Alamat IP, Spesifikasi dll)" outlined :rules="[
+                                                requiredIfData(item),
+                                                () => noDuplicateTitles(item, index, dataContainers)
+                                            ]">
                                         </v-text-field>
                                     </v-col>
-
                                     <v-col cols="5.5" class="px-1 py-0">
-                                        <v-text-field v-model="container.data" label="Isi data" outlined dense required
-                                            :rules="[requiredIfTitle(container)]">
+                                        <v-text-field v-model="item.data" label="Isi data" outlined
+                                            :rules="[requiredIfTitle(item)]">
                                         </v-text-field>
-
                                     </v-col>
-
                                     <v-col cols="1" class="d-flex align-center px-0">
                                         <v-btn @click="removeContainer(index)" color="error"
-                                            style="max-height: 30px; width: 30px; min-width: 30px;" size="small">
+                                            style="max-height: 30px; width: 30px; min-width: 30px" size="small">
                                             <v-icon>mdi-close</v-icon>
                                         </v-btn>
                                     </v-col>
                                 </v-row>
                             </v-container>
                         </div>
+
                         <v-col cols="auto" class="d-flex align-center">
                             <v-btn @click="addDataContainer" color="primary"
                                 class="search-button rounded-circle d-flex justify-center align-center"
@@ -81,10 +87,12 @@
                             </v-btn>
                         </v-col>
                         <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="2"
-                            :disabled="isDisableRegisterDevice">
+                            :disabled="isDisableSubmitBtn">
                             Tambah Perangkat
                         </v-btn>
                     </v-form>
+
+                    
                 </v-container>
             </v-col>
         </v-row>
@@ -102,49 +110,10 @@ const emit = defineEmits(["toogle-add-device-state", "register-device"]);
 
 const device_name = ref("");
 const password = ref("");
+const device_image_src = ref("");
 const device_image = ref(null);
 const device_image_base64 = ref("");
 const device_read_interval = ref(0)
-
-const deviceNameRules = [
-    (v) => !!v || "Nama perangkat harus diisi",
-    (v) => v.length >= 6 || "Nama perangkat minimal 6 karakter",
-    (v) => v.length <= 50 || "Nama perangkat maksimal 50 karakter",
-];
-
-const passwordRules = [
-    (v) => !!v || "Password harus diisi",
-    (v) => v.length >= 8 || "Password minimal 8 karakter",
-    (v) => v.length <= 30 || "Password maksimal 30 karakter",
-];
-
-
-const readIntervalRules = [
-    (v) => !!v || "Interval harus diisi",
-    (v) => (v >= 1 && v <= 60) || "Interval harus antara 1 hingga 60 detik",
-];
-
-
-
-
-const isDisableRegisterDevice = computed(() => {
-    // Cek apakah nama perangkat valid (6-50 karakter)
-    const isDeviceNameValid = device_name.value && device_name.value.length >= 6 && device_name.value.length <= 50;
-
-    // Cek apakah password valid (8-30 karakter)
-    const isPasswordValid = password.value && password.value.length >= 8 && password.value.length <= 30;
-
-    // Cek apakah interval pembacaan valid (1-60 detik)
-    const isReadIntervalValid = device_read_interval.value >= 1 && device_read_interval.value <= 60;
-
-    // Cek apakah semua dataContainers valid
-    const isDeviceDataValid = dataContainers.value.every(container => {
-        return (container.data.trim() && container.title.trim()); // Pastikan keduanya tidak kosong
-    });
-
-    // Jika salah satu tidak valid, maka tombol register harus disable
-    return !(isDeviceNameValid && isPasswordValid && isReadIntervalValid && isDeviceDataValid);
-});
 
 
 
@@ -153,6 +122,7 @@ const handleFileUpload = async (event) => {
 
     if (!file) {
         device_image_base64.value = "";
+        device_image_src.value = "";
         return;
     }
 
@@ -171,6 +141,10 @@ const handleFileUpload = async (event) => {
         device_image.value = null;
         return;
     }
+
+    // Buat URL objek untuk preview gambar
+    device_image_src.value = URL.createObjectURL(file);
+    console.log("Preview image URL:", device_image_src.value);
 
     try {
         const compressedFile = await compressToZip(file, file.name);
@@ -193,6 +167,7 @@ const convertImageToBase64 = (file) => {
     reader.readAsDataURL(file);
     reader.onload = () => {
         device_image_base64.value = reader.result;
+
     };
     reader.onerror = (error) => {
         console.error("Error converting file to Base64:", error);
@@ -213,29 +188,28 @@ const dataContainers = ref([
 ]);
 
 const addDataContainer = () => {
-    if (dataContainers.value.length > 0) {
-        const lastContainer = dataContainers.value[dataContainers.value.length - 1];
+    // Jika belum ada container, langsung tambahkan container pertama
+    if (dataContainers.value.length === 0) {
+        dataContainers.value.push({ title: "", data: "" });
+        return;
+    }
 
-        // Pastikan judul dan data terakhir sudah diisi sebelum menambah container baru
-        if (!lastContainer.title.trim() || !lastContainer.data.trim()) {
-            popUpProps.value = {
-                status: "error",
-                errorMessage: "Harap isi judul dan data sebelum menambahkan container baru",
-                errorCode: "EMPTY_CONTAINER",
-            };
-            popupVisible.value = true;
-            return;
-        }
+    const lastContainer = dataContainers.value[dataContainers.value.length - 1];
+
+    // Pastikan judul dan data terakhir sudah diisi sebelum menambah container baru
+    if (!lastContainer.title.trim() || !lastContainer.data.trim()) {
+        popUpProps.value = {
+            status: "error",
+            errorMessage: "Harap isi judul dan isi data sebelum menambahkan container baru",
+            errorCode: "EMPTY_CONTAINER",
+        };
+        popupVisible.value = true;
+        return;
     }
 
     dataContainers.value.push({ title: "", data: "" });
 };
 
-const isDisableAddContainer = computed(() => {
-    if (dataContainers.value.length === 0) return false;
-    const lastContainer = dataContainers.value[dataContainers.value.length - 1];
-    return !lastContainer.title.trim() || !lastContainer.data.trim();
-});
 
 
 const removeContainer = (index) => {
@@ -243,30 +217,73 @@ const removeContainer = (index) => {
 };
 
 
-const requiredIfData = (container) => {
-    return () => {
-        if (container.data.trim() && !container.title.trim()) {
-            return "Judul harus diisi jika isi data tidak kosong";
-        }
-        return true;
-    };
-};
+const noDuplicateTitles = (itemParam, index, items) => {
+    // Cari apakah ada judul yang sama di container lain
+    const duplicate = items.some(
+        (otherContainer, otherIndex) =>
+            otherIndex !== index &&
+            otherContainer.title &&
+            otherContainer.title.trim() === itemParam.title.trim()
+    );
 
-const requiredIfTitle = (container) => {
-    return () => {
-        if (container.title.trim() && !container.data.trim()) {
-            return "Isi data harus diisi jika judul tidak kosong";
-        }
-        return true;
-    };
+    return !duplicate || "Judul sudah ada";
 };
 
 
+const requiredIfData = (item) => {
+    if (!item.title.trim() && !item.data.trim()) {
+        return "Judul data tidak kosong";
+    }
+    if (item.data.trim() && !item.title.trim()) {
+        return "Judul data tidak kosong";
+    }
+    return true;
+};
 
+const requiredIfTitle = (item) => {
+    if (!item.title.trim() && !item.data.trim()) {
+        return "Isi data tidak kosong";
+    }
+    if (item.title.trim() && !item.data.trim()) {
+        return "Isi data tidak kosong";
+    }
+    return true;
+};
+
+
+const isDisableAddContainer = computed(() => {
+    console.log("dataContainers.value.length: ", dataContainers.value.length)
+    // Jika tidak ada container, tombol aktif
+    if (dataContainers.value.length === 0) return false;
+
+
+    // Disable jika ada container yang tidak valid
+    return dataContainers.value.some(container =>
+        requiredIfData(container) !== true || requiredIfTitle(container) !== true
+    );
+});
+// Fungsi validasi untuk submit
 function validateDeviceData(deviceData) {
-    return deviceData.filter(container => container.title.trim() && container.data.trim());
-}
+    // Validasi tidak ada judul kosong dan tidak ada duplikat
+    const titles = new Set();
+    let isValid = true;
 
+    const filteredData = deviceData.filter(container => {
+        if (!container.title.trim() || !container.data.trim()) {
+            return false;
+        }
+
+        if (titles.has(container.title.trim())) {
+            isValid = false;
+            return false;
+        }
+
+        titles.add(container.title.trim());
+        return true;
+    });
+
+    return isValid ? filteredData : null;
+}
 
 const formatDataContainers = (dataContainers) => {
     let formattedData = {};
@@ -282,6 +299,46 @@ const formatDataContainers = (dataContainers) => {
 
 
 ///////////////////// //////////////////////
+
+const deviceNameRules = [
+    (v) => !!v || "Nama perangkat harus diisi",
+    (v) => v.length >= 6 || "Nama perangkat minimal 6 karakter",
+    (v) => v.length <= 50 || "Nama perangkat maksimal 50 karakter",
+];
+
+const passwordRules = [
+    (v) => !!v || "Password harus diisi",
+    (v) => v.length >= 8 || "Password minimal 8 karakter",
+    (v) => v.length <= 30 || "Password maksimal 30 karakter",
+];
+
+
+const readIntervalRules = [
+    (v) => !!v || "Interval harus diisi",
+    (v) => (v >= 1 && v <= 60) || "Interval harus antara 1 hingga 60 detik",
+];
+
+
+
+const isDisableSubmitBtn = computed(() => {
+    // Cek apakah nama perangkat valid (6-50 karakter)
+    const isDeviceNameValid = device_name.value && device_name.value.length >= 6 && device_name.value.length <= 50;
+
+    // Cek apakah password valid (8-30 karakter)
+    const isPasswordValid = password.value && password.value.length >= 8 && password.value.length <= 30;
+
+    // Cek apakah interval pembacaan valid (1-60 detik)
+    const isReadIntervalValid = device_read_interval.value >= 1 && device_read_interval.value <= 60;
+
+    // Cek apakah semua dataContainers valid
+    const isDeviceDataValid = dataContainers.value.every(container => {
+        return (container.data.trim() && container.title.trim()); // Pastikan keduanya tidak kosong
+    });
+
+    // Jika salah satu tidak valid, maka tombol register harus disable
+    return !(isDeviceNameValid && isPasswordValid && isReadIntervalValid && isDeviceDataValid);
+});
+
 
 
 const submitRegisterDevice = async () => {
