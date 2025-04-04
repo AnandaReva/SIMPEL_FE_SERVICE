@@ -13,6 +13,10 @@
                     Detail Perangkat
                 </p>
 
+
+
+                <br>
+
                 <v-container class="pa-4 flex-grow-1 overflow-y-auto" style="max-height: 624px;">
                     <v-form ref="registerDeviceForm" @submit.prevent="submitDeviceUpdate" class="d-flex flex-column">
                         <v-text-field maxlength="50" v-model="currDeviceDataLocal.device_name" label="Nama Perangkat"
@@ -31,18 +35,31 @@
                         </v-number-input>
 
                         <!-- Menampilkan gambar yang sudah ada -->
+                        <!-- Jika ada gambar   -->
+
+                        <!--  existingImageSrc:  {{existingImageSrc}}  -->
+                        <!-- {{  extractImageFromAttachment(originalDeviceData.device_attachment.attachment_data) }} -->
+
+                        <v-container v-if="existingImageSrc == originalDeviceData.device_image_src">
+                            yess
+                            type: {{ typeof existingImageSrc }}
+                            typeof {{ typeof originalDeviceData.device_image_src }}
+                        </v-container>
+
+
+
 
                         <v-row class="d-flex justify-center mt-1 mb-3">
-                            <v-img v-if="existingImageSrc" :src="existingImageSrc" class="mt-4 mb-5" max-height="200"
+                            <v-img v-if="existingImageSrc || newDeviceImageSrc && newDeviceImage"
+                                :src="existingImageSrc || newDeviceImageSrc" class="mt-4 mb-5" max-height="200"
                                 contain />
-
                         </v-row>
-                        
-                        
+
+
 
                         <!-- Update Gambar -->
-                        <v-file-input v-model="device_image" label="Ubah Gambar Perangkat (Opsional, max 5MB)" outlined
-                            dense prepend-inner-icon="mdi-image" class="mb-4" accept="image/png, image/jpeg"
+                        <v-file-input v-model="newDeviceImage" label="Ubah Gambar Perangkat (Opsional, max 5MB)"
+                            outlined dense prepend-inner-icon="mdi-image" class="mb-4" accept="image/png, image/jpeg"
                             @change="handleFileUpload">
                         </v-file-input>
 
@@ -59,9 +76,9 @@
 
 
 
-                            
+
                             <v-container v-for="(currData, index) in currDeviceDetailsData" :key="'existing-' + index">
-                                {{ currDeviceDetailsData }}
+                                <!-- {{ currDeviceDetailsData }} -->
                                 <v-row>
                                     <v-col cols="5.5" class="px-1 py-0">
                                         <v-text-field v-model="currData.title" outlined hide-details
@@ -83,9 +100,11 @@
                             </v-container>
 
 
+
+
                             <!-- Form untuk menambahkan data baru -->
                             <v-container v-for="(newData, index) in newDeviceDetailsData" :key="'new-' + index">
-                                {{ newDeviceDetailsData }}
+                                <!-- {{ newDeviceDetailsData }} -->
                                 <v-row>
                                     <v-col cols="5.5" class="px-1 py-0">
                                         <v-text-field v-model="newData.title"
@@ -118,7 +137,7 @@
                             </v-btn>
                         </v-col>
 
-                        {{ isDisableSubmitBtn }}
+                        <!-- {{ isDisableSubmitBtn }} -->
                         <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="2"
                             :disabled="isDisableSubmitBtn">
                             Perbarui Data Perangkat
@@ -221,9 +240,6 @@ import { VNumberInput } from 'vuetify/labs/VNumberInput'
 const emit = defineEmits(["update-device", "toogle-detail-device-state"]);
 const props = defineProps(["currDeviceData"]);
 
-const imageSrc = ref("");
-const existingImageSrc = ref("");
-const newDeviceImage = ref("")
 
 ////////////// DEVICE DATA //////////////
 // Initialize local data with props
@@ -235,14 +251,25 @@ const currDeviceDataLocal = reactive({
     device_attachment: {},
     device_activities: [],
 });
+
+// Initialize original device data
+const originalDeviceData = reactive({
+    device_id: 0,
+    device_name: "",
+    device_password: "",
+    device_read_interval: 0,
+    device_image_src: "",
+    device_attachment_id: 0,
+});
+
 const currDeviceDetailsData = ref([]); // Untuk data yang sudah ada (bisa diedit key dan value)
 const newDeviceDetailsData = ref([]);      // Untuk data baru yang akan ditambahkan
 
 
 const originalDeviceDetailsData = ref([])
 const updatedCurrDeviceDetailsData = ref([])
-const deletedCurrDeviceData = ref([])
-const addedCurrDeviceData = ref([])
+const deletedCurrDeviceDetailsData = ref([])
+const addedCurrDeviceDetailsData = ref([])
 // Methods for device data management
 const addNewDataField = () => {
     if (newDeviceDetailsData.value.length === 0 ||
@@ -254,7 +281,7 @@ const addNewDataField = () => {
 
 const removeExistingDataField = (index) => {
     const deletedItem = currDeviceDetailsData.value[index];
-    deletedCurrDeviceData.value.push(deletedItem);
+    deletedCurrDeviceDetailsData.value.push(deletedItem);
     currDeviceDetailsData.value.splice(index, 1);
 };
 
@@ -301,6 +328,10 @@ const requiredifCurrTitle = (item) => {
     }
     return true;
 };
+
+
+
+
 
 const noDuplicateTitles = (itemParam, index, isNewData) => {
     // Gabungkan semua data yang ada (baik existing maupun new)
@@ -445,56 +476,118 @@ const getEditedDeviceData = (originalDataParam, existingDataParam) => {
         }
     });
 
-    deletedCurrDeviceData.value = [...newDeleted];
+    deletedCurrDeviceDetailsData.value = [...newDeleted];
     updatedCurrDeviceDetailsData.value = [...newUpdated];
-    addedCurrDeviceData.value = [...newAdded];
+    addedCurrDeviceDetailsData.value = [...newAdded];
 };
-
-
-
 
 ////////////// DEVICE ATTACHMENT //////////////
 
-// Function to extract image from base64 zip data
+
+const existingImageSrc = ref("");
+const newDeviceImage = ref(null)
+const newDeviceImageSrc = ref("");
+const newDeviceImageBase64 = ref("");
+
+
+// Function to handle new file upload
+const handleFileUpload = async (event) => {
+    const file = event.target?.files?.[0] || event;
+
+    if (!file) {
+        newDeviceImageBase64.value = "";
+        newDeviceImageSrc.value = "";
+        return;
+    }
+
+    if (!(file instanceof Blob)) {
+        console.error("Invalid file type");
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        popUpProps.value = {
+            status: "error",
+            errorMessage: "Ukuran gambar maksimal 5MB",
+            errorCode: "FILE_SIZE_EXCEEDED",
+        };
+        popupVisible.value = true;
+        newDeviceImage.value = null;
+        return;
+    }
+
+    // Buat URL objek untuk preview gambar
+    newDeviceImageSrc.value = URL.createObjectURL(file);
+    console.log("Preview image URL:", newDeviceImageSrc.value);
+
+    try {
+        const compressedFile = await compressToZip(file, file.name);
+        convertImageToBase64(compressedFile);
+
+
+        existingImageSrc.value = null;
+
+        console.log("existingImageSrc:", existingImageSrc.value);
+        console.log("newDeviceImageSrc:", newDeviceImageSrc.value);
+
+
+
+        console.group("Compressed file details");
+
+
+        console.log("Compressed file:", compressedFile);
+        console.log("Compressed file size:", compressedFile.size);
+        console.log("Uncompressed file size:", file.size);
+
+        console.groupEnd();
+
+    } catch (error) {
+        console.error("Compression error:", error);
+    }
+};
+
+const convertImageToBase64 = (file) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+        newDeviceImageBase64.value = reader.result;
+
+    };
+    reader.onerror = (error) => {
+        console.error("Error converting file to Base64:", error);
+        popUpProps.value = {
+            status: "error",
+            errorMessage: "Gagal mengonversi gambar",
+            errorCode: "BASE64_ERROR",
+        };
+        popupVisible.value = true;
+    };
+};
+
+const compressToZip = async (file, fileName) => {
+    const zip = new JSZip();
+    zip.file(fileName, file);
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    return zipBlob;
+};
+
 const extractImageFromAttachment = async (base64Data) => {
     try {
         const zip = new JSZip();
-        const zipData = await zip.loadAsync(base64Data.split(",")[1], {
-            base64: true,
-        });
+        const zipData = await zip.loadAsync(base64Data.split(",")[1], { base64: true });
 
         for (const fileName in zipData.files) {
             if (fileName.match(/\.(jpeg|jpg|png)$/i)) {
                 const fileData = await zipData.files[fileName].async("base64");
-                existingImageSrc.value = `data:image/${fileName
-                    .split(".")
-                    .pop()};base64,${fileData}`;
-                break;
+                return `data:image/${fileName.split(".").pop()};base64,${fileData}`; // ✅ RETURN di sini
             }
         }
+
+        return null; // jika tidak ada image ditemukan
     } catch (error) {
         console.error("Error extracting image from attachment:", error);
-    }
-};
-const handleZipUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    try {
-        const zip = new JSZip();
-        const zipData = await zip.loadAsync(file);
-
-        for (const fileName in zipData.files) {
-            if (fileName.match(/\.(jpeg|jpg|png)$/i)) {
-                const fileData = await zipData.files[fileName].async("base64");
-                imageSrc.value = `data:image/${fileName
-                    .split(".")
-                    .pop()};base64,${fileData}`;
-                break;
-            }
-        }
-    } catch (error) {
-        console.error("Error processing zip file:", error);
+        return null;
     }
 };
 
@@ -503,8 +596,43 @@ const handleZipUpload = async (event) => {
 // Hanya pertahankan watcher utama untuk props.currDeviceData
 watch(
     () => props.currDeviceData,
-    (newVal) => {
+    async (newVal) => {
         if (newVal) {
+
+            // console.log("New device data: ", newVal);
+            // Handle attahcment 
+
+            let originalDeviceAttachementId = null;
+            if (newVal.device_attachment?.attachment_id) {
+                originalDeviceAttachementId = newVal.device_attachment.attachment_id;
+            }
+            //    console.log("originalDeviceAttachementId: ", originalDeviceAttachementId);
+
+            let originalDeviceAttachementDataSrc = null;
+
+            if (newVal.device_attachment?.attachment_data) {
+
+                // get image src
+                originalDeviceAttachementDataSrc = await extractImageFromAttachment(newVal.device_attachment.attachment_data);
+                /*  console.log("originalDeviceAttachement: ", originalDeviceAttachementData);
+                 console.log("originalDeviceAttachementSrc: ", originalDeviceAttachementDataSrc); */
+
+                existingImageSrc.value = originalDeviceAttachementDataSrc;
+            }
+            // assign to original device data
+
+            Object.assign(originalDeviceData, {
+                device_id: newVal.device_id,
+                device_name: newVal.device_name || "",
+                device_password: newVal.device_password || "",
+                device_read_interval: newVal.device_read_interval || 1,
+                device_image_src: originalDeviceAttachementDataSrc,
+                device_attachment_id: originalDeviceAttachementId,
+            });
+
+            /*  console.log("existingImageSrc: ", existingImageSrc.value);
+             console.log("originalDeviceData: ", originalDeviceData); */
+
             // Assign basic device info
             Object.assign(currDeviceDataLocal, {
                 device_name: newVal.device_name || "",
@@ -536,13 +664,10 @@ watch(
 
             // Reset new data dan deleted data
 
-            deletedCurrDeviceData.value = [];
+            deletedCurrDeviceDetailsData.value = [];
             updatedCurrDeviceDetailsData.value = [];
 
-            // Handle image
-            if (newVal.device_attachment?.attachment_data) {
-                extractImageFromAttachment(newVal.device_attachment.attachment_data);
-            }
+
         }
     },
     { immediate: true, deep: true }
@@ -588,32 +713,46 @@ const readIntervalRules = [
 
 
 const isDisableSubmitBtn = computed(() => {
-    // Cek apakah nama perangkat valid (6-50 karakter)
-    const isDeviceNameValid = currDeviceDataLocal.device_name && currDeviceDataLocal.device_name.length >= 6 && currDeviceDataLocal.device_name.length <= 50;
+    // 1. Cek validasi form dasar
+    const isDeviceNameValid = currDeviceDataLocal.device_name &&
+        currDeviceDataLocal.device_name.length >= 6 &&
+        currDeviceDataLocal.device_name.length <= 50;
 
-    // Cek apakah password valid (8-30 karakter)
-    const isPasswordValid = currDeviceDataLocal.device_password && currDeviceDataLocal.device_password.length >= 8 && currDeviceDataLocal.device_password.length <= 30;
+    const isPasswordValid = currDeviceDataLocal.device_password &&
+        currDeviceDataLocal.device_password.length >= 8 &&
+        currDeviceDataLocal.device_password.length <= 30;
 
-    // Cek apakah interval pembacaan valid (1-60 detik)
-    const isReadIntervalValid = currDeviceDataLocal.device_read_interval >= 1 && currDeviceDataLocal.device_read_interval <= 60;
+    const isReadIntervalValid = currDeviceDataLocal.device_read_interval >= 1 &&
+        currDeviceDataLocal.device_read_interval <= 60;
 
-    // Cek apakah semua data valid
+    // 2. Cek validasi data tambahan
+    const isCurrDeviceDetailsDataValid = currDeviceDetailsData.value.every(item =>
+        item.data.trim() && item.title.trim());
 
-    // check lenght curr atau new data , jika curr data kosong maka hanya 
+    const isNewDeviceDetailsDataValid = newDeviceDetailsData.value.every(item =>
+        item.data.trim() && item.title.trim());
 
+    // 3. Cek apakah ada perubahan data
+    const isDataChanged =
+        // Cek field utama
+        currDeviceDataLocal.device_name !== originalDeviceData.device_name ||
+        currDeviceDataLocal.device_password !== originalDeviceData.device_password ||
+        currDeviceDataLocal.device_read_interval !== originalDeviceData.device_read_interval ||
+        // Cek gambar
+        (newDeviceImage.value !== null) ||
+        // Cek data tambahan
+        JSON.stringify(currDeviceDetailsData.value) !== JSON.stringify(originalDeviceDetailsData.value) ||
+        newDeviceDetailsData.value.length > 0;
 
-    const isCurrDeviceDetailsDataValid = currDeviceDetailsData.value.every(item => {
-        return (item.data.trim() && item.title.trim()); // Pastikan keduanya tidak kosong
-    });
-
-    const isNewDeviceDetailsDataValid = newDeviceDetailsData.value.every(item => {
-        return (item.data.trim() && item.title.trim()); // Pastikan keduanya tidak kosong
-    });
-
-    console.log("ini 2 isCurrDeviceDetailsDataValid: ", isCurrDeviceDetailsDataValid)
-    console.log("ini 2 isNewDeviceDetailsDataValid: ", isNewDeviceDetailsDataValid)
-    // Jika salah satu tidak valid, maka tombol register harus disable
-    return !(isDeviceNameValid && isPasswordValid && isReadIntervalValid && isCurrDeviceDetailsDataValid && isNewDeviceDetailsDataValid);
+    // Tombol disable jika:
+    // - Validasi form tidak terpenuhi ATAU
+    // - Tidak ada perubahan data
+    return !(isDeviceNameValid &&
+        isPasswordValid &&
+        isReadIntervalValid &&
+        isCurrDeviceDetailsDataValid &&
+        isNewDeviceDetailsDataValid) ||
+        !isDataChanged;
 });
 
 
@@ -625,95 +764,156 @@ const submitDeviceUpdate = () => {
         return;
     }
 
-    // Log informasi perangkat
-    console.log("Device Name:", currDeviceDataLocal.device_name);
-    console.log("Password:", currDeviceDataLocal.device_password);
-    console.log("Read Interval:", currDeviceDataLocal.device_read_interval);
+    console.log("originalDeviceData.device_id:", props.currDeviceData.device_id);
 
-    // Log informasi gambar
-    console.log("Existing Image:", existingImageSrc.value ? "Exists" : "None");
-    console.log("New Image:", imageSrc.value ? "Uploaded" : "None");
 
-    // Reset tracking arrays sebelum pemrosesan data
-    deletedCurrDeviceData.value = [];
+    // Mulai menyusun payload perubahan
+    let changeFields = {};
+
+    // Perubahan data dasar
+    if (currDeviceDataLocal.device_name !== originalDeviceData.device_name) {
+        changeFields.name = currDeviceDataLocal.device_name;
+    }
+    if (currDeviceDataLocal.device_password !== originalDeviceData.device_password) {
+        changeFields.password = currDeviceDataLocal.device_password;
+    }
+    if (currDeviceDataLocal.device_read_interval !== originalDeviceData.device_read_interval) {
+        changeFields.read_interval = currDeviceDataLocal.device_read_interval;
+    }
+
+    // Perubahan attachment
+    /*  exo:
+    changeFields.attachment = {
+        attachment_id: originalDeviceData.device_attachment_id,
+        attachment_data: newDeviceImageBase64.value
+    }
+     */
+    // Perubahan attachment
+
+    // console.log("newDeviceImage.value: ", newDeviceImage.value);
+    // console.log("newDeviceImageBase64.value: ", newDeviceImageBase64.value);
+    // console.log("existingImageSrc.value: ", existingImageSrc.value);
+    // console.log("originalDeviceData.device_image_src: ", originalDeviceData.device_image_src);
+    const imageChanged = newDeviceImageBase64.value !== "" || existingImageSrc.value !== originalDeviceData.device_image_src;
+
+    if (imageChanged) {
+        if (newDeviceImageBase64.value && newDeviceImage.value) {
+            changeFields.attachment = {
+                attachment_id: originalDeviceData.device_attachment_id,
+                attachment_data: newDeviceImageBase64.value
+            };
+        } else {
+            changeFields.attachment = {}; // kosong = hapus attachment
+        }
+    }
+
+
+    // Reset tracking arrays
+    deletedCurrDeviceDetailsData.value = [];
     updatedCurrDeviceDetailsData.value = [];
-    addedCurrDeviceData.value = [];
+    addedCurrDeviceDetailsData.value = [];
 
-    // Proses perubahan data perangkat
+
+    // Proses perubahan data detail
     getEditedDeviceData(originalDeviceDetailsData.value, currDeviceDetailsData.value);
 
-    console.log("Original Data:", originalDeviceDetailsData.value);
-    console.log("Existing Data:", currDeviceDetailsData.value);
-    console.log("Updated Existing Data:", updatedCurrDeviceDetailsData.value);
-    console.log("Added Existing Data:", addedCurrDeviceData.value);
-    console.log("Deleted Data:", deletedCurrDeviceData.value);
-    console.log("Truly New Data:", newDeviceDetailsData.value);
 
-    // Menggabungkan data baru dan data yang ditambahkan tanpa duplikasi
-    const combinedNewDeviceData = [...addedCurrDeviceData.value];
+    console.log("addedCurrDeviceDetailsData.value: ", addedCurrDeviceDetailsData.value);
+    console.log("newDeviceDetailsData.value: ", newDeviceDetailsData.value);
+    // Gabungkan data baru (tanpa duplikasi)
+    let combinedNewDeviceData = [];
 
-    newDeviceDetailsData.value.forEach(item => {
+    // Gabungkan addedCurrDeviceDetailsData
+    addedCurrDeviceDetailsData.value.forEach(item => {
         const exists = combinedNewDeviceData.some(
-            existingItem => existingItem.key === item.key && existingItem.value === item.value
+            existingItem =>
+                existingItem.title === item.title && existingItem.data === item.data
         );
-        if (!exists && item.key && item.value) {
+        if (!exists && item.title && item.data) {
             combinedNewDeviceData.push(item);
         }
     });
 
-    console.log("Combined New Device Data:", combinedNewDeviceData);
+    // Gabungkan newDeviceDetailsData
+    newDeviceDetailsData.value.forEach(item => {
+        const exists = combinedNewDeviceData.some(
+            existingItem =>
+                existingItem.title === item.title && existingItem.data === item.data
+        );
+        if (!exists && item.title && item.data) {
+            combinedNewDeviceData.push(item);
+        }
+    });
 
-    // Buat objek `data` hanya jika ada update, insert, atau delete
+    console.log("combinedNewDeviceData:", combinedNewDeviceData);
+
+
+
+    // newDeviceDetailsData.value.forEach(item => {
+    //     const exists = combinedNewDeviceData.some(
+    //         existingItem => existingItem.key === item.key && existingItem.value === item.value
+    //     );
+    //     if (!exists && item.key && item.value) {
+    //         combinedNewDeviceData.push(item);
+    //     }
+    // });
+
+
+
+    console.log("combinedNewDeviceData: ", combinedNewDeviceData);
+
+
+
+
+    // Perubahan detail
     let detaildDataPayload = {};
     if (updatedCurrDeviceDetailsData.value.length > 0) {
-        detaildDataPayload.update = Object.fromEntries(updatedCurrDeviceDetailsData.value.map(item => [item.title, item.data]));
+        detaildDataPayload.update = Object.fromEntries(
+            updatedCurrDeviceDetailsData.value.map(item => [item.title, item.data])
+        );
     }
     if (combinedNewDeviceData.length > 0) {
-        detaildDataPayload.insert = Object.fromEntries(combinedNewDeviceData.map(item => [item.title, item.data]));
+        detaildDataPayload.insert = Object.fromEntries(
+            combinedNewDeviceData.map(item => [item.title, item.data])
+        );
     }
-    if (deletedCurrDeviceData.value.length > 0) {
-        detaildDataPayload.delete = deletedCurrDeviceData.value.map(item => item.title);
+    if (deletedCurrDeviceDetailsData.value.length > 0) {
+        detaildDataPayload.delete = Object.fromEntries(
+            deletedCurrDeviceDetailsData.value.map(item => [item.title, item.data])
+        );
     }
 
-    detaildDataPayload = validateDeviceData(detaildDataPayload);
 
 
 
 
+    console.log("detaildDataPayload: ", detaildDataPayload);
+    console.log("deletedCurrDeviceDetailsData.value: ", deletedCurrDeviceDetailsData.value);
+    console.log("updatedCurrDeviceDetailsData.value: ", updatedCurrDeviceDetailsData.value);
 
-    // Pastikan `data` hanya ditambahkan jika ada isinya
-    const changeFields = {
-        name: currDeviceDataLocal.device_name,
-        password: currDeviceDataLocal.device_password,
-        read_interval: currDeviceDataLocal.device_read_interval,
-    };
+    console.log("combinedNewDeviceData: ", combinedNewDeviceData);
 
+
+
+
+    // Masukkan jika ada perubahan detail
     if (Object.keys(detaildDataPayload).length > 0) {
         changeFields.data = detaildDataPayload;
+        console.log("changeFields.data: ", changeFields.data);
     }
 
-    // Pastikan `attachment` hanya ditambahkan jika ada perubahan gambar
-    if (existingImageSrc.value) {
-        changeFields.attachment = {
-            attachement_id: currDeviceDataLocal.attachment_id,
-            attachment_change_fields: {
-                attachment_name: "new name", // Bisa diganti dengan nilai aktual
-                attachment_data: "new data"  // Bisa diganti dengan nilai aktual
-            }
-        };
-    }
-
-    // Susun payload akhir
+    // Payload akhir
     const updatedData = {
-        device_id: currDeviceDataLocal.device_id,
+        device_id: originalDeviceData.device_id,
         change_fields: changeFields
     };
 
     console.log("Final Payload:", updatedData);
-
     console.groupEnd();
 
 
+
+    // Kirim update
     // emit("update-device", updatedData);
 };
 
