@@ -93,21 +93,29 @@
                 @load="loadDevices" class="overflow-auto">
                 <DeviceList :devices="devices" :currDeviceId="currDeviceId" :currDeviceName="currDeviceName"
                   :totalDevices="totalDevices" @select-device="handleDeviceSelection"
-                  @view-device-detail="handleDeviceDetail" />
+                  @view-device-detail="handleDetailDevice" />
               </v-infinite-scroll>
             </v-col>
           </v-container>
 
           <!-- DONT REMOVE COMENTS -->
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 2">
-            <!-- Konten untuk state 3 (register device) -->
+            <!-- Konten untuk state 2 (register device) -->
             <RegisterDevice @toogle-add-device-state="toogleAddDeviceState" @register-device="registerDevice" />
           </v-container>
 
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 1">
             <!-- Konten untuk state 1 (detail device) -->
-            <DetailDevice @toogle-detail-device-state="toogleDetailDeviceState" :curr-device-data="currDeviceData" />
+            <DetailDevice @toogle-detail-device-state="toogleDetailDeviceState" @handle-edit-device="handleEditDevice" 
+              :curr-device-data="currDeviceData" />
           </v-container>
+
+          <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 3">
+            <!-- Konten untuk state 2 (detail device) -->
+            <EditDevice @toogle-edit-device-state="toogleEditDeviceState" @update-device="updateDevice"
+              :curr-device-data="currDeviceData" />
+          </v-container>
+
 
 
         </v-card>
@@ -249,6 +257,7 @@ import CanvasJS from "@canvasjs/charts";
 import DeviceList from "@/components/monitoring/DeviceList.vue";
 import RegisterDevice from "@/components/device_management/RegisterDevice.vue";
 import DetailDevice from "./device_management/DetailDevice.vue";
+import EditDevice from "@/components/device_management/EditDevice.vue";
 import PopUpInfoBox from "@/components/parts/PopUpInfoBox.vue";
 
 const popUpProps = ref({
@@ -276,8 +285,18 @@ const user_role = ref("");
 const curr_devicePage_state = ref(0);  // 0 = device_list (default), 1 = detail device, 2 = add device,
 
 
+function toogleEditDeviceState() {
+  console.log("toogleEditDeviceState");
+  if (curr_devicePage_state.value === 3) {
+    curr_devicePage_state.value = curr_devicePage_state.value = 0;
+
+  } else {
+    curr_devicePage_state.value = curr_devicePage_state.value = 3;
+  }
+}
+
 function toogleDetailDeviceState() {
-  console.log("toogleDetailDeviceState");
+  console.log("toogleDetail");
   if (curr_devicePage_state.value === 1) {
     curr_devicePage_state.value = curr_devicePage_state.value = 0;
 
@@ -643,8 +662,21 @@ function handleDeviceSelection(deviceId, deviceName) {
 }
 
 
-async function handleDeviceDetail(deviceIdParam) {
-  console.log("handleDeviceDetail - device id: ", deviceIdParam);
+async function handleEditDevice(deviceIdParam) {
+  console.log("handleEditDevice - device id: ", deviceIdParam);
+
+  const isSuccess = await getDeviceData(deviceIdParam); // Tunggu hasil sebelum lanjut
+  if (!isSuccess) {
+    console.error("Failed to get device data");
+    return;
+  }
+
+  console.log("getDeviceData SUCCESS!!");
+  toogleEditDeviceState();
+}
+
+async function handleDetailDevice(deviceIdParam) {
+  console.log("handleDetailDevice - device id: ", deviceIdParam);
 
   const isSuccess = await getDeviceData(deviceIdParam); // Tunggu hasil sebelum lanjut
   if (!isSuccess) {
@@ -655,6 +687,7 @@ async function handleDeviceDetail(deviceIdParam) {
   console.log("getDeviceData SUCCESS!!");
   toogleDetailDeviceState();
 }
+
 
 
 function loadDevices({ done }) {
@@ -806,7 +839,7 @@ async function getDeviceData(deviceIdParam) {
     if (!responseBE.device_data) {
       console.log("Device data is empty");
       return false;
-    } 
+    }
     console.log("getDeviceData responseBE.device_data: ", responseBE.device_data);
 
     currDeviceData.value = responseBE.device_data;
@@ -816,7 +849,17 @@ async function getDeviceData(deviceIdParam) {
 
 
   } catch (err) {
-    console.error("ERROR WHILE GETTING DEVICE DATA:", err);
+    console.error("getDeviceData FAILED!!:", response_be.error_message);
+    let popUpMessage = "Gagal Mendapatkan Data Perangkat";
+
+
+    popUpProps.value = {
+      status: "error",
+      errorMessage: popUpMessage,
+      errorCode: response_be.error_code,
+    };
+    popupVisible.value = true;
+
   } finally {
 
     isFetchingDeviceData.value = false;
@@ -842,6 +885,7 @@ const registerDevice = async (
   console.log("registerDevice - deviceDataParam:", deviceDataParam);
   console.log("registerDevice - deviceIntervalReadParam:", deviceIntervalReadParam);
 
+  isLoading.value = true;
 
   // Buat parameter request
   const params = {
@@ -872,7 +916,13 @@ const registerDevice = async (
         errorCode: "DEVICE_REGISTERED",
       };
 
-      toogleAddDeviceState();
+      // get new device_id
+      const newDeviceId = response_be?.payload?.device_id;
+      console.log("New device ID:", newDeviceId);
+      // go to detail new device_id
+
+      
+      handleEditDevice(newDeviceId);
 
     } else {
       throw new Error(response_be?.error_message || "Gagal mendaftarkan perangkat");
@@ -886,10 +936,66 @@ const registerDevice = async (
       errorMessage: error.message || "Terjadi kesalahan saat registrasi perangkat",
       errorCode: error.code || "REGISTER_DEVICE_ERROR",
     };
+  } finally {
+    popupVisible.value = true; // Popup selalu muncul setelah proses selesai
+    isLoading.value = false;
   }
 
-  popupVisible.value = true; // Popup selalu muncul setelah proses selesai
 };
+
+
+const updateDevice = async (
+  deviceIdparam,
+  deviceChangeFieldsParam,
+) => {
+  const baseUrl = BASE_API_URL;
+  const operation = "update_device_data";
+  console.group("-----updateDevice----");
+
+  isLoading.value = true;
+
+  console.log("updatedevice - deviceIdparam:", deviceIdparam);
+  console.log("updatedevice - deviceChangeFieldsParam:", deviceChangeFieldsParam);
+  // Buat parameter request
+  const params = {
+    device_id: deviceIdparam,
+    change_fields: deviceChangeFieldsParam,
+  };
+  console.log("Final params:", params);
+
+  try {
+    const response_be = await Process(baseUrl, operation, params);
+
+    if (response_be?.status === "success") {
+      popUpProps.value = {
+        status: "success",
+        errorMessage: "Data perangkat berhasil diperbaharui",
+        errorCode: "DEVICE UPDATED",
+      };
+
+      toogleEditDeviceState();
+
+    } else {
+      throw new Error(response_be?.error_message || "Gagal memperbarui data perangkat");
+    }
+  } catch (error) {
+    console.error("Error updating device:", error);
+
+    // Tampilkan error popup
+    popUpProps.value = {
+      status: "error",
+      errorMessage: error.message || "Terjadi kesalahan saat memperbarui data perangkat",
+      errorCode: error.code || "UPDATE DEVICE ERROR",
+    };
+  } finally {
+    popupVisible.value = true; // Popup selalu muncul setelah proses selesai
+    isLoading.value = false;
+  }
+
+  console.groupEnd();
+
+};
+
 
 
 /* 
@@ -910,8 +1016,8 @@ const registerDevice = async (
 
 //////////
 
-function toReportPage (){
-  
+function toReportPage() {
+
 }
 
 

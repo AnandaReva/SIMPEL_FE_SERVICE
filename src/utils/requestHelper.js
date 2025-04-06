@@ -2,8 +2,6 @@
 
 import axios from "axios";
 import { HmacSHA256 } from "crypto-js";
-import { BASE_AUTH_URL } from "@/configs/config";
-import { BASE_API_URL } from "@/configs/config";
 
 /**
  * Mengembalikan base URL otentikasi.
@@ -115,30 +113,21 @@ export async function Auth_Process(baseUrl, process_name, params = {}) {
         "salt": "O07HoiEWKqelbTM8"
     }
 }
-
-
-
-
-
 */
 
+
+import { DeepSortObject } from "./utils.js";
 import router from "@/router";
 
 export async function Process(apiUrl, process_name, params = {}) {
   try {
     const fullUrl = `${apiUrl}process`;
     console.log("📡 Request ke:", fullUrl);
-   // console.log("🔄 Parameters:", params);
+    // console.log("🔄 Parameters:", params);
 
 
     // Urutkan params berdasarkan huruf a-z
-    params = Object.keys(params)
-      .sort()
-      .reduce((sortedObj, key) => {
-        sortedObj[key] = params[key];
-        return sortedObj;
-      }, {});
-
+    params = DeepSortObject(params);
     console.log("🔄 Parameters (sorted):", params);
 
     // Ambil session_id dan session_hash dari localStorage
@@ -147,8 +136,8 @@ export async function Process(apiUrl, process_name, params = {}) {
 
     // Stringify body untuk enkripsi
     const bodyString = JSON.stringify(params);
-  //  console.log("HMAC message: ", bodyString);
-   // console.log("HMAC key: ", session_hash);
+    console.log("HMAC message: ", bodyString);
+    console.log("HMAC key: ", session_hash);
 
     // Generate HMAC-SHA256 hash
     const signature = HmacSHA256(bodyString, session_hash).toString();
@@ -161,7 +150,7 @@ export async function Process(apiUrl, process_name, params = {}) {
       signature: signature,
       process: process_name,
     };
-  //  console.log("headers: ", headers);
+    //  console.log("headers: ", headers);
 
     // Kirim request ke backend
     const { data } = await axios.post(fullUrl, params, { headers });

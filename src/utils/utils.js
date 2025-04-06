@@ -16,3 +16,18 @@ export function RandomStringGenerator(len) {
 }
 
 
+// Tambahkan di bagian atas file
+export function DeepSortObject(obj) {
+    if (Array.isArray(obj)) {
+      return obj.map(DeepSortObject);
+    } else if (obj !== null && typeof obj === "object") {
+      return Object.keys(obj)
+        .sort()
+        .reduce((result, key) => {
+          result[key] = DeepSortObject(obj[key]);
+          return result;
+        }, {});
+    }
+    return obj;
+  }
+  
