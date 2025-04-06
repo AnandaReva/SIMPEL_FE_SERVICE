@@ -10,7 +10,7 @@
         <v-row class="fill-height">
             <v-col class="mx-auto px-0">
                 <p class="text-h6 font-weight-medium ma-0 text-center">
-                    Detail Perangkat
+                    Edit Informasi Perangkat
                 </p>
 
 
@@ -40,12 +40,7 @@
                         <!--  existingImageSrc:  {{existingImageSrc}}  -->
                         <!-- {{  extractImageFromAttachment(originalDeviceData.device_attachment.attachment_data) }} -->
 
-                        <v-container v-if="existingImageSrc == originalDeviceData.device_image_src">
-                            yess
-                            type: {{ typeof existingImageSrc }}
-                            typeof {{ typeof originalDeviceData.device_image_src }}
-                        </v-container>
-
+                       
 
 
 
@@ -145,67 +140,6 @@
 
                     </v-form>
 
-
-
-
-                    <!-- Tabel Aktivitas -->
-                    <div class="mt-4">
-                        <p class="text-h6 font-weight-medium mt-5 mb-3 text-center">
-                            Aktivitas Perangkat
-                        </p>
-                        <v-table>
-                            <thead>
-                                <tr>
-                                    <th>Tanggal/Waktu</th>
-                                    <th>Deskripsi</th>
-                                    <th>Aktor</th>
-                                    <th>Perubahan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(activity, index) in currDeviceDataLocal.device_activities" :key="index">
-                                    <td>{{ formatTimestamp(activity.activity_tstamp) }}</td>
-                                    <td>{{ activity.activity_description }}</td>
-                                    <td>{{ activity.actor_full_name }}</td>
-                                    <td>
-                                        <div v-if="activity.activity_before && activity.activity_after &&
-                                            activity.activity_before !== '{}' && activity.activity_after !== '{}'">
-                                            <v-table dense class="mt-2">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Judul</th>
-                                                        <th>Sebelum</th>
-                                                        <th>Sesudah</th>
-                                                    </tr>
-                                                </thead>
-                            <tbody>
-                                <template v-if="typeof JSON.parse(activity.activity_before) === 'object'">
-                                    <tr v-for="(value, key) in JSON.parse(activity.activity_before)" :key="key">
-                                        <td class="font-weight-bold">{{ beautifyKey(key) }}</td>
-                                        <td>{{ value || '-' }}</td>
-                                        <td>{{ JSON.parse(activity.activity_after)[key] || '-' }}</td>
-                                    </tr>
-                                </template>
-                                <template v-else>
-                                    <tr>
-                                        <td class="font-weight-bold">Data</td>
-                                        <td>{{ activity.activity_before }}</td>
-                                        <td>{{ activity.activity_after }}</td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </v-table>
-                    </div>
-                    <span v-else>-</span>
-                    </td>
-                    </tr>
-                    </tbody>
-                    </v-table>
-
-
-                    </div>
-
-
                 </v-container>
             </v-col>
         </v-row>
@@ -260,7 +194,6 @@ const currDeviceDataLocal = reactive({
     device_read_interval: 1,
     device_data: {},
     device_attachment: {},
-    device_activities: [],
 });
 
 // Initialize original device data
@@ -658,7 +591,6 @@ watch(
                 device_password: newVal.device_password || "",
                 device_read_interval: newVal.device_read_interval || 1,
                 device_attachment: newVal.device_attachment || {},
-                device_activities: newVal.device_activities || [],
             });
 
             // Convert curr device_data to array format

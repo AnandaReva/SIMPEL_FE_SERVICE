@@ -19,7 +19,7 @@
                     <v-col class="d-flex flex-column">
                         <!-- Nama Perangkat -->
 
-                        {{ currDeviceData.device_name }}
+                        
                         <v-col class="mb-4">
                             <p class="text-subtitle-1 font-weight-medium mb-1">Nama Perangkat</p>
                             <v-card outlined class="pa-3">
@@ -67,13 +67,13 @@
                                 <v-row>
                                     <v-col cols="5.5" class="px-1 py-0">
                                         <v-card outlined class="pa-2">
-                                            <p class="text-subtitle-1 font-weight-medium mb-1">Judul</p>
+                                            
                                             {{ currData.title }}
                                         </v-card>
                                     </v-col>
                                     <v-col cols="5.5" class="px-1 py-0">
                                         <v-card outlined class="pa-2">
-                                            <p class="text-subtitle-1 font-weight-medium mb-1">Isi Data</p>
+
                                             {{ currData.data }}
                                         </v-card>
                                     </v-col>
@@ -142,7 +142,7 @@
                     <v-col cols="auto" class="d-flex justify-end">
                         <v-btn @click="toEditPage(currDeviceDataLocal.device_id)" color="primary"
                             class="d-flex justify-center align-center" style="max-height: 50px">
-                            <span>Ubah data</span>
+                            <span class="pr-1">Ubah data </span>
                             <v-icon>mdi-pencil</v-icon>
                         </v-btn>
                     </v-col>

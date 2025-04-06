@@ -39,7 +39,7 @@
             <v-row class="px-2" style="max-height: 70px;">
               <!-- Pilihan Pengurutan -->
               <!-- Filter Status -->
-              <v-col cols="6">
+              <v-col cols="5">
                 <v-select v-model="selectedStatus" :items="[
                   { title: 'Semua', value: '' },
                   { title: 'Aktif', value: 1 },
@@ -55,19 +55,34 @@
               </v-col>
 
               <!-- Pilihan Pengurutan -->
-              <v-col cols="6" class="pr-2">
-                <v-select v-model="selectedSort" :items="[
+              <v-col cols="5" class="pr-2">
+                <v-select v-model="selectedOrderBy" :items="[
                   { title: 'Waktu terakhir', value: 'last_tstamp' },
                   { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
                   { title: 'Nama perangkat', value: 'name' }
                 ]" density="compact" label="Pengurutan" variant="outlined"></v-select>
-                <!-- <v-select v-model="selectedSort" :items="[
+                <!-- <v-select v-model="selectedOrderBy" :items="[
                   { title: 'Waktu terakhir', value: 'last_tstamp' },
                   { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
                   { title: 'Nama perangkat', value: 'name' }
                 ]" density="compact" label="Pengurutan" variant="outlined"
                   @update:modelValue="(val) => console.log('Selected Sort:', val)"></v-select> -->
               </v-col>
+
+              <v-col cols="2">
+                <v-btn type="button" @click="toogleSortType" color="blue-lighten-4" variant="flat"
+                  style="border: 1px solid black">
+                  <template v-if="selectedSortType === 'ASC'">
+                    <v-icon>mdi-arrow-up</v-icon>
+                  </template>
+                  <template v-else>
+                    <v-icon>mdi-arrow-down</v-icon>
+                  </template>
+                </v-btn>
+
+              </v-col>
+
+
             </v-row>
 
             <!-- Serach Device -->
@@ -106,7 +121,7 @@
 
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 1">
             <!-- Konten untuk state 1 (detail device) -->
-            <DetailDevice @toogle-detail-device-state="toogleDetailDeviceState" @handle-edit-device="handleEditDevice" 
+            <DetailDevice @toogle-detail-device-state="toogleDetailDeviceState" @handle-edit-device="handleEditDevice"
               :curr-device-data="currDeviceData" />
           </v-container>
 
@@ -142,7 +157,7 @@
               </div>
             </div>
           </div>
-          <div ref="chartContainer" id="chartContainer" style="height: 300px; width: 100%;"></div>
+          <div ref="chartContainer" id="chartContainer" style="height: 386px; width: 100%;"></div>
 
         </v-card>
 
@@ -150,7 +165,7 @@
 
 
         <br>
-        <v-card class="pa-4" color="blue-lighten-4" elevation="1">
+        <v-card class="pa-4" color="blue-lighten-4" elevation="1" height="283px">
           <v-row justify="space-around" class="mt-4">
             <v-col cols="auto">
               <div class="text-center">
@@ -214,7 +229,7 @@
           </v-row>
 
 
-          <div>
+          <!-- <div>
             <v-row class="pa-2" justify="end" align="center">
               <span class="mr-4 text-subtitle-1 font-weight-medium">
                 Detail Laporan Penggunaan
@@ -225,7 +240,7 @@
                 <v-icon>mdi-arrow-right</v-icon>
               </v-btn>
             </v-row>
-          </div>
+          </div> -->
         </v-card>
       </v-col>
     </v-row>
@@ -597,9 +612,9 @@ watch(currDeviceId, (newDeviceId) => {
 
 //////////////////// DEVICES////////////////////
 
-const selectedSort = ref("last_tstamp"); // Default: Waktu terakhir
+const selectedOrderBy = ref("last_tstamp"); // Default: Waktu terakhir
 const selectedStatus = ref(1); // Default: Semua perangkat aktif
-
+const selectedSortType = ref("ASC") // Default: ASC
 
 const filter = ref('');
 const devices = ref([]);
@@ -610,9 +625,17 @@ const currDeviceName = ref('')
 const currDeviceData = ref({});
 
 
+const toogleSortType = () => {
+  selectedSortType.value = selectedSortType.value === "ASC" ? "DESC" : "ASC";
+}
+watch(selectedSortType, (newSortType)=> {
+  console.log(`��� Sorting berubah: ${newSortType}`);
+  searchDevices();
+}); 
 
-watch(selectedSort, (newSort) => {
-  console.log(`��� Sorting berubah: ${newSort}`);
+
+watch(selectedOrderBy, (newOrderBy) => {
+  console.log(`��� Order By berubah: ${newOrderBy}`);
   searchDevices();
 });
 
@@ -620,6 +643,7 @@ watch(selectedStatus, (newStatus) => {
   console.log(`��� Status perangkat berubah: ${newStatus}`);
   searchDevices();
 });
+
 
 
 const lastFetchedPageDevices = ref(0);
@@ -754,7 +778,8 @@ async function getDeviceList(pageNumber) {
     const baseUrl = BASE_API_URL;
     const params = {
       filter: filter.value,
-      order_by: selectedSort.value,
+      order_by: selectedOrderBy.value,
+      sort_type: selectedSortType.value,
       page_number: pageNumber,
       page_size: page_size.value,
       st: selectedStatus.value,
@@ -921,8 +946,8 @@ const registerDevice = async (
       console.log("New device ID:", newDeviceId);
       // go to detail new device_id
 
-      
-      handleEditDevice(newDeviceId);
+
+      handleDetailDevice(newDeviceId);
 
     } else {
       throw new Error(response_be?.error_message || "Gagal mendaftarkan perangkat");
