@@ -6,14 +6,14 @@
                 <v-icon>mdi-arrow-left-bold</v-icon> <span>Kembali</span>
             </v-btn>
         </v-col>
-
+        <v-container class="overflow-y-auto" style="max-height: 75vh;"></v-container>
         <v-row class="fill-height ">
 
 
             <v-col class="mx-auto px-0">
                 <p class="text-h6 font-weight-medium ma-0 text-center">Tambah Perangkat Baru</p>
 
-                <v-container class="pa-4 flex-grow-1 overflow-y-auto" style="max-height: 624px;">
+                <v-container class="pa-4 flex-grow-1 overflow-y-auto" max-height="500px" >
 
 
                     <v-form ref="registerDeviceForm" @submit.prevent="submitRegisterDevice" class="d-flex flex-column">

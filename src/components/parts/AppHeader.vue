@@ -1,111 +1,100 @@
 <!-- src/components/parts/AppHeader.vue -->
 <template>
-  <div class="px-4 py-2 bg-blue-lighten-5">
-    
-    
-    
-    <v-row align="center">
-      
-      
-      <!-- Drawer toggle button -->
-      <v-app-bar-nav-icon variant="text" @click.stop="$emit('toggle-navigation-drawer')"></v-app-bar-nav-icon>
+  <v-row class="d-flex justify-space-between align-center bg-blue-lighten-4" style="height:10vh; max-height:10vh; overflow:hidden;">
+    <!-- Drawer toggle button -->
+    <v-app-bar-nav-icon variant="text" @click.stop="$emit('toggle-navigation-drawer')" />
 
-      <!-- Left side: Title -->
+    <!-- Left side: Title -->
+    <v-col cols="auto">
+      <h1 class="text-h5 font-weight-medium text-[2.5vh]">SIMPLE</h1>
+    </v-col>
+
+    <v-spacer />
+
+    <!-- User Information (Right side) -->
+    <div class="pa-3">
       <v-col cols="auto">
-        <h1 class="text-h5 font-weight-medium">SIMPLE</h1>
+        <v-row align="center">
+          <!-- Avatar -->
+          <v-avatar size="40" color="primary" class="mr-2" style="height:4vh; width:4vh; font-size:2vh;">
+            <img v-if="user?.avatar" :src="user.avatar" alt="Avatar" />
+            <span v-else>{{ user?.full_name?.charAt(0) || "?" }}</span>
+          </v-avatar>
+
+          <!-- User Info -->
+          <div>
+            <p class="text-subtitle-1 font-weight-bold text-[1.8vh] m-0">
+              {{ user?.full_name || "Guest" }}
+            </p>
+            <p class="text-subtitle-2 text-grey-darken-1 text-[1.5vh] m-0">
+              {{ user?.role || "Guest" }}
+            </p>
+          </div>
+        </v-row>
       </v-col>
+    </div>
 
-      <v-spacer></v-spacer>
+    <!-- Menu Icon -->
+    <v-col cols="auto">
+      <v-menu offset-y>
+        <template v-slot:activator="{ props }">
+          <v-btn v-bind="props" icon class="ma-0 pa-0">
+            <v-icon size="28" class="text-grey-darken-2">mdi-menu</v-icon>
+          </v-btn>
+        </template>
 
-      <!-- User Information (Right side) -->
-
-      <div class="pa-3">
-
-        <v-col cols="auto">
-          <v-row align="center">
-            <!-- Avatar -->
-            <v-avatar size="40" color="primary" class="mr-2">
-              <img v-if="user?.avatar" :src="user.avatar" alt="Avatar" />
-              <span v-else>{{ user?.full_name?.charAt(0) || "?" }}</span>
-            </v-avatar>
-
-            <!-- User Info -->
+        <v-list class="pa-2" style="min-width: 220px">
+          <v-list-item class="py-1">
             <div>
-              <p class="text-subtitle-1 font-weight-bold">
-                {{ user?.full_name || "Guest" }}
-              </p>
-              <p class="text-subtitle-2 text-grey-darken-1">
-                {{ user?.role || "Guest" }}
-              </p>
-
+              <p class="text-caption text-grey-darken-1 mb-1">Email</p>
+              <p class="text-body-2 font-weight-medium">{{ user?.email || "Guest" }}</p>
             </div>
-          </v-row>
-        </v-col>
-      </div>
+          </v-list-item>
 
-      <!-- Menu Icon -->
-      <v-col cols="auto">
-        <v-menu offset-y>
-          <template v-slot:activator="{ props }">
-            <v-icon v-bind="props">mdi-menu</v-icon>
-          </template>
+          <v-divider class="my-2" />
 
-          <v-list>
-            <v-list-item>
-              <p class="text-subtitle-2 text-grey-darken-1">
-                Email:
-              </p>
-              <p class="text-subtitle-1 font-weight-bold">
-                {{ user?.email || "Guest" }}
-              </p>
-            </v-list-item>
-            <v-divider :thickness="5"></v-divider>
-            <v-list-item>
-              <p class="text-subtitle-2 text-grey-darken-1">
-                Username:
-              </p>
-              <p class="text-subtitle-1 font-weight-bold">
-                {{ user?.username || "Guest" }}
-              </p>
-            </v-list-item>
-            <v-divider :thickness="5"></v-divider>
-            <v-list-item>
-              <p class="text-subtitle-2 text-grey-darken-1">
-                Nama Lengkap:
-              </p>
-              <p class="text-subtitle-1 font-weight-bold">
-                {{ user?.full_name || "Guest" }}
-              </p>
-            </v-list-item>
-            <v-divider :thickness="5"></v-divider>
-            <v-list-item>
-              <p class="text-subtitle-2 text-grey-darken-1">
-                Peran:
-              </p>
-              <p class="text-subtitle-1 font-weight-bold">
-                {{ user?.role || "Guest" }}
-              </p>
-            </v-list-item>
-            <v-divider :thickness="5"></v-divider>
+          <v-list-item class="py-1">
+            <div>
+              <p class="text-caption text-grey-darken-1 mb-1">Username</p>
+              <p class="text-body-2 font-weight-medium">{{ user?.username || "Guest" }}</p>
+            </div>
+          </v-list-item>
 
+          <v-divider class="my-2" />
 
-            <v-list-item>
-              <div class="d-flex justify-end align-center">
-                <v-btn @click="logOut" variant="text" class="d-flex align-center bg-red-lighten-4 pa-2 rounded">
-                  <span class="text-subtitle-2 text-red-darken-1">Keluar</span>
-                  <v-icon class="ml-2" color="red">mdi-logout</v-icon>
-                </v-btn>
-              </div>
-            </v-list-item>
+          <v-list-item class="py-1">
+            <div>
+              <p class="text-caption text-grey-darken-1 mb-1">Nama Lengkap</p>
+              <p class="text-body-2 font-weight-medium">{{ user?.full_name || "Guest" }}</p>
+            </div>
+          </v-list-item>
 
+          <v-divider class="my-2" />
 
+          <v-list-item class="py-1">
+            <div>
+              <p class="text-caption text-grey-darken-1 mb-1">Peran</p>
+              <p class="text-body-2 font-weight-medium">{{ user?.role || "Guest" }}</p>
+            </div>
+          </v-list-item>
 
-          </v-list>
-        </v-menu>
-      </v-col>
-    </v-row>
-  </div>
+          <v-divider class="my-2" />
+
+          <v-list-item class="py-1">
+            <div class="d-flex justify-end w-100">
+              <v-btn @click="logOut" variant="text" class="bg-red-lighten-4 text-red-darken-1 rounded px-3 py-2">
+                <v-icon start size="20" color="red">mdi-logout</v-icon>
+                Keluar
+              </v-btn>
+            </div>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </v-col>
+
+  </v-row>
 </template>
+
 
 <script setup>
 import { ref, onMounted } from "vue";
@@ -115,8 +104,8 @@ import { BASE_AUTH_URL } from "@/configs/config"
 defineEmits(['toggle-navigation-drawer'])
 
 const user = ref({
-  full_name: "Guest",
-  role: "Guest",
+  full_name: "Guest User",
+  role: "guest",
   avatar: "",
 });
 
@@ -132,8 +121,8 @@ onMounted(() => {
     if (userData) {
       const parsedUser = JSON.parse(userData);
       user.value = {
-        full_name: parsedUser.full_name || "Guest",
-        username: parsedUser.username || "Guest",
+        full_name: parsedUser.full_name || "Guest User",
+        username: parsedUser.username || "guset",
         role: parsedUser.role || "guest",
         email: parsedUser.email || "",
         avatar: parsedUser.avatar || "",
@@ -187,31 +176,44 @@ async function logout(sessionId, sessionHash) {
   }
 }
 </script>
-
+<!-- 
 <style scoped>
-.text-h3 {
-  font-weight: bold;
-}
-
-.text-subtitle-1 {
-  font-size: 16px;
-  margin: 0;
-}
-
-.text-subtitle-2 {
-  font-size: 14px;
-  margin: 0;
-  color: gray;
+.app-header {
+  height: 10vh;
+  max-height: 10vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
 }
 
 .v-avatar {
+  height: 4vh;
+  width: 4vh;
+  font-size: 2vh;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
 }
 
+.text-h5 {
+  font-size: 2.5vh;
+}
+
+.text-subtitle-1 {
+  font-size: 1.8vh;
+  margin: 0;
+}
+
+.text-subtitle-2 {
+  font-size: 1.5vh;
+  margin: 0;
+  color: gray;
+}
+
 .v-icon {
+  font-size: 2vh;
   cursor: pointer;
 }
 </style>
+ -->

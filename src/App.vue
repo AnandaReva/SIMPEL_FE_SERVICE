@@ -42,11 +42,15 @@ const checkLocalStorage = () => {
   return userData && sessionId && sessionHash;
 };
 
+const currRouteName = ref("")
+
 
 // Watch perubahan route
 watch(route, (newRoute) => {
-  console.log("Current route:", newRoute.path);
-  //showHeaderFooter.value = newRoute.name !== 'login' && newRoute.name !== 'verify-otp' && newRoute.name !== 'reset-password'; 
+
+  currRouteName.value = newRoute.name
+
+  console.log("Current route Name:", currRouteName.value);
 
   showHeaderFooter.value = newRoute.name !== 'login' && newRoute.name !== 'verify-otp' && newRoute.name !== 'reset-password' && checkLocalStorage()
 }, { immediate: true }); // immediate: true agar dijalankan saat pertama kali komponen dimuat

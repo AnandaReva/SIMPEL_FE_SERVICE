@@ -1,11 +1,26 @@
 <template>
     <v-col class="fill-height px-0">
-        <v-col cols="auto" class="d-flex align-center">
-            <v-btn @click="backToDeviceList" color="primary" class="d-flex justify-center align-center"
-                style="max-height: 50px">
-                <v-icon>mdi-arrow-left-bold</v-icon> <span>Kembali</span>
-            </v-btn>
-        </v-col>
+
+        <v-row class="d-flex justify-space-between align-center">
+            <!-- Tombol Kembali (Start / Left) -->
+            <v-col cols="auto" class="d-flex align-center">
+                <v-btn @click="backToDeviceList" color="primary" class="d-flex justify-center align-center"
+                    style="max-height: 50px">
+                    <v-icon>mdi-arrow-left-bold</v-icon>
+                    <span class="ml-1">Kembali</span>
+                </v-btn>
+            </v-col>
+
+            <!-- Tombol Ubah data (End / Right), hanya jika role sesuai -->
+            <v-col v-if="user_role == 'system master' || user_role == 'system admin'" cols="auto"
+                class="d-flex align-center">
+                <v-btn @click="toEditPage(currDeviceDataLocal.device_id)" color="primary"
+                    class="d-flex justify-center align-center" style="max-height: 50px">
+                    <v-icon>mdi-pencil</v-icon>
+                </v-btn>
+            </v-col>
+        </v-row>
+
 
         <v-row class="fill-height">
             <v-col class="mx-auto px-0">
@@ -15,22 +30,27 @@
 
                 <br>
 
-                <v-container class="pa-4 flex-grow-1 overflow-y-auto px-0" style="max-height: 624px;">
+                <v-container class="pa-4 flex-grow-1 overflow-y-auto px-0" style="max-height: 50vh;">
                     <v-col class="d-flex flex-column">
                         <!-- Nama Perangkat -->
 
 
                         <v-col class="mb-4">
-                            <p class="text-subtitle-1 font-weight-medium mb-1">Nama Perangkat</p>
+                            <p class="text-subtitle-1 font-weight-medium mb-1">Password</p>
                             <v-card outlined class="pa-3">
-                                {{ currDeviceData.device_name }}
+                                <v-icon size="24" color="primary">mdi-access-point-network</v-icon>
+
+                                {{ currDeviceDataLocal.device_name }}
                             </v-card>
                         </v-col>
+
 
                         <!-- Password -->
                         <v-col class="mb-4">
                             <p class="text-subtitle-1 font-weight-medium mb-1">Password</p>
                             <v-card outlined class="pa-3">
+                                <v-icon size="24" color="primary">mdi-lock</v-icon>
+
                                 {{ currDeviceDataLocal.device_password }}
                             </v-card>
                         </v-col>
@@ -45,12 +65,30 @@
                         </v-col>
 
 
+
+
+
                         <!-- Gambar Perangkat -->
+
+                        <v-col class="mb-4">
+                            <v-row>
+                                <v-icon class="ma-0 pa-3" size="24" color="primary">mdi-image</v-icon>
+                                <p class="text-subtitle-1 font-weight-medium">Gambar</p>
+
+
+                            </v-row>
+
+
+
+                        </v-col>
                         <v-col class="mb-4">
 
-                            <p class="text-subtitle-1 font-weight-medium mb-1">Gambar
-                            </p>
+
+
+
+
                             <v-row class="d-flex justify-center mt-1 mb-3" v-if="existingImageSrc">
+
                                 <v-img :src="existingImageSrc" class="mt-4 mb-5" max-height="200" contain />
                             </v-row>
 
@@ -86,7 +124,13 @@
 
                             </v-container>
                         </div>
-                        <v-col class="mb-4 mx-0 px-0">
+
+                        <!-- Aktivitas -->
+                        <v-row class="px-4">
+                            <v-icon>mdi-information</v-icon>
+                            <p class="text-subtitle-1 font-weight-medium ma-0">Aktivitas</p>
+                        </v-row>
+                        <v-col class="mb-1 mx-0 px-0">
 
 
                             <v-col>
@@ -117,7 +161,7 @@
                                             </v-btn>
                                         </v-col>
 
-                                        <v-col cols="1" class="px-1">
+                                        <v-col cols="1" class="psx-1">
                                             <v-btn color="primary" @click="searchDeviceActivities"
                                                 class="search-button rounded-circle d-flex justify-center align-center"
                                                 style="height: 40px; width: 40px; min-width: 40px;">
@@ -143,8 +187,8 @@
                                         Dilihat : {{ device_activities.length }} / {{ totalDeviceActivities }}
                                     </p>
 
-                                    <v-infinite-scroll v-if="currDeviceDataLocal.device_id" height="550"
-                                        @load="loadDeviceActivities" :key="scrollKeyDeviceActivities"
+                                    <v-infinite-scroll v-if="currDeviceDataLocal.device_id" height="550px"
+                                        @load="loadDeviceActivities" :key="scrollKeyDeviceActivities" mode="intersect"
                                         class="overflow-auto px-0">
                                         <DevicesActivityList :device-activities="device_activities" />
                                     </v-infinite-scroll>
@@ -160,14 +204,7 @@
 
 
                     <!-- Tombol Ke Edit Page -->
-                    <v-col v-if="user_role == 'system master' || user_role == 'system admin'" cols="auto"
-                        class="d-flex justify-end">
-                        <v-btn @click="toEditPage(currDeviceDataLocal.device_id)" color="primary"
-                            class="d-flex justify-center align-center" style="max-height: 50px">
-                            <span class="pr-1">Ubah data </span>
-                            <v-icon>mdi-pencil</v-icon>
-                        </v-btn>
-                    </v-col>
+
 
                 </v-container>
 
@@ -177,6 +214,18 @@
         </v-row>
     </v-col>
 </template>
+
+<style scoped>
+.scrollable-container {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.border {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+</style>
 
 <script setup>
 import { ref, onMounted, nextTick, watch } from "vue";
@@ -228,7 +277,7 @@ const resetScrollDeviceActivities = () => {
 
 
 const loadDeviceActivities = async ({ done }) => {
-    if (totalPagesDeviceActivities.value === 0) {
+    if (totalPagesDeviceActivities.value === 0 || lastFetchedPageDeviceActivities.value >= totalPagesDeviceActivities.value) {
         done("empty");
         return;
     }
@@ -273,29 +322,17 @@ const appendDeviceActivities = (device_activities, additionalDevices) => {
 };
 
 
-// function appendDevices(devices, additionalDevices) {
-//     const deviceMap = new Map();
-//     devices.forEach((device) => {
-//         deviceMap.set(device.device_id, device);
-//     });
+function searchDeviceActivities() {
 
-//     additionalDevices.forEach((newDevice) => {
-//         if (!deviceMap.has(newDevice.device_id)) {
-//             devices.push(newDevice);
-//             deviceMap.set(newDevice.device_id, newDevice);
-//         }
-//     });
+    totalDeviceActivities.value = 0;
 
-//     return devices;
-// }
-
-
-
-const searchDeviceActivities = () => {
     resetScrollDeviceActivities();
     lastFetchedPageDeviceActivities.value = 0;
     device_activities.value = [];
-    getDeviceActivitiesList(1);
+    // Ensure the infinite scroll triggers only when the user scrolls
+    setTimeout(() => {
+        getDeviceActivitiesList(1);
+    }, 0);
 };
 
 async function getDeviceActivitiesList(pageNumberParam) {
@@ -392,15 +429,3 @@ const toEditPage = (deviceId) => {
     emit("handle-edit-device", deviceId);
 };
 </script>
-
-<style scoped>
-.scrollable-container {
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.border {
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-}
-</style>

@@ -1,5 +1,5 @@
 <template>
-    <div class="activity-list pa-0 ma-0">
+     <v-div class="activity-list pa-0 ma-0" >
 
         <v-list bg-color="white" dense class="rounded-lg elevation-2 px-0">
 
@@ -35,7 +35,8 @@
                         </v-col>
                         <v-col cols="1" class="text-right">
                             <v-btn icon size="small" variant="text" @click="toggleExpand(index)">
-                                <v-icon>{{ expandedIndex === index ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                                <v-icon>{{ expandedIndex === index ? 'mdi-chevron-up' : 'mdi-chevron-down'
+                                }}</v-icon>
                             </v-btn>
                         </v-col>
                     </v-row>
@@ -99,7 +100,10 @@
                 </v-list-item>
             </template>
         </v-list>
-    </div>
+
+
+    </v-div>
+
 </template>
 
 <script setup>

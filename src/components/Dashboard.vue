@@ -2,7 +2,7 @@
 
 
 <template>
-  <v-card class="pa-4 elevation-2 fill-height" style="min-height: 100px;"
+  <v-card class="pa-4 elevation-2 fill-height" 
     :class="{ 'disable-interactions': isLoading }">
 
     <v-progress-circular v-if="isLoading" color="primary" indeterminate class="loading-spinner"></v-progress-circular>
@@ -12,10 +12,8 @@
 
       <!-- LEFT:  Devices -->
       <v-col cols="12" md="4">
-        <p class="text-subtitle-5 font-weight-bold mb-3">
-          Daftar Perangkat
-        </p>
-        <v-card class="pa-3" color="blue-lighten-4" elevation="1">
+        <h2 class="text-h5 font-weight-bold mb-3">Daftar Perangkat</h2>
+        <v-card class="pa-3" color="blue-lighten-4" elevation="1" height="75vh">
           <!-- hanya system master atau admin -->
 
           <!-- DONT REMOVE COMENTS -->
@@ -45,7 +43,7 @@
 
 
             <!-- filterDeviceList -->
-            <v-row class="px-2" style="max-height: 70px;">
+            <v-row class="px-1" style="max-height: 70px;">
               <!-- Pilihan Pengurutan -->
               <!-- filterDeviceList Status -->
               <v-col cols="5">
@@ -64,7 +62,7 @@
               </v-col>
 
               <!-- Pilihan Pengurutan -->
-              <v-col cols="5" class="pr-2">
+              <v-col cols="5" class="pr-1">
                 <v-select v-model="selectedOrderByDeviceList" :items="[
                   { title: 'Waktu terakhir', value: 'last_tstamp' },
                   { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
@@ -98,7 +96,7 @@
             <v-col class="d-flex justify-center align-center fill-width pa-0 " style="max-height: 70px;">
               <!-- Field untuk input pencarian -->
               <v-text-field v-model="filterDeviceList" label="Search" placeholder="Masukkan Nama device" variant="solo"
-                clearable class="px-2" style="max-height: 50px;" maxlength="50"
+                clearable class="px-1" style="max-height: 50px;" maxlength="50"
                 :rules="[v => v.length <= 30 || 'Maksimal 30 karakter']"
                 @input="filterDeviceList = filterDeviceList.slice(0, 30)"></v-text-field>
 
@@ -147,9 +145,11 @@
 
 
       <!-- RIGHT SIDE: Live Monitoring -->
-      <v-col cols="12" md="8">
+      <v-col cols="12" md="8" height="75vh">
+
+
         <h2 class="text-h5 font-weight-bold mb-3">Live Monitoring</h2>
-        <v-card class="pa-4" color="blue-lighten-4" elevation="1">
+        <v-card class="pa-3" color="blue-lighten-4" elevation="1" height="50vh">
           <div class="mb-2">
             <div class="d-flex justify-space-between align-center">
               <div>
@@ -172,9 +172,11 @@
 
         <!-- Qunatity value -->
 
+        <v-container  class="pa-0 ma-0" height="1vh"> </v-container>
 
-        <br>
-        <v-card class="pa-4" color="blue-lighten-4" elevation="1" height="280px">
+
+        
+        <v-card class="pa-3 " color="blue-lighten-4" elevation="1" height="24vh" >
           <v-row justify="space-around" class="mt-4">
             <v-col cols="auto">
               <div class="text-center">
@@ -239,6 +241,10 @@
 
         </v-card>
       </v-col>
+
+
+
+
     </v-row>
   </v-card>
 
@@ -736,6 +742,7 @@ function appendDevices(devices, additionalDevices) {
 
 
 function searchDevices() {
+  totalDevices.value = 0;
   resetScrollDevices();
   lastFetchedPageDevices.value = 0;
   devices.value = []; // Reset daftar perangkat sebelum pencarian baru
@@ -1034,39 +1041,3 @@ function toReportPage() {
 
 </script>
 
-<style scoped>
-/* Styling for the loading spinner */
-.loading-spinner {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1000;
-  /* Pastikan di atas elemen lain */
-}
-
-
-/* Disable interactions when isLoading is true */
-.disable-interactions * {
-  pointer-events: none;
-}
-
-
-/* Optional: Add an overlay to make it clear that the screen is in loading state */
-.disable-interactions {
-  position: relative;
-}
-
-.disable-interactions::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  /* Semi-transparent overlay */
-  z-index: 5;
-  /* Ensure it overlays on top of the content */
-}
-</style>

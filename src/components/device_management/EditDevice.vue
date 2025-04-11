@@ -7,26 +7,22 @@
             </v-btn>
         </v-col>
 
-        <v-row class="fill-height">
+        <v-row class="fill-height overflow-y-auto">
             <v-col class="mx-auto px-0">
                 <p class="text-h6 font-weight-medium ma-0 text-center">
                     Edit Informasi Perangkat
                 </p>
 
-
-
                 <br>
 
-                <v-container class="pa-4 flex-grow-1 overflow-y-auto" style="max-height: 624px;">
+                <v-container class="pa-4 flex-grow-1 overflow-y-auto" style="max-height: 50vh;">
                     <v-form ref="registerDeviceForm" @submit.prevent="submitDeviceUpdate" class="d-flex flex-column">
                         <v-text-field maxlength="50" v-model="currDeviceDataLocal.device_name" label="Nama Perangkat"
                             outlined dense prepend-inner-icon="mdi-access-point-network" class="mb-4"
                             :rules="deviceNameRules" required></v-text-field>
 
-
                         <v-text-field maxlength="30" v-model="currDeviceDataLocal.device_password" label="Password"
                             outlined dense prepend-inner-icon="mdi-lock" class="mb-4" :rules="passwordRules" required>
-
                         </v-text-field>
 
                         <v-number-input v-model="currDeviceDataLocal.device_read_interval" control-variant="split"
@@ -34,49 +30,24 @@
                             :rules="readIntervalRules">
                         </v-number-input>
 
-                        <!-- Menampilkan gambar yang sudah ada -->
-                        <!-- Jika ada gambar   -->
-
-                        <!--  existingImageSrc:  {{existingImageSrc}}  -->
-                        <!-- {{  ExtractImage(originalDeviceData.device_image.file_data) }} -->
-
-
-
-
-
-
-
-
                         <v-row class="d-flex justify-center mt-1 mb-3">
                             <v-img v-if="existingImageSrc || newDeviceImageSrc && newDeviceImage"
                                 :src="existingImageSrc || newDeviceImageSrc" class="mt-4 mb-5" max-height="200"
                                 contain />
                         </v-row>
 
-
-
-                        <!-- Update Gambar -->
                         <v-file-input v-model="newDeviceImage" label="Ubah Gambar Perangkat (Opsional, max 5MB)"
                             outlined dense prepend-inner-icon="mdi-image" class="mb-4" accept="image/png, image/jpeg"
                             @change="handleFileUpload">
                         </v-file-input>
 
-
                         <v-row class="pa-4">
-
                             <v-icon>mdi-information</v-icon>
                             <p class="text-subtitle-1 font-weight-medium ma-0">Data Perangkat (Optional)</p>
-
                         </v-row>
 
-
-                        <div class="scrollable-container pa-0 border ma-0">
-
-
-
-
+                        <div class="scrollable-container pa-0 border ma-0" style="max-height: 300px; overflow-y: auto;">
                             <v-container v-for="(currData, index) in currDeviceDetailsData" :key="'existing-' + index">
-                                <!-- {{ currDeviceDetailsData }} -->
                                 <v-row>
                                     <v-col cols="5.5" class="px-1 py-0">
                                         <v-text-field v-model="currData.title" outlined hide-details
@@ -97,12 +68,7 @@
                                 </v-row>
                             </v-container>
 
-
-
-
-                            <!-- Form untuk menambahkan data baru -->
                             <v-container v-for="(newData, index) in newDeviceDetailsData" :key="'new-' + index">
-                                <!-- {{ newDeviceDetailsData }} -->
                                 <v-row>
                                     <v-col cols="5.5" class="px-1 py-0">
                                         <v-text-field v-model="newData.title"
@@ -122,10 +88,8 @@
                                     </v-col>
                                 </v-row>
                             </v-container>
-
                         </div>
 
-                        <!-- Tombol tambah data baru -->
                         <v-col cols="auto" class="d-flex align-center">
                             <v-btn @click="addNewDataField" color="primary"
                                 class="rounded-circle d-flex justify-center align-center"
@@ -135,14 +99,11 @@
                             </v-btn>
                         </v-col>
 
-                        <!-- {{ isDisableSubmitBtn }} -->
                         <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="2"
                             :disabled="isDisableSubmitBtn">
                             Perbarui Data Perangkat
                         </v-btn>
-
                     </v-form>
-
                 </v-container>
             </v-col>
         </v-row>

@@ -1,6 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginPage from '@/components/Login.vue';
 import DashboardPage from '@/components/Dashboard.vue';
+import ReportPage from '@/components/reports/ReportPage.vue';
+
+
+
 import VerifyOTP from '@/components/auths/VerifyOTP.vue';
 import ResetPassword from '@/components/auths/ResetPassword.vue';
 import VerifyResetPassword from '@/components/auths/VerifyResetPassword.vue';
@@ -14,6 +18,12 @@ const routes = [
         path: '/dashboard',
         name: 'dashboard',
         component: DashboardPage,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/report',
+        name: 'reports',
+        component: ReportPage,
         meta: { requiresAuth: true },
     },
     {

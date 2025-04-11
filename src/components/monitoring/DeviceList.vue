@@ -1,6 +1,6 @@
 <template>
-    <div class="device-list">
-        <p class="text-subtitle-2 font-weight-bold">Total hasil: {{ totalDevices }}</p>
+    <div class="device-list px-0">
+        <p class="text-subtitle-2 font-weight-bold">Menampilkan:  {{devices.length}}/{{ totalDevices }}</p>
 
         <v-list bg-color="white" dense class="rounded-lg elevation-2">
             <template v-if="devices && devices.length > 0">
