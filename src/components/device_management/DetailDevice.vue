@@ -15,11 +15,11 @@
 
                 <br>
 
-                <v-container class="pa-4 flex-grow-1 overflow-y-auto" style="max-height: 624px;">
+                <v-container class="pa-4 flex-grow-1 overflow-y-auto px-0" style="max-height: 624px;">
                     <v-col class="d-flex flex-column">
                         <!-- Nama Perangkat -->
 
-                        
+
                         <v-col class="mb-4">
                             <p class="text-subtitle-1 font-weight-medium mb-1">Nama Perangkat</p>
                             <v-card outlined class="pa-3">
@@ -62,12 +62,12 @@
                             <p class="text-subtitle-1 font-weight-medium ma-0">Data Perangkat</p>
                         </v-row>
 
-                        <div class="scrollable-container pa-0 border ma-0">
+                        <div class="scrollable-container px-0 border mb-4 mx-0">
                             <v-container v-for="(currData, index) in currDeviceDetailsData" :key="'existing-' + index">
                                 <v-row>
                                     <v-col cols="5.5" class="px-1 py-0">
                                         <v-card outlined class="pa-2">
-                                            
+
                                             {{ currData.title }}
                                         </v-card>
                                     </v-col>
@@ -79,67 +79,89 @@
                                     </v-col>
                                 </v-row>
                             </v-container>
-                        </div>
 
-                        <!-- Tabel Aktivitas -->
-                        <div class="mt-4">
-                            <p class="text-h6 font-weight-medium mt-5 mb-3 text-center">
-                                Aktivitas Perangkat
-                            </p>
-                            <v-table>
-                                <thead>
-                                    <tr>
-                                        <th>Tanggal/Waktu</th>
-                                        <th>Deskripsi</th>
-                                        <th>Aktor</th>
-                                        <th>Perubahan</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(activity, index) in currDeviceDataLocal.device_activities" :key="index">
-                                        <td>{{ formatTimestamp(activity.activity_tstamp) }}</td>
-                                        <td>{{ activity.activity_description }}</td>
-                                        <td>{{ activity.actor_full_name }}</td>
-                                        <td>
-                                            <div v-if="activity.activity_before && activity.activity_after &&
-                                                activity.activity_before !== '{}' && activity.activity_after !== '{}'">
-                                                <v-table dense class="mt-2">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Judul</th>
-                                                            <th>Sebelum</th>
-                                                            <th>Sesudah</th>
-                                                        </tr>
-                                                    </thead>
-                                <tbody>
-                                    <template v-if="typeof JSON.parse(activity.activity_before) === 'object'">
-                                        <tr v-for="(value, key) in JSON.parse(activity.activity_before)" :key="key">
-                                            <td class="font-weight-bold">{{ beautifyKey(key) }}</td>
-                                            <td>{{ value || '-' }}</td>
-                                            <td>{{ JSON.parse(activity.activity_after)[key] || '-' }}</td>
-                                        </tr>
-                                    </template>
-                                    <template v-else>
-                                        <tr>
-                                            <td class="font-weight-bold">Data</td>
-                                            <td>{{ activity.activity_before }}</td>
-                                            <td>{{ activity.activity_after }}</td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </v-table>
+                            <v-container>
+
+
+
+                            </v-container>
                         </div>
-                        <span v-else>-</span>
-                        </td>
-                        </tr>
-                        </tbody>
-                        </v-table>
-                        </div>
+                        <v-col class="mb-4 mx-0 px-0">
+
+
+                            <v-col>
+
+
+                                <v-col>
+                                    <!-- filterDeviceList -->
+                                    <v-row class="px-0" style="max-height: 70px;">
+                                        <v-col cols="6" class="px-1">
+                                            <v-select v-model="selectedFilter" :items="[
+                                                { title: 'Semua', value: '' },
+                                                { title: 'Update', value: 'update' },
+                                                { title: 'Connect', value: 'connect' },
+                                                { title: 'Disconnect', value: 'disconnect' },
+                                                { title: 'Lainnya', value: 'other' },
+                                            ]" density="compact" label="Filter" variant="outlined"></v-select>
+                                        </v-col>
+
+                                        <v-col cols="5" class="px-1">
+                                            <v-btn type="button" @click="toggleSortType" color="blue-lighten-4"
+                                                variant="flat" style="border: 1px solid ; height: 40px; width: 100%;">
+                                                <template v-if="selectedSortType === 'ASC'">
+                                                    <v-icon>mdi-arrow-up</v-icon>
+                                                </template>
+                                                <template v-else>
+                                                    <v-icon>mdi-arrow-down</v-icon>
+                                                </template>
+                                            </v-btn>
+                                        </v-col>
+
+                                        <v-col cols="1" class="px-1">
+                                            <v-btn color="primary" @click="searchDeviceActivities"
+                                                class="search-button rounded-circle d-flex justify-center align-center"
+                                                style="height: 40px; width: 40px; min-width: 40px;">
+                                                <v-icon>mdi-magnify</v-icon>
+                                            </v-btn>
+                                        </v-col>
+                                    </v-row>
+
+
+
+                                </v-col>
+
+
+
+                                <!-- Device activities -->
+
+
+
+
+
+                                <v-col class="px-0">
+                                    <p>
+                                        Dilihat : {{ device_activities.length }} / {{ totalDeviceActivities }}
+                                    </p>
+
+                                    <v-infinite-scroll v-if="currDeviceDataLocal.device_id" height="550"
+                                        @load="loadDeviceActivities" :key="scrollKeyDeviceActivities"
+                                        class="overflow-auto px-0">
+                                        <DevicesActivityList :device-activities="device_activities" />
+                                    </v-infinite-scroll>
+
+                                </v-col>
+
+
+                            </v-col>
+
+
+                        </v-col>
                     </v-col>
 
 
                     <!-- Tombol Ke Edit Page -->
-                    <v-col cols="auto" class="d-flex justify-end">
+                    <v-col v-if="user_role == 'system master' || user_role == 'system admin'" cols="auto"
+                        class="d-flex justify-end">
                         <v-btn @click="toEditPage(currDeviceDataLocal.device_id)" color="primary"
                             class="d-flex justify-center align-center" style="max-height: 50px">
                             <span class="pr-1">Ubah data </span>
@@ -152,108 +174,215 @@
             </v-col>
 
 
-
-
         </v-row>
     </v-col>
 </template>
 
 <script setup>
-import { ref, reactive, watch } from "vue";
-import JSZip from "jszip";
+import { ref, onMounted, nextTick, watch } from "vue";
+import DevicesActivityList from "./DevicesActivityList.vue";
+import { ExtractImage } from "@/utils/utils"
+import { Process } from "@/utils/requestHelper";
+import { BASE_API_URL } from "@/configs/config";
 
 const emit = defineEmits(["toogle-detail-device-state", "handle-edit-device"]);
 const props = defineProps(["currDeviceData"]);
 
-////////////// DEVICE DATA //////////////
-// Initialize local data with props
-const currDeviceDataLocal = reactive({
-    device_id: null, // <-- tambahkan
+// Device data
+const user_role = ref("");
+const currDeviceDataLocal = ref({
+    device_id: null,
     device_name: "",
     device_password: "",
     device_read_interval: 0,
     device_data: {},
-    device_attachment: {},
-    device_activities: [],
+    device_image: {}
 });
-
-
 const currDeviceDetailsData = ref([]);
 const existingImageSrc = ref("");
 
-const extractImageFromAttachment = async (base64Data) => {
-    try {
-        const zip = new JSZip();
-        const zipData = await zip.loadAsync(base64Data.split(",")[1], { base64: true });
+// Device activities state
+const device_activities = ref([]);
+const totalDeviceActivities = ref(0);
+const totalPagesDeviceActivities = ref(0);
+const isFetchingDeviceActivities = ref(false);
+const lastFetchedPageDeviceActivities = ref(0);
+const scrollKeyDeviceActivities = ref(0);
 
-        for (const fileName in zipData.files) {
-            if (fileName.match(/\.(jpeg|jpg|png)$/i)) {
-                const fileData = await zipData.files[fileName].async("base64");
-                return `data:image/${fileName.split(".").pop()};base64,${fileData}`;
-            }
-        }
-        return null;
-    } catch (error) {
-        console.error("Error extracting image from attachment:", error);
-        return null;
-    }
+// Filter and sorting
+const selectedFilter = ref("");
+const selectedSortType = ref("DESC");
+const page_size = ref(10); // Adjust as needed
+
+
+// Methods
+const toggleSortType = () => {
+    selectedSortType.value = selectedSortType.value === "ASC" ? "DESC" : "ASC";
 };
 
-// Pindahkan watch di bawah fungsi ini
-watch(
-    () => props.currDeviceData,
-    async (newVal) => {
-        if (newVal) {
-            Object.assign(currDeviceDataLocal, {
-                device_id: newVal.device_id || null,
-                device_name: newVal.device_name || "",
-                device_password: newVal.device_password || "",
-                device_read_interval: newVal.device_read_interval || 1,
-                device_attachment: newVal.device_attachment || {},
-                device_activities: newVal.device_activities || [],
-            });
+const resetScrollDeviceActivities = () => {
+    scrollKeyDeviceActivities.value += 1;
+};
 
-            if (newVal.device_data) {
-                currDeviceDetailsData.value = Object.entries(newVal.device_data)
-                    .map(([key, value]) => ({
-                        title: key,
-                        data: value
-                    }));
-            } else {
-                currDeviceDetailsData.value = [];
-            }
 
-            if (newVal.device_attachment?.attachment_data) {
-                existingImageSrc.value = await extractImageFromAttachment(newVal.device_attachment.attachment_data);
-            }
+
+
+const loadDeviceActivities = async ({ done }) => {
+    if (totalPagesDeviceActivities.value === 0) {
+        done("empty");
+        return;
+    }
+
+    console.log("---loadDeviceActivities---")
+    const fetchedPageNumber = lastFetchedPageDeviceActivities.value + 1;
+    console.log("loadDeviceActivities - ast page:", lastFetchedPageDeviceActivities.value);
+    console.log("loadDeviceActivities - Fetched page number:", fetchedPageNumber);
+
+
+    setTimeout(async () => {
+        await getDeviceActivitiesList(fetchedPageNumber);
+
+        if (fetchedPageNumber < totalPagesDeviceActivities.value) {
+            done("done");
+        } else {
+            done("empty");
         }
-    },
-    { immediate: true, deep: true }
-);
+    }, 1000);
+    console.groupEnd();
+};
 
 
+const appendDeviceActivities = (device_activities, additionalDevices) => {
+    console.log("---appendDeviceActivities----")
+    console.log("appendDeviceActivities - curr devices: ", device_activities)
+    console.log("appendDeviceActivities - additionalDevices: ", additionalDevices)
 
-const formatTimestamp = (epoch) => {
-    if (!epoch) return "-";
-    const date = new Date(epoch * 1000);
-    return date.toLocaleString("id-ID", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+    const deviceActivityMap = new Map();
+    device_activities.forEach((activity) => {
+        deviceActivityMap.set(activity.activity_id, activity);
     });
+
+    additionalDevices.forEach((newActivity) => {
+        if (!deviceActivityMap.has(newActivity.device_id)) {
+            device_activities.push(newActivity);
+            deviceActivityMap.set(newActivity.activity_id, newActivity);
+        }
+    });
+
+    return device_activities;
 };
 
-const beautifyKey = (key) => {
-    const mapping = {
-        name: 'Nama Perangkat',
-        read_interval: 'Interval Pembacaan',
-        attachment: 'Gambar'
-    }
-    const humanized = key.replace(/_/g, ' ')
-    return mapping[key] || humanized.charAt(0).toUpperCase() + humanized.slice(1)
+
+// function appendDevices(devices, additionalDevices) {
+//     const deviceMap = new Map();
+//     devices.forEach((device) => {
+//         deviceMap.set(device.device_id, device);
+//     });
+
+//     additionalDevices.forEach((newDevice) => {
+//         if (!deviceMap.has(newDevice.device_id)) {
+//             devices.push(newDevice);
+//             deviceMap.set(newDevice.device_id, newDevice);
+//         }
+//     });
+
+//     return devices;
+// }
+
+
+
+const searchDeviceActivities = () => {
+    resetScrollDeviceActivities();
+    lastFetchedPageDeviceActivities.value = 0;
+    device_activities.value = [];
+    getDeviceActivitiesList(1);
 };
+
+async function getDeviceActivitiesList(pageNumberParam) {
+
+    console.log("---getDeviceActivitiesList---")
+
+    if (isFetchingDeviceActivities.value) return;
+
+    isFetchingDeviceActivities.value = true;
+
+    try {
+        const operation = "get_device_activity_list";
+        const baseUrl = BASE_API_URL;
+        const params = {
+            device_id: currDeviceDataLocal.value.device_id,
+            filter: selectedFilter.value,
+            sort_type: selectedSortType.value,
+            page_number: pageNumberParam,
+            page_size: page_size.value,
+        };
+
+        const response_be = await Process(baseUrl, operation, params);
+
+        if (response_be.status !== "success") {
+            console.error("Failed to get device activities:", response_be.error_message);
+            return;
+        }
+
+        const responseBE = response_be.payload;
+
+        //console.log("getDeviceActivitiesList - responseBE: ", responseBE.device_activities)
+        if (!responseBE.device_activities) {
+            console.log("getDeviceActivitiesList - device_activities")
+            return;
+        }
+
+        console.log("getDeviceActivitiesList - device_activities: ", device_activities.value)
+
+        device_activities.value = appendDeviceActivities(device_activities.value, responseBE.device_activities);
+        totalDeviceActivities.value = responseBE.total_data;
+        totalPagesDeviceActivities.value = Math.ceil(responseBE.total_data / Number(page_size.value));
+        lastFetchedPageDeviceActivities.value = pageNumberParam;
+    } catch (err) {
+        console.error("Error while getting device activities:", err);
+    } finally {
+        isFetchingDeviceActivities.value = false;
+    }
+}
+
+// Watchers
+watch([selectedSortType, selectedFilter], () => {
+    searchDeviceActivities();
+});
+
+// Lifecycle hooks
+onMounted(async () => {
+    const user_data = JSON.parse(localStorage.getItem('user_data'));
+    user_role.value = user_data?.role;
+
+    if (props.currDeviceData) {
+        const newVal = props.currDeviceData;
+        currDeviceDataLocal.value = {
+            device_id: newVal.device_id || null,
+            device_name: newVal.device_name || "",
+            device_password: newVal.device_password || "",
+            device_read_interval: newVal.device_read_interval || 1,
+            device_image: newVal.device_image || {},
+        };
+
+        if (newVal.device_data) {
+            currDeviceDetailsData.value = Object.entries(newVal.device_data)
+                .map(([key, value]) => ({
+                    title: key,
+                    data: value
+                }));
+        }
+
+        if (newVal.device_image?.file_data) {
+            existingImageSrc.value = await ExtractImage(newVal.device_image.file_data);
+        }
+        await nextTick();
+        resetScrollDeviceActivities();
+        searchDeviceActivities(1);
+    }
+});
+
+
 
 const backToDeviceList = () => {
     emit("toogle-detail-device-state");
@@ -261,10 +390,7 @@ const backToDeviceList = () => {
 
 const toEditPage = (deviceId) => {
     emit("handle-edit-device", deviceId);
-}
-
-
-
+};
 </script>
 
 <style scoped>

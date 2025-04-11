@@ -1,7 +1,7 @@
 <template>
     <v-col class="fill-height px-0">
         <v-col cols="auto" class="d-flex align-center">
-            <v-btn @click="backToDeviceList" color="primary" class="d-flex justify-center align-center"
+            <v-btn @click="backToDetailDevice" color="primary" class="d-flex justify-center align-center"
                 style="max-height: 50px">
                 <v-icon>mdi-arrow-left-bold</v-icon> <span>Kembali</span>
             </v-btn>
@@ -38,9 +38,12 @@
                         <!-- Jika ada gambar   -->
 
                         <!--  existingImageSrc:  {{existingImageSrc}}  -->
-                        <!-- {{  extractImageFromAttachment(originalDeviceData.device_attachment.attachment_data) }} -->
+                        <!-- {{  ExtractImage(originalDeviceData.device_image.file_data) }} -->
 
-                       
+
+
+
+
 
 
 
@@ -165,12 +168,11 @@ dont remove comments
       },
       "delete": ["deleted_field1", "deleted_field2"]
     } ,
-     "attachment": {
-          "attachemnt_id": 1,
-         "attachment_change_fields" : {
-                 "attachemnt_name": "new name",
-                 "attachment_data": "new data",
-        }
+     "image": {
+          "update": {
+          "file_id": 1,
+        "file_data": "new data",
+    }
      }
   }
 }
@@ -178,11 +180,11 @@ dont remove comments
 */
 
 import { ref, reactive, onMounted, watch, computed } from "vue";
-import JSZip from "jszip";
+import { ExtractImage, CompressToZip, ConvertImageToBase64 } from "@/utils/utils"
 
 import { VNumberInput } from 'vuetify/labs/VNumberInput'
 
-const emit = defineEmits(["update-device", "toogle-edit-device-state"]);
+const emit = defineEmits(["update-device", "toogle-detail-device-state"]);
 const props = defineProps(["currDeviceData"]);
 
 
@@ -193,7 +195,7 @@ const currDeviceDataLocal = reactive({
     device_password: "",
     device_read_interval: 1,
     device_data: {},
-    device_attachment: {},
+    device_image: {},
 });
 
 // Initialize original device data
@@ -203,7 +205,7 @@ const originalDeviceData = reactive({
     device_password: "",
     device_read_interval: 0,
     device_image_src: "",
-    device_attachment_id: 0,
+    device_file_id: 0,
 });
 
 const currDeviceDetailsData = ref([]); // Untuk data yang sudah ada (bisa diedit key dan value)
@@ -433,7 +435,7 @@ const getEditedDeviceData = (originalDataParam, existingDataParam) => {
 
 };
 
-////////////// DEVICE ATTACHMENT //////////////
+////////////// DEVICE IMAGE //////////////
 
 
 const existingImageSrc = ref("");
@@ -473,75 +475,33 @@ const handleFileUpload = async (event) => {
     console.log("Preview image URL:", newDeviceImageSrc.value);
 
     try {
-        const compressedFile = await compressToZip(file, file.name);
-        convertImageToBase64(compressedFile);
-
-
+        const compressedFile = await CompressToZip(file, file.name);
+        const base64Result = await ConvertImageToBase64(compressedFile);
+        newDeviceImageBase64.value = base64Result;
         existingImageSrc.value = null;
 
-        console.log("existingImageSrc:", existingImageSrc.value);
-        console.log("newDeviceImageSrc:", newDeviceImageSrc.value);
-
-
-
-        console.group("Compressed file details");
-
-
-        console.log("Compressed file:", compressedFile);
-        console.log("Compressed file size:", compressedFile.size);
-        console.log("Uncompressed file size:", file.size);
-
-        console.groupEnd();
+        /*  console.group(" Image Processing");
+         console.log("existingImageSrc:", existingImageSrc.value);
+         console.log("newDeviceImageSrc:", newDeviceImageSrc.value);
+         console.log("Compressed file:", compressedFile);
+         console.log("Compressed file size:", compressedFile.size);
+         console.log("Uncompressed file size:", file.size);
+         console.groupEnd(); */
 
     } catch (error) {
-        console.error("Compression error:", error);
-    }
-};
-
-const convertImageToBase64 = (file) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-        newDeviceImageBase64.value = reader.result;
-
-    };
-    reader.onerror = (error) => {
-        console.error("Error converting file to Base64:", error);
+        console.error("Error processing image: :", error);
         popUpProps.value = {
             status: "error",
-            errorMessage: "Gagal mengonversi gambar",
-            errorCode: "BASE64_ERROR",
+            errorMessage: "GAGAL MEMPROSES GAMBAR",
+            errorCode: "ERROR",
         };
         popupVisible.value = true;
-    };
-};
-
-const compressToZip = async (file, fileName) => {
-    const zip = new JSZip();
-    zip.file(fileName, file);
-
-    const zipBlob = await zip.generateAsync({ type: "blob" });
-    return zipBlob;
-};
-
-const extractImageFromAttachment = async (base64Data) => {
-    try {
-        const zip = new JSZip();
-        const zipData = await zip.loadAsync(base64Data.split(",")[1], { base64: true });
-
-        for (const fileName in zipData.files) {
-            if (fileName.match(/\.(jpeg|jpg|png)$/i)) {
-                const fileData = await zipData.files[fileName].async("base64");
-                return `data:image/${fileName.split(".").pop()};base64,${fileData}`; // ✅ RETURN di sini
-            }
-        }
-
-        return null; // jika tidak ada image ditemukan
-    } catch (error) {
-        console.error("Error extracting image from attachment:", error);
-        return null;
+        return;
     }
 };
+
+
+
 
 
 // Watch to ensure data is properly assigned
@@ -552,24 +512,23 @@ watch(
         if (newVal) {
 
             // console.log("New device data: ", newVal);
-            // Handle attahcment 
+            // Handle image 
 
-            let originalDeviceAttachementId = null;
-            if (newVal.device_attachment?.attachment_id) {
-                originalDeviceAttachementId = newVal.device_attachment.attachment_id;
+            let originalDeviceImageId = null;
+            if (newVal.device_image?.file_id) {
+                originalDeviceImageId = newVal.device_image.file_id;
             }
-            //    console.log("originalDeviceAttachementId: ", originalDeviceAttachementId);
+            //    console.log("originalDeviceImageId: ", originalDeviceImageId);
 
-            let originalDeviceAttachementDataSrc = null;
+            let originalDeviceImageDataSrc = null;
 
-            if (newVal.device_attachment?.attachment_data) {
+            if (newVal.device_image?.file_data) {
 
                 // get image src
-                originalDeviceAttachementDataSrc = await extractImageFromAttachment(newVal.device_attachment.attachment_data);
-                /*  console.log("originalDeviceAttachement: ", originalDeviceAttachementData);
-                 console.log("originalDeviceAttachementSrc: ", originalDeviceAttachementDataSrc); */
+                originalDeviceImageDataSrc = await ExtractImage(newVal.device_image.file_data);
 
-                existingImageSrc.value = originalDeviceAttachementDataSrc;
+
+                existingImageSrc.value = originalDeviceImageDataSrc;
             }
             // assign to original device data
 
@@ -578,8 +537,8 @@ watch(
                 device_name: newVal.device_name || "",
                 device_password: newVal.device_password || "",
                 device_read_interval: newVal.device_read_interval || 1,
-                device_image_src: originalDeviceAttachementDataSrc,
-                device_attachment_id: originalDeviceAttachementId,
+                device_image_src: originalDeviceImageDataSrc,
+                device_file_id: originalDeviceImageId,
             });
 
             /*  console.log("existingImageSrc: ", existingImageSrc.value);
@@ -590,7 +549,7 @@ watch(
                 device_name: newVal.device_name || "",
                 device_password: newVal.device_password || "",
                 device_read_interval: newVal.device_read_interval || 1,
-                device_attachment: newVal.device_attachment || {},
+                device_image: newVal.device_image || {},
             });
 
             // Convert curr device_data to array format
@@ -628,28 +587,6 @@ onMounted(() => {
     originalDeviceDetailsData.value = JSON.parse(JSON.stringify(currDeviceDetailsData.value));
 });
 
-
-const formatTimestamp = (epoch) => {
-    if (!epoch) return "-";
-    const date = new Date(epoch * 1000);
-    return date.toLocaleString("id-ID", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-};
-const beautifyKey = (key) => {
-    const mapping = {
-        name: 'Nama Perangkat',
-        read_interval: 'Read Interval',
-        attachment: 'Gambar'
-    }
-    // Replace underscore with space and capitalize
-    const humanized = key.replace(/_/g, ' ')
-    return mapping[key] || humanized.charAt(0).toUpperCase() + humanized.slice(1)
-}
 
 ////////////////////
 
@@ -741,70 +678,102 @@ const submitDeviceUpdate = () => {
         changeFields.read_interval = currDeviceDataLocal.device_read_interval;
     }
 
-    // Perubahan attachment
+    // Perubahan image
     /*  exo:
-   changeFields.attachment = {
+   changeFields.image = {
     insert: {
-        attachment_id: originalDeviceData.device_attachment_id,
-        attachment_data: newDeviceImageBase64.value
+        file_id: originalDeviceData.device_file_id,
+        file_data: newDeviceImageBase64.value
     }
 } atau
-changeFields.attachment = {
+changeFields.image = {
     update: {
-        attachment_id: originalDeviceData.device_attachment_id,
-        attachment_data: newDeviceImageBase64.value
+        file_id: originalDeviceData.device_file_id,
+        file_data: newDeviceImageBase64.value
     }
 } atau
-changeFields.attachment = {
+changeFields.image = {s
     delete: {
-        attachment_id: originalDeviceData.device_attachment_id
+        file_id: originalDeviceData.device_file_id
     }
 }
      */
-    // Perubahan attachment
+    // Perubahan image
 
-    console.group("Attachment Changes");
-    console.log("newDeviceImage.value: ", newDeviceImage.value);
-    console.log("newDeviceImageBase64.value: ", newDeviceImageBase64.value);
-    console.log("existingImageSrc.value: ", existingImageSrc.value);
+    console.group("Image Changes");
+
+    // Semua ref perlu .value
+    console.log("newDeviceImage: ", newDeviceImage.value);
+    console.log("newDeviceImageBase64: ", newDeviceImageBase64.value);
+    console.log("existingImageSrc: ", existingImageSrc.value);
     console.log("originalDeviceData.device_image_src: ", originalDeviceData.device_image_src);
 
-    const hasExistingImage = originalDeviceData.device_attachment_id !== null;
+    // Evaluasi kondisi
+    const hasExistingImage = originalDeviceData.device_file_id !== null;
     const hasNewImageUploaded = newDeviceImageBase64.value !== "" && newDeviceImage.value;
-    const hasImageRemoved = !newDeviceImage.value && hasExistingImage;
 
-    console.log("hasExistingImage: ", hasExistingImage);
-    console.log("hasNewImageUploaded: ", hasNewImageUploaded);
-    console.log("hasImageRemoved: ", hasImageRemoved);
+    // Ini yang paling akurat untuk deteksi penghapusan
+    const hasImageRemoved =
+        hasExistingImage &&
+        (existingImageSrc.value == null || existingImageSrc.value === "") &&
+        (newDeviceImage.value == null) &&
+        (newDeviceImageSrc.value !== "" && newDeviceImageSrc.value.startsWith("blob:"));
+
+    console.log("=== Evaluasi kondisi tampil di UI ===");
+    if (existingImageSrc.value || (newDeviceImageSrc.value && newDeviceImage.value)) {
+        console.log("Ada gambar (tampilan)");
+    } else {
+        console.log("Tidak ada gambar (tampilan)");
+    }
+
+    // Cek nilai masing-masing ref
+    console.log("typeof existingImageSrc:", typeof existingImageSrc.value, existingImageSrc.value);
+    console.log("Is existingImageSrc empty?", existingImageSrc.value == null || existingImageSrc.value === "");
+
+    console.log("typeof newDeviceImageSrc:", typeof newDeviceImageSrc.value, newDeviceImageSrc.value);
+    console.log("Is newDeviceImageSrc empty?", newDeviceImageSrc.value == null || newDeviceImageSrc.value === "");
+
+    console.log("typeof newDeviceImage:", typeof newDeviceImage.value, newDeviceImage.value);
+    console.log("Is newDeviceImage empty?", newDeviceImage.value == null);
+
+    console.log("hasExistingImage:", hasExistingImage);
+    console.log("hasNewImageUploaded:", hasNewImageUploaded);
+    console.log("hasImageRemoved:", hasImageRemoved);
     console.groupEnd();
 
+
+
     if (hasImageRemoved) {
-        // Gambar dihapus dan sebelumnya ada gambar → delete
-        changeFields.attachment = {
+        console.log("Gambar dihapus");
+
+        changeFields.image = {
             delete: {
-                attachment_id: originalDeviceData.device_attachment_id,
+                file_id: originalDeviceData.device_file_id,
             },
         };
+
     } else if (hasNewImageUploaded) {
-        // Ada gambar baru yang valid (upload atau drag drop baru)
+        console.log("Gambar baru diupload");
+
         if (hasExistingImage) {
-            // Sudah ada attachment sebelumnya → update
-            changeFields.attachment = {
+            changeFields.image = {
                 update: {
-                    attachment_id: originalDeviceData.device_attachment_id,
-                    attachment_data: newDeviceImageBase64.value,
+                    file_id: originalDeviceData.device_file_id,
+                    file_data: newDeviceImageBase64.value,
                 },
             };
         } else {
-            // Tidak ada attachment sebelumnya → insert
-            changeFields.attachment = {
+            changeFields.image = {
                 insert: {
-                    attachment_data: newDeviceImageBase64.value,
+                    file_data: newDeviceImageBase64.value,
                 },
             };
         }
     }
-    // Jika tidak memenuhi kondisi di atas, tidak ada perubahan pada attachment
+
+    // hasExistingImage:  true
+    //
+    // Jika tidak memenuhi kondisi di atas, tidak ada perubahan pada image
 
     // Reset tracking arrays
     deletedCurrDeviceDetailsData.value = [];
@@ -902,8 +871,8 @@ changeFields.attachment = {
     emit("update-device", updatedData.device_id, updatedData.change_fields);
 };
 
-const backToDeviceList = () => {
-    emit("toogle-edit-device-state");
+const backToDetailDevice = () => {
+    emit("toogle-detail-device-state");
 };
 
 

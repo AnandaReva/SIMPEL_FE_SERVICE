@@ -40,7 +40,7 @@
 
                                         <!-- Aktivitas Terakhir -->
                                         <v-col cols="3" class="text-right text-caption text-grey-darken-1">
-                                            {{ formatTimestamp(device.device_last_tstamp) || '-' }}
+                                            {{ FormatTimestamp(device.device_last_tstamp) || '-' }}
                                         </v-col>
                                     </v-row>
                                 </v-list-item>
@@ -75,6 +75,7 @@
 
 <script setup>
 import IoTIcon from "@/assets/images/IoTIcon.png";
+import { FormatTimestamp } from "@/utils/utils";
 
 const props = defineProps(["devices", "currDeviceId", "totalDevices"]);
 const emit = defineEmits(["select-device", "view-device-detail"]);
@@ -91,18 +92,6 @@ function viewDeviceDetail(deviceDataDetail) {
     emit("view-device-detail", deviceDataDetail.device_id);
 }
 
-// Fungsi untuk mengonversi epoch timestamp ke format waktu lokal
-const formatTimestamp = (epoch) => {
-    if (!epoch) return "-";
-    const date = new Date(epoch * 1000);
-    return date.toLocaleString("id-ID", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-};
 </script>
 
 <style scoped>

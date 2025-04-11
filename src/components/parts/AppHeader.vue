@@ -1,6 +1,15 @@
+<!-- src/components/parts/AppHeader.vue -->
 <template>
   <div class="px-4 py-2 bg-blue-lighten-5">
+    
+    
+    
     <v-row align="center">
+      
+      
+      <!-- Drawer toggle button -->
+      <v-app-bar-nav-icon variant="text" @click.stop="$emit('toggle-navigation-drawer')"></v-app-bar-nav-icon>
+
       <!-- Left side: Title -->
       <v-col cols="auto">
         <h1 class="text-h5 font-weight-medium">SIMPLE</h1>
@@ -103,6 +112,8 @@ import { ref, onMounted } from "vue";
 import { Auth_Process } from "@/utils/requestHelper"; // Sesuaikan path import jika perlu
 import { BASE_AUTH_URL } from "@/configs/config"
 
+defineEmits(['toggle-navigation-drawer'])
+
 const user = ref({
   full_name: "Guest",
   role: "Guest",
@@ -123,7 +134,7 @@ onMounted(() => {
       user.value = {
         full_name: parsedUser.full_name || "Guest",
         username: parsedUser.username || "Guest",
-        role: parsedUser.role || "Guest",
+        role: parsedUser.role || "guest",
         email: parsedUser.email || "",
         avatar: parsedUser.avatar || "",
       };

@@ -14,7 +14,7 @@
                 <p class="text-h6 font-weight-medium ma-0 text-center">Tambah Perangkat Baru</p>
 
                 <v-container class="pa-4 flex-grow-1 overflow-y-auto" style="max-height: 624px;">
-                    
+
 
                     <v-form ref="registerDeviceForm" @submit.prevent="submitRegisterDevice" class="d-flex flex-column">
                         <v-text-field maxlength="50" v-model="device_name" label="Nama Perangkat" outlined dense
@@ -92,7 +92,7 @@
                         </v-btn>
                     </v-form>
 
-                    
+
                 </v-container>
             </v-col>
         </v-row>
@@ -104,7 +104,7 @@
 import { ref, computed } from "vue";
 
 import { VNumberInput } from 'vuetify/labs/VNumberInput'
-import JSZip from "jszip";
+import { CompressToZip, ConvertImageToBase64 } from "@/utils/utils"
 
 const emit = defineEmits(["toogle-add-device-state", "register-device"]);
 
@@ -144,43 +144,25 @@ const handleFileUpload = async (event) => {
 
     // Buat URL objek untuk preview gambar
     device_image_src.value = URL.createObjectURL(file);
-    console.log("Preview image URL:", device_image_src.value);
+    //console.log("Preview image URL:", device_image_src.value);
 
     try {
-        const compressedFile = await compressToZip(file, file.name);
-        convertImageToBase64(compressedFile);
+        const compressedFile = await CompressToZip(file, file.name);
+        const base64Result = await ConvertImageToBase64(compressedFile);
+        device_image_base64.value = base64Result;
+
     } catch (error) {
-        console.error("Compression error:", error);
-    }
-};
-
-const compressToZip = async (file, fileName) => {
-    const zip = new JSZip();
-    zip.file(fileName, file);
-
-    const zipBlob = await zip.generateAsync({ type: "blob" });
-    return zipBlob;
-};
-
-const convertImageToBase64 = (file) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-        device_image_base64.value = reader.result;
-
-    };
-    reader.onerror = (error) => {
-        console.error("Error converting file to Base64:", error);
+        console.error("Error processing image: :", error);
         popUpProps.value = {
             status: "error",
-            errorMessage: "Gagal mengonversi gambar",
-            errorCode: "BASE64_ERROR",
+            errorMessage: "GAGAL MEMPROSES GAMBAR",
+            errorCode: "ERROR",
         };
         popupVisible.value = true;
-    };
+        device_image.value = null;
+        return;
+    }
 };
-
-
 
 
 const dataContainers = ref([

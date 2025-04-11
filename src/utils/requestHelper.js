@@ -49,6 +49,8 @@ exp success:
 
 */
 export async function Auth_Process(baseUrl, process_name, params = {}) {
+    console.group("---Auth_Process---")
+  
   try {
     const fullUrl = `${baseUrl}${process_name}`;
     console.log("📡 Request ke:", fullUrl);
@@ -86,6 +88,8 @@ export async function Auth_Process(baseUrl, process_name, params = {}) {
       payload: payload,
       status: "error",
     };
+  } finally {
+    console.groupEnd();
   }
 }
 
@@ -120,7 +124,11 @@ import { DeepSortObject } from "./utils.js";
 import router from "@/router";
 
 export async function Process(apiUrl, process_name, params = {}) {
+  console.groupCollapsed("---Process", process_name, "---")
+
+
   try {
+
     const fullUrl = `${apiUrl}process`;
     console.log("📡 Request ke:", fullUrl);
     // console.log("🔄 Parameters:", params);
@@ -208,6 +216,11 @@ export async function Process(apiUrl, process_name, params = {}) {
       payload: payload,
       status: "error",
     };
+
+  } finally {
+    console.groupEnd();
   }
+
+
 }
 

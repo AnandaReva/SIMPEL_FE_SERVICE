@@ -1,7 +1,11 @@
+<!-- src/App.vue -->
 <template>
   <v-app class="bg-app">
     <!-- Jika bukan halaman login, tampilkan header dan footer -->
-    <AppHeader v-if="showHeaderFooter" />
+    <AppHeader v-if="showHeaderFooter" @toggle-navigation-drawer="toggleDrawer" />
+
+    <Navigation ref="navigationDrawer" />
+
 
     <!-- Menampilkan halaman berdasarkan route -->
     <router-view></router-view>
@@ -15,6 +19,17 @@ import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppHeader from './components/parts/AppHeader.vue';
 import AppFooter from './components/parts/AppFooter.vue';
+import Navigation from './components/parts/Navigation.vue';
+
+const navigationDrawer = ref(null)
+
+const toggleDrawer = () => {
+  if (navigationDrawer.value) {
+    navigationDrawer.value.toggleDrawer();
+  }
+};
+
+/////////////////
 
 const showHeaderFooter = ref(true);
 const route = useRoute();
@@ -33,7 +48,7 @@ watch(route, (newRoute) => {
   console.log("Current route:", newRoute.path);
   //showHeaderFooter.value = newRoute.name !== 'login' && newRoute.name !== 'verify-otp' && newRoute.name !== 'reset-password'; 
 
-  showHeaderFooter.value = newRoute.name !== 'login' && newRoute.name !== 'verify-otp' &&newRoute.name !== 'reset-password'  && checkLocalStorage()
+  showHeaderFooter.value = newRoute.name !== 'login' && newRoute.name !== 'verify-otp' && newRoute.name !== 'reset-password' && checkLocalStorage()
 }, { immediate: true }); // immediate: true agar dijalankan saat pertama kali komponen dimuat
 
 </script>

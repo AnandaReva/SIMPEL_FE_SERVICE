@@ -21,31 +21,40 @@
           <!-- DONT REMOVE COMENTS -->
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 0">
             <!-- Konten untuk state 0 (device list) -->
+
+
+
+
             <v-row v-if="(user_role === 'system admin' || user_role === 'system master')"
-              class=" d-flex justify-end align-center pa-0" style="max-height: 70px;">
+              class="d-flex justify-end align-center pa-0" style="max-height: 70px;">
+
               <v-col cols="auto" class="d-flex align-center ">
                 <v-container class="pr-3">
                   <span>Tambah Perangkat</span>
                 </v-container>
                 <v-btn @click="toogleAddDeviceState" color="primary"
-                  class="search-button rounded-circle d-flex justify-center align-center"
+                  class="rounded-circle d-flex justify-center align-center"
                   style="max-height: 50px; width: 50px; min-width: 50px;">
                   <v-icon>mdi-plus</v-icon>
                 </v-btn>
               </v-col>
             </v-row>
+            <v-row v-else class="d-flex justify-end align-center pa-0" style="height: 70px; max-height: 70px; ">
 
-            <!-- filter -->
+            </v-row>
+
+
+            <!-- filterDeviceList -->
             <v-row class="px-2" style="max-height: 70px;">
               <!-- Pilihan Pengurutan -->
-              <!-- Filter Status -->
+              <!-- filterDeviceList Status -->
               <v-col cols="5">
-                <v-select v-model="selectedStatus" :items="[
+                <v-select v-model="selectedStatusDeviceList" :items="[
                   { title: 'Semua', value: '' },
                   { title: 'Aktif', value: 1 },
                   { title: 'Tidak Aktif', value: 0 }
                 ]" density="compact" label="Status" variant="outlined"></v-select>
-                <!-- <v-select v-model="selectedStatus" :items="[
+                <!-- <v-select v-model="selectedStatusDeviceList" :items="[
                   { title: 'Semua', value: '' },
                   { title: 'Aktif', value: 1 },
                   { title: 'Tidak Aktif', value: 0 }
@@ -56,12 +65,12 @@
 
               <!-- Pilihan Pengurutan -->
               <v-col cols="5" class="pr-2">
-                <v-select v-model="selectedOrderBy" :items="[
+                <v-select v-model="selectedOrderByDeviceList" :items="[
                   { title: 'Waktu terakhir', value: 'last_tstamp' },
                   { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
                   { title: 'Nama perangkat', value: 'name' }
                 ]" density="compact" label="Pengurutan" variant="outlined"></v-select>
-                <!-- <v-select v-model="selectedOrderBy" :items="[
+                <!-- <v-select v-model="selectedOrderByDeviceList" :items="[
                   { title: 'Waktu terakhir', value: 'last_tstamp' },
                   { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
                   { title: 'Nama perangkat', value: 'name' }
@@ -72,7 +81,7 @@
               <v-col cols="2">
                 <v-btn type="button" @click="toogleSortType" color="blue-lighten-4" variant="flat"
                   style="border: 1px solid black">
-                  <template v-if="selectedSortType === 'ASC'">
+                  <template v-if="selectedSortTypeDeviceList === 'ASC'">
                     <v-icon>mdi-arrow-up</v-icon>
                   </template>
                   <template v-else>
@@ -88,10 +97,10 @@
             <!-- Serach Device -->
             <v-col class="d-flex justify-center align-center fill-width pa-0 " style="max-height: 70px;">
               <!-- Field untuk input pencarian -->
-              <v-text-field v-model="filter" label="Search" placeholder="Masukkan Nama device" variant="solo" clearable
-                class="px-2" style="max-height: 50px;" maxlength="50"
+              <v-text-field v-model="filterDeviceList" label="Search" placeholder="Masukkan Nama device" variant="solo"
+                clearable class="px-2" style="max-height: 50px;" maxlength="50"
                 :rules="[v => v.length <= 30 || 'Maksimal 30 karakter']"
-                @input="filter = filter.slice(0, 30)"></v-text-field>
+                @input="filterDeviceList = filterDeviceList.slice(0, 30)"></v-text-field>
 
               <!-- Tombol Search -->
               <v-btn color="primary" @click="searchDevices"
@@ -116,7 +125,7 @@
           <!-- DONT REMOVE COMENTS -->
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 2">
             <!-- Konten untuk state 2 (register device) -->
-            <RegisterDevice @toogle-add-device-state="toogleAddDeviceState" @register-device="registerDevice" />
+            <AddDevice @toogle-add-device-state="toogleAddDeviceState" @register-device="addDevice" />
           </v-container>
 
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 1">
@@ -127,7 +136,7 @@
 
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 3">
             <!-- Konten untuk state 2 (detail device) -->
-            <EditDevice @toogle-edit-device-state="toogleEditDeviceState" @update-device="updateDevice"
+            <EditDevice @toogle-detail-device-state="toogleDetailDeviceState" @update-device="updateDevice"
               :curr-device-data="currDeviceData" />
           </v-container>
 
@@ -165,7 +174,7 @@
 
 
         <br>
-        <v-card class="pa-4" color="blue-lighten-4" elevation="1" height="283px">
+        <v-card class="pa-4" color="blue-lighten-4" elevation="1" height="280px">
           <v-row justify="space-around" class="mt-4">
             <v-col cols="auto">
               <div class="text-center">
@@ -228,19 +237,6 @@
             </v-col>
           </v-row>
 
-
-          <!-- <div>
-            <v-row class="pa-2" justify="end" align="center">
-              <span class="mr-4 text-subtitle-1 font-weight-medium">
-                Detail Laporan Penggunaan
-              </span>
-
-              <v-btn @click="toReportPage" color="primary" class="rounded-circle d-flex justify-center align-center"
-                style="max-height: 50px; width: 50px; min-width: 50px;">
-                <v-icon>mdi-arrow-right</v-icon>
-              </v-btn>
-            </v-row>
-          </div> -->
         </v-card>
       </v-col>
     </v-row>
@@ -270,7 +266,7 @@ import CanvasJS from "@canvasjs/charts";
 //import CanvasJS, { addTheme } from "@canvasjs/charts";
 
 import DeviceList from "@/components/monitoring/DeviceList.vue";
-import RegisterDevice from "@/components/device_management/RegisterDevice.vue";
+import AddDevice from "@/components/device_management/AddDevice.vue";
 import DetailDevice from "./device_management/DetailDevice.vue";
 import EditDevice from "@/components/device_management/EditDevice.vue";
 import PopUpInfoBox from "@/components/parts/PopUpInfoBox.vue";
@@ -576,20 +572,12 @@ const startWebSocket = async () => {
 };
 
 onMounted(() => {
-
-
   // get user role
   const user_data = JSON.parse(localStorage.getItem('user_data'));
-  //  console.log('user_data', user_data);
   user_role.value = user_data?.role;
-  console.log('user_role', user_role.value);
-
-
+  //console.log('user_role', user_role.value);
 
   searchDevices();
-
-
-  // startWebSocket();
 });
 
 onUnmounted(() => {
@@ -603,20 +591,14 @@ watch(currDeviceId, (newDeviceId) => {
 });
 
 
-
-
-
-
-
-
-
 //////////////////// DEVICES////////////////////
 
-const selectedOrderBy = ref("last_tstamp"); // Default: Waktu terakhir
-const selectedStatus = ref(1); // Default: Semua perangkat aktif
-const selectedSortType = ref("ASC") // Default: ASC
+const selectedOrderByDeviceList = ref("last_tstamp"); // Default: Waktu terakhir
+const selectedStatusDeviceList = ref(1); // Default: Semua perangkat aktif
+const selectedSortTypeDeviceList = ref("DESC") // Default: ASC
+const filterDeviceList = ref('');
 
-const filter = ref('');
+
 const devices = ref([]);
 const page_size = ref(10);
 const totalPagesDevices = ref(0);
@@ -626,29 +608,27 @@ const currDeviceData = ref({});
 
 
 const toogleSortType = () => {
-  selectedSortType.value = selectedSortType.value === "ASC" ? "DESC" : "ASC";
+  selectedSortTypeDeviceList.value = selectedSortTypeDeviceList.value === "ASC" ? "DESC" : "ASC";
 }
-watch(selectedSortType, (newSortType)=> {
-  console.log(`��� Sorting berubah: ${newSortType}`);
-  searchDevices();
-}); 
-
-
-watch(selectedOrderBy, (newOrderBy) => {
-  console.log(`��� Order By berubah: ${newOrderBy}`);
+watch(selectedSortTypeDeviceList, (newSortType) => {
+  //console.log(`��� Sorting berubah: ${newSortType}`);
   searchDevices();
 });
 
-watch(selectedStatus, (newStatus) => {
-  console.log(`��� Status perangkat berubah: ${newStatus}`);
+
+watch(selectedOrderByDeviceList, (newOrderBy) => {
+  // console.log(`��� Order By berubah: ${newOrderBy}`);
+  searchDevices();
+});
+
+watch(selectedStatusDeviceList, (newStatus) => {
+  //console.log(`��� Status perangkat berubah: ${newStatus}`);
   searchDevices();
 });
 
 
 
 const lastFetchedPageDevices = ref(0);
-//const newDevice = ref()
-
 const scrollKeyDevices = ref(0);
 
 function resetScrollDevices() {
@@ -700,29 +680,28 @@ async function handleEditDevice(deviceIdParam) {
 }
 
 async function handleDetailDevice(deviceIdParam) {
+  console.group("---handleDetailDevice----")
   console.log("handleDetailDevice - device id: ", deviceIdParam);
+  const isSuccessGetDevice = await getDeviceData(deviceIdParam); // Tunggu hasil sebelum lanjut
 
-  const isSuccess = await getDeviceData(deviceIdParam); // Tunggu hasil sebelum lanjut
-  if (!isSuccess) {
+  if (!isSuccessGetDevice) {
     console.error("Failed to get device data");
     return;
   }
 
   console.log("getDeviceData SUCCESS!!");
   toogleDetailDeviceState();
+  console.groupEnd();
 }
 
 
-
+///////// INFINITE SCROLL DEVICES //////////
 function loadDevices({ done }) {
-  console.log("--- loadDevices() ---");
-
+  console.group("--- loadDevices() ---")
   if (totalPagesDevices.value === 0) {
     done("empty");
     return;
   }
-
-
   const fetchedPageNumber = lastFetchedPageDevices.value + 1;
   console.log("last page:", lastFetchedPageDevices.value);
   console.log("Fetched page number:", fetchedPageNumber);
@@ -736,6 +715,7 @@ function loadDevices({ done }) {
       done("empty");
     }
   }, 1000);
+  console.groupEnd();
 }
 
 function appendDevices(devices, additionalDevices) {
@@ -756,8 +736,6 @@ function appendDevices(devices, additionalDevices) {
 
 
 function searchDevices() {
-
-
   resetScrollDevices();
   lastFetchedPageDevices.value = 0;
   devices.value = []; // Reset daftar perangkat sebelum pencarian baru
@@ -765,7 +743,8 @@ function searchDevices() {
 }
 
 
-async function getDeviceList(pageNumber) {
+async function getDeviceList(pageNumberParam) {
+  console.log("----getDeviceList----")
   if (isFetchingDevices.value == true) {
     console.log("Fetching devices already in progress...");
     return;
@@ -777,12 +756,12 @@ async function getDeviceList(pageNumber) {
     const operation = "get_device_list";
     const baseUrl = BASE_API_URL;
     const params = {
-      filter: filter.value,
-      order_by: selectedOrderBy.value,
-      sort_type: selectedSortType.value,
-      page_number: pageNumber,
+      filterDeviceList: filterDeviceList.value,
+      order_by: selectedOrderByDeviceList.value,
+      sort_type: selectedSortTypeDeviceList.value,
+      page_number: pageNumberParam,
       page_size: page_size.value,
-      st: selectedStatus.value,
+      st: selectedStatusDeviceList.value,
     };
 
     console.log("getDeviceList params:", params);
@@ -812,7 +791,7 @@ async function getDeviceList(pageNumber) {
     devices.value = appendDevices(devices.value, responseBE.devices);
     totalDevices.value = responseBE.total_data;
     totalPagesDevices.value = Math.ceil(responseBE.total_data / Number(page_size.value));
-    lastFetchedPageDevices.value = pageNumber;
+    lastFetchedPageDevices.value = pageNumberParam;
 
     console.log("totalPagesDevices: ", totalPagesDevices.value);
     console.log("totalDevices: ", totalDevices.value);
@@ -825,9 +804,8 @@ async function getDeviceList(pageNumber) {
 }
 
 
-
-
 async function getDeviceData(deviceIdParam) {
+  console.group("---getDeviceData----")
 
   if (isFetchingDeviceData.value == true) {
     console.log("Fetching device data already in progress...");
@@ -889,12 +867,14 @@ async function getDeviceData(deviceIdParam) {
 
     isFetchingDeviceData.value = false;
   }
+
+  console.groupEnd();
 }
 
 
-//////
+////////// ADD DEVICE ////////
 
-const registerDevice = async (
+const addDevice = async (
   deviceNameParam,
   passwordParam,
   deviceImageBase64Param,
@@ -902,13 +882,15 @@ const registerDevice = async (
   deviceIntervalReadParam,
 ) => {
   const baseUrl = BASE_API_URL;
-  const operation = "register_device";
+  const operation = "add_device_data";
 
-  console.log("registerDevice - deviceNameParam:", deviceDataParam);
-  console.log("registerDevice - passwordParam:", passwordParam);
-  console.log("registerDevice - deviceImageBase64Param:", deviceImageBase64Param);
-  console.log("registerDevice - deviceDataParam:", deviceDataParam);
-  console.log("registerDevice - deviceIntervalReadParam:", deviceIntervalReadParam);
+  console.group("---addDevice---")
+
+  console.log("addDevice - deviceNameParam:", deviceDataParam);
+  console.log("addDevice - passwordParam:", passwordParam);
+  console.log("addDevice - deviceImageBase64Param:", deviceImageBase64Param);
+  console.log("addDevice - deviceDataParam:", deviceDataParam);
+  console.log("addDevice - deviceIntervalReadParam:", deviceIntervalReadParam);
 
   isLoading.value = true;
 
@@ -921,7 +903,7 @@ const registerDevice = async (
 
   // Tambahkan attachment jika ada
   if (deviceImageBase64Param) {
-    params.attachment = deviceImageBase64Param;
+    params.image = deviceImageBase64Param;
   }
 
   // Tambahkan data perangkat jika ada
@@ -938,7 +920,7 @@ const registerDevice = async (
       popUpProps.value = {
         status: "success",
         errorMessage: "Perangkat berhasil ditambahkan",
-        errorCode: "DEVICE_REGISTERED",
+        errorCode: "NEW DEVICE ADDED",
       };
 
       // get new device_id
@@ -966,8 +948,11 @@ const registerDevice = async (
     isLoading.value = false;
   }
 
+  console.groupEnd();
+
 };
 
+//////// UPDATE DEVICE /////////
 
 const updateDevice = async (
   deviceIdparam,
@@ -998,7 +983,13 @@ const updateDevice = async (
         errorCode: "DEVICE UPDATED",
       };
 
-      toogleEditDeviceState();
+      // get new device_id
+      const newDeviceId = response_be?.payload?.device_id;
+      console.log("New device ID:", newDeviceId);
+      // go to detail new device_id
+
+
+      handleDetailDevice(deviceIdparam);
 
     } else {
       throw new Error(response_be?.error_message || "Gagal memperbarui data perangkat");
@@ -1021,8 +1012,6 @@ const updateDevice = async (
 
 };
 
-
-
 /* 
 
     exp data: {    "device_Id": 1,
@@ -1037,9 +1026,6 @@ const updateDevice = async (
 
 
 */
-
-
-//////////
 
 function toReportPage() {
 
