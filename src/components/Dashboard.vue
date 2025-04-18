@@ -2,8 +2,7 @@
 
 
 <template>
-  <v-card class="pa-4 elevation-2 fill-height" 
-    :class="{ 'disable-interactions': isLoading }">
+  <v-card class="pa-4 elevation-2 fill-height" :class="{ 'disable-interactions': isLoading }">
 
     <v-progress-circular v-if="isLoading" color="primary" indeterminate class="loading-spinner"></v-progress-circular>
 
@@ -166,22 +165,27 @@
               </div>
             </div>
           </div>
-          <div ref="chartContainer" id="chartContainer" style="height: 386px; width: 100%;"></div>
+
+          <v-container v-if="currDeviceId">
+
+            <div ref="chartContainer" id="chartContainer" style="height: 386px; width: 100%;"></div>
+
+          </v-container>
 
         </v-card>
 
-        <!-- Qunatity value -->
+        <!-- Quantity value -->
 
-        <v-container  class="pa-0 ma-0" height="1vh"> </v-container>
+        <v-container class="pa-0 ma-0" height="1vh"> </v-container>
 
 
-        
-        <v-card class="pa-3 " color="blue-lighten-4" elevation="1" height="24vh" >
+
+        <v-card class="pa-3 " color="blue-lighten-4" elevation="1" height="24vh" style="overflow-y: auto;">
           <v-row justify="space-around" class="mt-4">
             <v-col cols="auto">
               <div class="text-center">
                 <div
-                  style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  style="border: 2px solid #2196F3; height: 8vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
                     {{ formatValue(currDeviceSensorData.Energy) }}
                   </p>
@@ -193,7 +197,7 @@
             <v-col cols="auto">
               <div class="text-center">
                 <div
-                  style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  style="border: 2px solid #2196F3; height: 8vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
                     {{ formatValue(currDeviceSensorData.voltage) }}
                   </p>
@@ -205,7 +209,7 @@
             <v-col cols="auto">
               <div class="text-center">
                 <div
-                  style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  style="border: 2px solid #2196F3; height: 8vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
                     {{ formatValue(currDeviceSensorData.current) }}
                   </p>
@@ -217,7 +221,7 @@
             <v-col cols="auto">
               <div class="text-center">
                 <div
-                  style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  style="border: 2px solid #2196F3; height: 8vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
                     {{ formatValue(currDeviceSensorData.Frequency) }}
                   </p>
@@ -229,7 +233,7 @@
             <v-col cols="auto">
               <div class="text-center">
                 <div
-                  style="border: 2px solid #2196F3; height: 70px; width: 70px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  style="border: 2px solid #2196F3; height: 8vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
                     {{ formatValue(currDeviceSensorData.power_factor) }}
                   </p>
@@ -240,6 +244,8 @@
           </v-row>
 
         </v-card>
+
+
       </v-col>
 
 
@@ -262,7 +268,7 @@
 </style>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { Process } from "@/utils/requestHelper";
 import { BASE_API_URL, WS_API_URL } from "@/configs/config";
 
@@ -444,16 +450,35 @@ const updateChart = (newData) => {
 };
 
 
+watch(currDeviceId, async (newDeviceId) => {
+  console.log(`🔄 Device berubah: ${newDeviceId}, reinit chart!`);
+  dataPoints.value = []; // Reset data saat ganti device
+
+  await nextTick(); // ⏳ Tunggu sampai DOM update
+  initChart();
+});
+
+
 const initChart = () => {
   console.log("initChart(), dataPoints.value:  ", dataPoints.value);
-  chart = new CanvasJS.Chart("chartContainer", {
+
+  const container = document.getElementById("chartContainer");
+  if (!container) {
+    console.warn("⚠️ chartContainer tidak ditemukan!");
+    return;
+  }
+
+  // Bersihkan elemen chart sebelumnya (jika ada)
+  container.innerHTML = "";
+
+  chart = new CanvasJS.Chart(container, {
     theme: "dark2",
     animationEnabled: true,
     axisX: {
       title: "Waktu (jam:mnt:dtk)",
-      valueFormatString: "HH:mm:ss", // Format waktu tanpa milidetik
+      valueFormatString: "HH:mm:ss",
       labelFormatter: function (e) {
-        return e.value.toISOString().slice(11, 19); // Mengambil HH:mm:ss
+        return e.value.toISOString().slice(11, 19);
       },
     },
     axisY: {
@@ -462,8 +487,8 @@ const initChart = () => {
     data: [
       {
         type: "line",
-        markerSize: 8, // Ukuran titik
-        markerColor: "#39FF14", // Neon hijau
+        markerSize: 8,
+        markerColor: "#39FF14",
         lineColor: "#1F51FF",
         dataPoints: dataPoints.value.length
           ? dataPoints.value
@@ -474,6 +499,7 @@ const initChart = () => {
 
   chart.render();
 };
+
 
 
 const startWebSocket = async () => {
@@ -530,12 +556,14 @@ const startWebSocket = async () => {
 
       if (chart) {
         console.log("🗑️ Destroying chart...");
-        chart.destroy(); // Hapus chart dari DOM
+        chart?.destroy(); // Hapus chart dari DOM
         chart = null;
         document.getElementById("chartContainer").innerHTML = ""; // Bersihkan elemen
       }
 
       let popUpMessage = "Koneksi dengan perangkat terputus.";
+      currDeviceId.value = null;
+
       popUpProps.value = {
         status: "error",
         errorMessage: popUpMessage,
@@ -590,11 +618,7 @@ onUnmounted(() => {
   socket?.close();
 });
 
-watch(currDeviceId, (newDeviceId) => {
-  console.log(`🔄 Device berubah: ${newDeviceId}, reinit chart!`);
-  dataPoints.value = []; // Reset data saat ganti device
-  initChart();
-});
+
 
 
 //////////////////// DEVICES////////////////////
@@ -658,6 +682,8 @@ function handleDeviceSelection(deviceId, deviceName) {
   if (chart) {
     chart.options.data[0].dataPoints = []; // Kosongkan data points
     chart?.render();
+
+
     console.log("📈 Chart updated:", dataPoints.value.length);
   }
 
@@ -1019,25 +1045,9 @@ const updateDevice = async (
 
 };
 
-/* 
-
-    exp data: {    "device_Id": 1,
-    "tstamp": 1739882173782,  // ms
-    "voltage": 290.5,
-    "current": 2.3,
-    "power": 510.15,
-    "energy": 1560.75,
-    "frequency": 50.1,
-    "power_factor": 0.98}
-
-
-
-*/
-
 function toReportPage() {
 
 }
 
 
 </script>
-

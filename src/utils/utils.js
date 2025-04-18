@@ -42,6 +42,23 @@ export function FormatTimestamp(epoch) {
   });
 };
 
+export function ConvertToEpoch(dateInput) {
+  if (!dateInput) return null;
+
+  // Jika input berupa string tanggal (misalnya dari v-date-picker)
+  const date = new Date(dateInput);
+
+  // Pastikan objek Date valid
+  if (isNaN(date.getTime())) return null;
+
+  // Konversi ke detik (bukan milidetik)
+  return Math.floor(date.getTime() / 1000);
+}
+
+
+
+
+
 export async function ExtractImage(base64Data) {
   try {
     const zip = new JSZip();
