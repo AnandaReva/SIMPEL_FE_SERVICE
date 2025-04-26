@@ -11,9 +11,10 @@
 
 
 
-            <v-icon color="properties.status" class="popUp-icon .w-50">
+            <v-icon :color="properties[props.status]?.[0]" class="popUp-icon">
                 {{ properties[props.status]?.[1] }}
             </v-icon>
+
 
 
 

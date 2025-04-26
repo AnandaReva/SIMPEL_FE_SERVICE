@@ -1,5 +1,5 @@
 <template>
-     <v-div class="activity-list pa-0 ma-0" >
+     <v-container class="activity-list pa-0 ma-0" >
 
         <v-list bg-color="white" dense class="rounded-lg elevation-2 px-0">
 
@@ -102,7 +102,7 @@
         </v-list>
 
 
-    </v-div>
+    </v-container>
 
 </template>
 

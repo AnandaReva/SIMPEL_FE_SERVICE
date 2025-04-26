@@ -2,32 +2,36 @@
 
 
 <template>
-  <v-card class="pa-4 elevation-2 fill-height" :class="{ 'disable-interactions': isLoading }">
+  <v-container fluid class="pa-2 elevation-2 fill-height fill-width" :class="{ 'disable-interactions': isLoading }">
 
-    <v-progress-circular v-if="isLoading" color="primary" indeterminate class="loading-spinner"></v-progress-circular>
+
+
+
+    <v-progress-circular v-if="isLoading" color="secondary" indeterminate class="loading-spinner"></v-progress-circular>
 
     <v-row>
 
 
       <!-- LEFT:  Devices -->
       <v-col cols="12" md="4">
-        <h2 class="text-h5 font-weight-bold mb-3">Daftar Perangkat</h2>
-        <v-card class="pa-3" color="blue-lighten-4" elevation="1" height="75vh">
+        <h2 class="text-h5 font-weight-bold mb-3" style="color: var(--v-theme-primary);">
+          Daftar Perangkat
+        </h2>
+
+        <v-card class="pa-3" color="base" elevation="1" height="75vh">
           <!-- hanya system master atau admin -->
 
-          <!-- DONT REMOVE COMENTS -->
+          <!-- DONT REMOVE COMMENTS -->
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 0">
             <!-- Konten untuk state 0 (device list) -->
 
-
-
-
-            <v-row v-if="(user_role === 'system admin' || user_role === 'system master')"
+            <v-row v-if="user_role === 'system admin' || user_role === 'system master'"
               class="d-flex justify-end align-center pa-0" style="max-height: 70px;">
-
-              <v-col cols="auto" class="d-flex align-center ">
+              <v-col cols="auto" class="d-flex align-center">
                 <v-container class="pr-3">
-                  <span>Tambah Perangkat</span>
+                  <span class="text-body-1 font-weight-medium" style="color: var(--v-theme-primary);">
+                    Tambah Perangkat
+                  </span>
                 </v-container>
                 <v-btn @click="toogleAddDeviceState" color="primary"
                   class="rounded-circle d-flex justify-center align-center"
@@ -36,48 +40,37 @@
                 </v-btn>
               </v-col>
             </v-row>
-            <v-row v-else class="d-flex justify-end align-center pa-0" style="height: 70px; max-height: 70px; ">
 
+
+            <v-row v-else class="d-flex justify-end align-center pa-0" style="height: 70px; max-height: 70px;">
             </v-row>
 
 
+
+
             <!-- filterDeviceList -->
-            <v-row class="px-1" style="max-height: 70px;">
-              <!-- Pilihan Pengurutan -->
-              <!-- filterDeviceList Status -->
-              <v-col cols="5">
+
+
+            <v-row class="d-flex justify-center align-center fill-width pa-0" style="max-height: 70px;">
+              <v-col cols="5" class="pr-0">
                 <v-select v-model="selectedStatusDeviceList" :items="[
                   { title: 'Semua', value: '' },
                   { title: 'Aktif', value: 1 },
                   { title: 'Tidak Aktif', value: 0 }
-                ]" density="compact" label="Status" variant="outlined"></v-select>
-                <!-- <v-select v-model="selectedStatusDeviceList" :items="[
-                  { title: 'Semua', value: '' },
-                  { title: 'Aktif', value: 1 },
-                  { title: 'Tidak Aktif', value: 0 }
-                ]" density="compact" label="Status" variant="outlined"
-                  @update:modelValue="(val) => console.log('Selected Status:', val)"></v-select> -->
-
+                ]" density="compact" label="Status" variant="outlined" style="height: 50px;" />
               </v-col>
 
-              <!-- Pilihan Pengurutan -->
-              <v-col cols="5" class="pr-1">
+              <v-col cols="5" class="px-0">
                 <v-select v-model="selectedOrderByDeviceList" :items="[
                   { title: 'Waktu terakhir', value: 'last_tstamp' },
-                  { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
+                  { title: 'Waktu perangkat didaftarkan', value: 'create_timestamp' },
                   { title: 'Nama perangkat', value: 'name' }
-                ]" density="compact" label="Pengurutan" variant="outlined"></v-select>
-                <!-- <v-select v-model="selectedOrderByDeviceList" :items="[
-                  { title: 'Waktu terakhir', value: 'last_tstamp' },
-                  { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
-                  { title: 'Nama perangkat', value: 'name' }
-                ]" density="compact" label="Pengurutan" variant="outlined"
-                  @update:modelValue="(val) => console.log('Selected Sort:', val)"></v-select> -->
+                ]" density="compact" label="Pengurutan" variant="outlined" style="height: 50px;" />
               </v-col>
 
-              <v-col cols="2">
-                <v-btn type="button" @click="toogleSortType" color="blue-lighten-4" variant="flat"
-                  style="border: 1px solid black">
+              <v-col cols="2" class="pa-1">
+                <v-btn type="button" @click="toogleSortType" variant="text"
+                  style="border: 1px solid black; max-height: 50px; width: 50px; min-width: 50px;">
                   <template v-if="selectedSortTypeDeviceList === 'ASC'">
                     <v-icon>mdi-arrow-up</v-icon>
                   </template>
@@ -85,21 +78,19 @@
                     <v-icon>mdi-arrow-down</v-icon>
                   </template>
                 </v-btn>
-
               </v-col>
-
-
             </v-row>
 
-            <!-- Serach Device -->
-            <v-col class="d-flex justify-center align-center fill-width pa-0 " style="max-height: 70px;">
-              <!-- Field untuk input pencarian -->
+
+
+            <!-- Search Device -->
+            <v-col class="d-flex justify-center align-center fill-width pa-0" style="max-height: 70px;">
               <v-text-field v-model="filterDeviceList" label="Search" placeholder="Masukkan Nama device" variant="solo"
                 clearable class="px-1" style="max-height: 50px;" maxlength="50"
                 :rules="[v => v.length <= 30 || 'Maksimal 30 karakter']"
-                @input="filterDeviceList = filterDeviceList.slice(0, 30)"></v-text-field>
+                @input="filterDeviceList = filterDeviceList.slice(0, 30)">
+              </v-text-field>
 
-              <!-- Tombol Search -->
               <v-btn color="primary" @click="searchDevices"
                 class="search-button rounded-circle d-flex justify-center align-center"
                 style="max-height: 50px; width: 50px; min-width: 50px;">
@@ -108,8 +99,6 @@
             </v-col>
 
             <v-col class="px-0">
-              <!-- Manajemen Perangkat -->
-              <!-- Device List Panel -->
               <v-infinite-scroll :key="scrollKeyDevices" id="DevicesBox" ref="DevicesBox" height="550" side="end"
                 @load="loadDevices" class="overflow-auto">
                 <DeviceList :devices="devices" :currDeviceId="currDeviceId" :currDeviceName="currDeviceName"
@@ -119,7 +108,7 @@
             </v-col>
           </v-container>
 
-          <!-- DONT REMOVE COMENTS -->
+          <!-- DONT REMOVE COMMENTS -->
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 2">
             <!-- Konten untuk state 2 (register device) -->
             <AddDevice @toogle-add-device-state="toogleAddDeviceState" @register-device="addDevice" />
@@ -132,13 +121,10 @@
           </v-container>
 
           <v-container class="pa-0 ma-0" v-if="curr_devicePage_state == 3">
-            <!-- Konten untuk state 2 (detail device) -->
+            <!-- Konten untuk state 3 (edit device) -->
             <EditDevice @toogle-detail-device-state="toogleDetailDeviceState" @update-device="updateDevice"
               :curr-device-data="currDeviceData" />
           </v-container>
-
-
-
         </v-card>
       </v-col>
 
@@ -148,46 +134,67 @@
 
 
         <h2 class="text-h5 font-weight-bold mb-3">Live Monitoring</h2>
-        <v-card class="pa-3" color="blue-lighten-4" elevation="1" height="50vh">
-          <div class="mb-2">
-            <div class="d-flex justify-space-between align-center">
-              <div>
+        <v-card class="pa-3" color="base" elevation="1" height="50vh">
 
-                <span v-if="currDeviceId">Perangkat saat ini: <strong>{{ currDeviceName }} </strong> </span>
-                <span v-else>Tidak ada perangkat dipilih</span>
 
-              </div>
-              <div>
+
+          <v-container class="ma-0 py-0">
+
+            <!-- Baris tombol di paling atas -->
+            <v-row class="d-flex justify-end mb-0">
+              <v-col cols="auto">
+                <v-btn v-if="currDeviceId" type="button" @click="disconnectDevice" color="error"
+                  class="rounded-circle d-flex justify-center align-center"
+                  style="max-height: 50px; width: 50px; min-width: 50px;">
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
+
+            <!-- Baris perangkat dan zona waktu sejajar -->
+            <v-row class="d-flex align-center">
+              <v-col cols="6">
+                <span class="text-body-1 font-weight-medium" style="color: var(--v-theme-primary);" v-if="currDeviceId">
+                  Perangkat saat ini: {{ currDeviceName }}
+                </span>
+                <span v-else class="text-body-1 font-weight-medium" style="color: var(--v-theme-primary);">
+                  Tidak ada perangkat yang dipilih
+                </span>
+              </v-col>
+
+              <v-col cols="6" class="text-right">
                 <strong>
-                  <span>Zona Waktu:
-                    {{ Intl.DateTimeFormat().resolvedOptions().timeZone }}</span>
+                  <span class="text-body-1 font-weight-light" style="color: var(--v-theme-primary);">
+                    Zona Waktu: {{ Intl.DateTimeFormat().resolvedOptions().timeZone }}
+                  </span>
                 </strong>
-              </div>
-            </div>
-          </div>
-
-          <v-container v-if="currDeviceId">
-
-            <div ref="chartContainer" id="chartContainer" style="height: 386px; width: 100%;"></div>
+              </v-col>
+            </v-row>
 
           </v-container>
+
+
+          <v-container v-if="currDeviceId" style="height: 400px; overflow-y: auto;">
+
+            <div ref="chartContainer" id="chartContainer" style="height: 300px; width: 100%;"></div>
+          </v-container>
+
 
         </v-card>
 
         <!-- Quantity value -->
 
+
         <v-container class="pa-0 ma-0" height="1vh"> </v-container>
 
-
-
-        <v-card class="pa-3 " color="blue-lighten-4" elevation="1" height="24vh" style="overflow-y: auto;">
+        <v-card class="pa-3 " color="base" elevation="1" height="24vh" style="overflow-y: auto;">
           <v-row justify="space-around" class="mt-4">
             <v-col cols="auto">
               <div class="text-center">
                 <div
-                  style="border: 2px solid #2196F3; height: 8vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  style="border: 2px solid #346285; height: 6vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
-                    {{ formatValue(currDeviceSensorData.Energy) }}
+                    {{ formatValue(currDeviceSensorData.energy) }}
                   </p>
                 </div>
                 <div class="text-caption mt-2">Energy (kWh)</div>
@@ -197,7 +204,7 @@
             <v-col cols="auto">
               <div class="text-center">
                 <div
-                  style="border: 2px solid #2196F3; height: 8vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  style="border: 2px solid #346285; height: 6vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
                     {{ formatValue(currDeviceSensorData.voltage) }}
                   </p>
@@ -209,7 +216,7 @@
             <v-col cols="auto">
               <div class="text-center">
                 <div
-                  style="border: 2px solid #2196F3; height: 8vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  style="border: 2px solid #346285; height: 6vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
                     {{ formatValue(currDeviceSensorData.current) }}
                   </p>
@@ -221,9 +228,9 @@
             <v-col cols="auto">
               <div class="text-center">
                 <div
-                  style="border: 2px solid #2196F3; height: 8vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  style="border: 2px solid #346285; height: 6vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
-                    {{ formatValue(currDeviceSensorData.Frequency) }}
+                    {{ formatValue(currDeviceSensorData.frequency) }}
                   </p>
                 </div>
                 <div class="text-caption mt-2">Frequency (Hz)</div>
@@ -233,7 +240,7 @@
             <v-col cols="auto">
               <div class="text-center">
                 <div
-                  style="border: 2px solid #2196F3; height: 8vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
+                  style="border: 2px solid #346285; height: 6vh; width: 8vh; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: white;">
                   <p class="text-caption font-weight-bold">
                     {{ formatValue(currDeviceSensorData.power_factor) }}
                   </p>
@@ -252,7 +259,7 @@
 
 
     </v-row>
-  </v-card>
+  </v-container>
 
 
   <PopUpInfoBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
@@ -373,39 +380,38 @@ let chart = null;
 let socket = null;
 
 
+// this returns undefined every time
+const formatValue = (newValue) => {
+  return newValue === undefined || newValue === null ? "-" : newValue.toFixed(2);
+}
 
-const formatValue = (value) =>
-  value === undefined || value === null ? "-" : value.toFixed(2);
 
 const getLocalTimezoneOffset = () => {
   const now = new Date();
   return now.getTimezoneOffset() * 60 * 1000; // Konversi menit ke milidetik
 };
 
-function convertTstampToLocal(tstamp) {
-  if (!tstamp) return "-";
+function converttimestampToLocal(timestamp) {
+  if (!timestamp) return "-";
 
-  // Format ulang agar bisa diparsing oleh Date (tambahkan 'T' di tengah)
-  const formattedTstamp = tstamp.replace(" ", "T"); // "2025-03-08 15:51:45" -> "2025-03-08T15:51:45"
+  // Format agar bisa diparsing oleh Date (tambahkan 'T' dan 'Z')
+  const formattedTimestamp = timestamp.replace(" ", "T") + "Z"; // ex: "2025-04-26T11:32:45Z"
+  const utcDate = new Date(formattedTimestamp);
 
-  // Konversi ke objek Date (anggap sebagai UTC)
-  const utcDate = new Date(formattedTstamp + "Z"); // Tambahkan 'Z' agar dianggap UTC
-
-  // Pastikan timestamp valid
   if (isNaN(utcDate.getTime())) {
-    console.warn("❌ Invalid timestamp:", tstamp);
+    console.warn("❌ Invalid timestamp:", timestamp);
     return "-";
   }
 
-  // Dapatkan offset zona waktu lokal
-  const localOffset = getLocalTimezoneOffset();
+  // Dapatkan offset lokal (negatif untuk waktu di depan UTC, positif untuk belakang UTC)
+  const localOffset = getLocalTimezoneOffset(); // dalam milidetik
 
-  // Konversi ke zona waktu lokal
+  // Konversi ke waktu lokal: UTC - (-offset) => UTC + offset
   const localDate = new Date(utcDate.getTime() - localOffset);
 
-  // Format tanggal dan waktu lengkap
+  // Format tanggal lokal
   return localDate.toLocaleString("id-ID", {
-    hour12: false, // Format 24 jam
+    hour12: false,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -415,21 +421,28 @@ function convertTstampToLocal(tstamp) {
   });
 }
 
+
 const updateChart = (newData) => {
   console.log("updateChart(), newData:", newData);
-  if (!newData.tstamp || newData.power === undefined) {
+  if (!newData.timestamp || newData.power === undefined) {
     console.warn("❌ Data tidak valid untuk chart:", newData);
     return;
   }
 
-  // Konversi tstamp ke waktu lokal
-  const localDate = new Date(newData.tstamp.replace(" ", "T") + "Z");
+  const formattedTimestamp = newData.timestamp.replace(" ", "T") + "Z";
+  const utcDate = new Date(formattedTimestamp);
+
+  if (isNaN(utcDate.getTime())) {
+    console.warn("❌ Invalid UTC date in updateChart:", newData.timestamp);
+    return;
+  }
+
+  // Konversi ke lokal
   const localOffset = getLocalTimezoneOffset();
-  const localDateWithOffset = new Date(localDate.getTime() - localOffset);
+  const localDateWithOffset = new Date(utcDate.getTime() - localOffset);
 
-  console.log("Local tstamp:", localDateWithOffset);
+  console.log("Local timestamp for chart:", localDateWithOffset);
 
-  // Buat titik data baru
   const newPoint = { x: localDateWithOffset, y: newData.power };
   dataPoints.value.push(newPoint);
 
@@ -442,12 +455,20 @@ const updateChart = (newData) => {
 
   if (chart) {
     console.log("🖌️ Rendering chart...");
-    chart.options.data[0].dataPoints = [...dataPoints.value]; // Pastikan data diupdate
+
+    // Clear dulu
+    chart.options.data[0].dataPoints.length = 0;
+
+    // Baru assign lagi
+    dataPoints.value.forEach(dp => chart.options.data[0].dataPoints.push(dp));
+
     chart.render();
-  } else {
+  }
+  else {
     console.log("⚠️ Chart belum ada, menunggu data lebih banyak...");
   }
 };
+
 
 
 watch(currDeviceId, async (newDeviceId) => {
@@ -472,7 +493,12 @@ const initChart = () => {
   container.innerHTML = "";
 
   chart = new CanvasJS.Chart(container, {
-    theme: "dark2",
+    theme: "light2",
+    title: {
+      text: "Grafik Daya Perangkat",
+      fontSize: 15,
+      fontColor: "#346285",
+    },
     animationEnabled: true,
     axisX: {
       title: "Waktu (jam:mnt:dtk)",
@@ -488,8 +514,8 @@ const initChart = () => {
       {
         type: "line",
         markerSize: 8,
-        markerColor: "#39FF14",
-        lineColor: "#1F51FF",
+        markerColor: "#346285",
+        lineColor: "#badefa",
         dataPoints: dataPoints.value.length
           ? dataPoints.value
           : [{ x: new Date(), y: 0 }],
@@ -579,14 +605,25 @@ const startWebSocket = async () => {
 
     socket.onmessage = (event) => {
       try {
-        const message = JSON.parse(event.data);
-        console.log("📡 Data received:", message);
+        let message = JSON.parse(event.data);
+        console.groupCollapsed("📡 Data received:", message);
+        console.log("📡 Data received unit_id:", message.unit_id);
         console.log("📡 Data received current:", message.current);
-        console.log("📡 Data received tstamp:", message.tstamp);
         console.log("📡 Data received power:", message.power);
+        console.log("📡 Data received power:", message.energy);
+        console.log("📡 Data received timestamp:", message.timestamp);
 
-        if (message.device_id === currDeviceId.value) {
+        console.groupEnd();
+
+
+        console.log("currDeviceId.value: ", currDeviceId.value);
+        console.log("message.unit_id: ", message.unit_id);
+
+
+        if (message.unit_id === currDeviceId.value) {
           currDeviceSensorData.value = message;
+
+          console.log("currDeviceSensorData.value: ", currDeviceSensorData.value);
           updateChart(message);
         }
       } catch (error) {
@@ -604,6 +641,43 @@ const startWebSocket = async () => {
     };
   }
 };
+
+const disconnectDevice = () => {
+  console.log("🚪 Disconnecting device...");
+
+  if (socket) {
+    socket.close(); // Ini akan otomatis trigger `socket.onclose`
+    socket = null;
+  }
+
+  // Reset semua variabel terkait device
+  currDeviceId.value = null;
+  currDeviceSensorData.value = {};
+  dataPoints.value = [];
+
+  // Hancurkan chart kalau ada
+  if (chart) {
+    chart.destroy();
+    chart = null;
+  }
+
+  // Bersihkan container chart
+  const container = document.getElementById("chartContainer");
+  if (container) {
+    container.innerHTML = "";
+  }
+
+  // Opsional: munculkan notifikasi popup (kalau kamu mau)
+  popUpProps.value = {
+    status: "success",
+    errorMessage: "Berhasil memutus koneksi perangkat.",
+    errorCode: "",
+  };
+  popupVisible.value = true;
+
+  console.log("✅ Device disconnected successfully.");
+};
+
 
 onMounted(() => {
   // get user role
@@ -1045,9 +1119,6 @@ const updateDevice = async (
 
 };
 
-function toReportPage() {
-
-}
 
 
 </script>

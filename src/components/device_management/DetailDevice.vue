@@ -28,14 +28,13 @@
                     Detail Perangkat
                 </p>
 
-                <br>
 
-                <v-container class="pa-4 flex-grow-1 overflow-y-auto px-0" style="max-height: 50vh;">
+                <v-container class=" flex-grow-1 overflow-y-auto px-0 pt-0" style="max-height: 50vh;">
                     <v-col class="d-flex flex-column">
                         <!-- Nama Perangkat -->
 
 
-                        <v-col class="mb-4">
+                        <v-col class="mb-1">
                             <p class="text-subtitle-1 font-weight-medium mb-1">Password</p>
                             <v-card outlined class="pa-3">
                                 <v-icon size="24" color="primary">mdi-access-point-network</v-icon>
@@ -46,7 +45,7 @@
 
 
                         <!-- Password -->
-                        <v-col class="mb-4">
+                        <v-col class="mb-1">
                             <p class="text-subtitle-1 font-weight-medium mb-1">Password</p>
                             <v-card outlined class="pa-3">
                                 <v-icon size="24" color="primary">mdi-lock</v-icon>
@@ -56,7 +55,7 @@
                         </v-col>
 
                         <!-- Interval Pembacaan -->
-                        <v-col class="mb-4">
+                        <v-col class="mb-1">
                             <p class="text-subtitle-1 font-weight-medium mb-1">Interval Pembacaan Data Sensor (Detik)
                             </p>
                             <v-card outlined class="pa-3">
@@ -70,7 +69,7 @@
 
                         <!-- Gambar Perangkat -->
 
-                        <v-col class="mb-4">
+                        <v-col class="mb-1">
                             <v-row>
                                 <v-icon class="ma-0 pa-3" size="24" color="primary">mdi-image</v-icon>
                                 <p class="text-subtitle-1 font-weight-medium">Gambar</p>
@@ -81,15 +80,15 @@
 
 
                         </v-col>
-                        <v-col class="mb-4">
+                        <v-col class="mb-1">
 
 
 
 
 
-                            <v-row class="d-flex justify-center mt-1 mb-3" v-if="existingImageSrc">
+                            <v-row class="d-flex justify-center mt-1 mb-1" v-if="existingImageSrc">
 
-                                <v-img :src="existingImageSrc" class="mt-4 mb-5" max-height="200" contain />
+                                <v-img :src="existingImageSrc" class="mt-4 mb-1" max-height="200" contain />
                             </v-row>
 
                         </v-col>

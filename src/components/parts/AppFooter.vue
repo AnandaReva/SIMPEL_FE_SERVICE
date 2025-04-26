@@ -1,12 +1,18 @@
 <template>
-  <v-footer class="bg-blue-lighten-4" style="max-height: 5vh;">
+
+  <v-container fluid class="pa-0 ma-0 d-flex align-center justify-space-between bg-base"
+    style="height:8vh; max-height:5vh; overflow:hidden;" rounded="0">
+
+
 
     <v-row align="center" justify="center">
       <v-col class="text-center">
-        <span class="text-body-2">VERSION : 0.1.16</span>
+        <span class="text-body-2">VERSION : 0.1.17</span>
       </v-col>
     </v-row>
-  </v-footer>
+
+
+  </v-container>
 </template>
 
 <script setup>

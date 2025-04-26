@@ -14,45 +14,65 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const drawer = ref(false);
 const route = useRoute();
 const router = useRouter();
 
-const items = [
-    { title: 'Dashboard', value: 'dashboard', icon: 'mdi-view-dashboard' },
-    { title: 'Laporan', value: 'reports', icon: 'mdi-chart-bar' },
-    { title: 'Pengguna', value: 'users', icon: 'mdi-account-group' },
-    { title: 'Pengaturan', value: 'settings', icon: 'mdi-cog' },
+// Ambil role dari localStorage
+let userRole = null;
+try {
+  const userData = JSON.parse(localStorage.getItem('user_data'));
+  userRole = userData?.role?.toLowerCase(); // misal "system master" -> "system master"
+} catch (e) {
+  console.error('Failed to parse user_data:', e);
+}
+
+// Definisi semua item menu
+const allItems = [
+  { title: 'Dashboard', value: 'dashboard', icon: 'mdi-view-dashboard' },
+  { title: 'Laporan', value: 'reports', icon: 'mdi-chart-bar', roleRestricted: true },
+  { title: 'Perangkat', value: 'devices', icon: 'mdi-access-point', roleRestricted: true },
+  { title: 'Pengguna', value: 'users', icon: 'mdi-account-group', roleRestricted: true },
+  { title: 'Pengaturan', value: 'settings', icon: 'mdi-cog' },
 ];
-// Fungsi untuk mengecek apakah item aktif berdasarkan route saat ini
-const isActive = (itemValue) => {
-    // Jika route memiliki parent, bandingkan dengan parent route
-    if (route.meta.parent) {
-        return route.meta.parent === itemValue;
+
+// Items yang ditampilkan tergantung role
+const items = computed(() => {
+  return allItems.filter(item => {
+    if (item.roleRestricted) {
+      return userRole === 'system admin' || userRole === 'system master';
     }
-    // Default comparison
-    return route.name === itemValue;
+    return true;
+  });
+});
+
+// Cek aktif atau tidak
+const isActive = (itemValue) => {
+  if (route.meta.parent) {
+    return route.meta.parent === itemValue;
+  }
+  return route.name === itemValue;
 };
 
-// Fungsi untuk navigasi
+// Navigasi
 const navigateTo = (routeName) => {
-    router.push({ name: routeName });
+  router.push({ name: routeName });
 };
 
 // Watch route changes (opsional untuk mobile)
 watch(route, () => {
-    if (window.innerWidth < 960) { // Sesuaikan dengan breakpoint mobile Anda
-        drawer.value = false;
-    }
+  if (window.innerWidth < 960) {
+    drawer.value = false;
+  }
 });
 
 // Expose method to parent
 defineExpose({
-    toggleDrawer() {
-        drawer.value = !drawer.value;
-    },
+  toggleDrawer() {
+    drawer.value = !drawer.value;
+  },
 });
 </script>

@@ -4,6 +4,11 @@ import DashboardPage from '@/components/Dashboard.vue';
 import ReportPage from '@/components/reports/ReportPage.vue';
 
 
+import DeviceManagement from '@/components/device_management/DeviceManagement.vue';
+import UserManagementPage from '@/components/user_management/UserManagement.vue';
+
+import SettingsPage from '@/components/Settings.vue';
+
 
 import VerifyOTP from '@/components/auths/VerifyOTP.vue';
 import ResetPassword from '@/components/auths/ResetPassword.vue';
@@ -26,6 +31,35 @@ const routes = [
         component: ReportPage,
         meta: { requiresAuth: true },
     },
+    {
+        path: '/users',
+        name: 'users',
+        component: UserManagementPage,
+        meta: { requiresAuth: true },
+    },
+
+
+    {
+        path: '/device',
+        name: 'devices',
+        component: DeviceManagement,
+        meta: { requiresAuth: true },
+    },
+
+
+    {
+        path: '/settings',
+        name: 'settings',
+        component: SettingsPage,
+        meta: { requiresAuth: true },
+    },
+
+
+
+
+
+
+
     {
         path: '/login',
         name: 'login',

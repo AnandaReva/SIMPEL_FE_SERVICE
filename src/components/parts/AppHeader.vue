@@ -1,88 +1,102 @@
 <!-- src/components/parts/AppHeader.vue -->
 <template>
-  <v-row class="d-flex justify-space-between align-center bg-blue-lighten-4" style="height:10vh; max-height:10vh; overflow:hidden;">
-    <!-- Drawer toggle button -->
+  <v-container fluid class="pa-0 ma-0 d-flex align-center justify-space-between bg-base"
+    style="height:7vh; max-height:10vh; overflow:hidden;" rounded="0">
+
+
+
+
+    <!-- Drawer Toggle Button -->
     <v-app-bar-nav-icon variant="text" @click.stop="$emit('toggle-navigation-drawer')" />
 
-    <!-- Left side: Title -->
-    <v-col cols="auto">
-      <h1 class="text-h5 font-weight-medium text-[2.5vh]">SIMPLE</h1>
-    </v-col>
+    <!-- Title -->
+    <h1 class="text-h5 font-weight-medium text-[2.5vh] ml-3">SIMPLE</h1>
 
     <v-spacer />
 
-    <!-- User Information (Right side) -->
-    <div class="pa-3">
-      <v-col cols="auto">
-        <v-row align="center">
-          <!-- Avatar -->
-          <v-avatar size="40" color="primary" class="mr-2" style="height:4vh; width:4vh; font-size:2vh;">
-            <img v-if="user?.avatar" :src="user.avatar" alt="Avatar" />
-            <span v-else>{{ user?.full_name?.charAt(0) || "?" }}</span>
-          </v-avatar>
+    <!-- User Info and Menu -->
+    <div class="d-flex align-center">
+      <!-- Avatar + User Info -->
+      <div class="d-flex align-center mr-4">
+        <v-avatar size="40" color="primary" class="mr-2" style="height:4vh; width:4vh; font-size:2vh;">
+          <template v-if="user?.avatar">
+            <img :src="user.avatar" alt="Avatar" />
+          </template>
+          <template v-else>
+            {{ user?.full_name?.charAt(0) || "?" }}
+          </template>
+        </v-avatar>
 
-          <!-- User Info -->
-          <div>
-            <p class="text-subtitle-1 font-weight-bold text-[1.8vh] m-0">
-              {{ user?.full_name || "Guest" }}
-            </p>
-            <p class="text-subtitle-2 text-grey-darken-1 text-[1.5vh] m-0">
-              {{ user?.role || "Guest" }}
-            </p>
-          </div>
-        </v-row>
-      </v-col>
-    </div>
+        <div>
+          <p class="text-subtitle-1 font-weight-bold text-[1.8vh] m-0">
+            {{ user?.full_name || "Guest" }}
+          </p>
+          <p class="text-subtitle-2 text-grey-darken-1 text-[1.5vh] m-0">
+            {{ user?.role || "Guest" }}
+          </p>
+        </div>
+      </div>
 
-    <!-- Menu Icon -->
-    <v-col cols="auto">
+      <!-- Menu -->
       <v-menu offset-y>
-        <template v-slot:activator="{ props }">
-          <v-btn v-bind="props" icon class="ma-0 pa-0">
+        <template #activator="{ props }">
+          <v-btn icon v-bind="props" variant="text" class="ma-0 pa-0 ">
             <v-icon size="28" class="text-grey-darken-2">mdi-menu</v-icon>
           </v-btn>
         </template>
 
-        <v-list class="pa-2" style="min-width: 220px">
-          <v-list-item class="py-1">
-            <div>
+        <v-list class="pa-2"
+          style="min-width: 250px; background-color: #f7f7f7; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+          <!-- Header:   Username -->
+
+          <v-list-item class="py-2">
+
+            <v-container class="d-flex align-center pa-0 ma-0">
+              <v-icon class="mr-2" color="primary">mdi-account-circle</v-icon>
+              <p class="text-caption text-grey-darken-1 mb-1">{{ user?.full_name || 'Guest User' }}</p>
+
+            </v-container>
+            <span class="text-caption text-grey-darken-2 mt-1 pl-8">{{ user?.username || 'system guest' }}</span>
+            <v-divider class="my-2" />
+          </v-list-item>
+
+
+          <!-- Email -->
+          <v-list-item class="py-2">
+
+            <v-container class="d-flex align-center pa-0 ma-0">
+              <v-icon class="mr-2" color="primary">mdi-email</v-icon>
               <p class="text-caption text-grey-darken-1 mb-1">Email</p>
-              <p class="text-body-2 font-weight-medium">{{ user?.email || "Guest" }}</p>
-            </div>
+
+            </v-container>
+            <span class="text-caption text-grey-darken-2 mt-1 pl-8">{{ user?.email || 'Guest' }}</span>
+            <v-divider class="my-2" />
           </v-list-item>
 
-          <v-divider class="my-2" />
 
-          <v-list-item class="py-1">
-            <div>
-              <p class="text-caption text-grey-darken-1 mb-1">Username</p>
-              <p class="text-body-2 font-weight-medium">{{ user?.username || "Guest" }}</p>
-            </div>
-          </v-list-item>
 
-          <v-divider class="my-2" />
 
-          <v-list-item class="py-1">
-            <div>
-              <p class="text-caption text-grey-darken-1 mb-1">Nama Lengkap</p>
-              <p class="text-body-2 font-weight-medium">{{ user?.full_name || "Guest" }}</p>
-            </div>
-          </v-list-item>
 
-          <v-divider class="my-2" />
+          <!-- Role -->
 
-          <v-list-item class="py-1">
-            <div>
+          <v-list-item class="py-2">
+
+            <v-container class="d-flex align-center pa-0 ma-0">
+              <v-icon class="mr-2" color="primary">mdi-shield-account</v-icon>
               <p class="text-caption text-grey-darken-1 mb-1">Peran</p>
-              <p class="text-body-2 font-weight-medium">{{ user?.role || "Guest" }}</p>
-            </div>
+
+            </v-container>
+            <span class="text-caption text-grey-darken-2 mt-1 pl-8">{{ user?.role || 'system guest' }}</span>
+            <v-divider class="my-2" />
           </v-list-item>
 
-          <v-divider class="my-2" />
 
-          <v-list-item class="py-1">
+
+
+          <!-- Logout Button -->
+          <v-list-item class="py-2">
             <div class="d-flex justify-end w-100">
-              <v-btn @click="logOut" variant="text" class="bg-red-lighten-4 text-red-darken-1 rounded px-3 py-2">
+              <v-btn @click="logOut" class="bg-red-lighten-4 text-red-darken-1 rounded px-4 py-2" variant="text">
                 <v-icon start size="20" color="red">mdi-logout</v-icon>
                 Keluar
               </v-btn>
@@ -90,9 +104,8 @@
           </v-list-item>
         </v-list>
       </v-menu>
-    </v-col>
-
-  </v-row>
+    </div>
+  </v-container>
 </template>
 
 
@@ -176,44 +189,3 @@ async function logout(sessionId, sessionHash) {
   }
 }
 </script>
-<!-- 
-<style scoped>
-.app-header {
-  height: 10vh;
-  max-height: 10vh;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-}
-
-.v-avatar {
-  height: 4vh;
-  width: 4vh;
-  font-size: 2vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-
-.text-h5 {
-  font-size: 2.5vh;
-}
-
-.text-subtitle-1 {
-  font-size: 1.8vh;
-  margin: 0;
-}
-
-.text-subtitle-2 {
-  font-size: 1.5vh;
-  margin: 0;
-  color: gray;
-}
-
-.v-icon {
-  font-size: 2vh;
-  cursor: pointer;
-}
-</style>
- -->

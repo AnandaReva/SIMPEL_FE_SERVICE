@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted , watch} from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Auth_Process } from '@/utils/requestHelper';
 import { BASE_AUTH_URL } from '@/configs/config';
@@ -45,11 +45,12 @@ import { BASE_AUTH_URL } from '@/configs/config';
 const route = useRoute();
 const router = useRouter();
 
-const full_signature = ref('');
-const signature = ref('');
-const expiry_tstamp = ref(0);
-const nonce = ref('');
+const url_signature = ref(''); // Menyimpan signature dari URL
+const expiry_tstamp = ref(0); // Timestamp expire dari URL
+const remainingTime = ref(0); // Waktu tersisa dalam detik
+let countdownInterval = null;
 
+// Form fields
 const new_password = ref('');
 const confirm_password = ref('');
 const loading = ref(false);
@@ -57,31 +58,19 @@ const serverError = ref('');
 const passwordError = ref('');
 const confirmPasswordError = ref('');
 
-const remainingTime = ref(0);
-let countdownInterval = null;
-
-
-
+// Popup handling
 const popupVisible = ref(false);
-
-const closePopup = () => {
-    popupVisible.value = false;
-};
-
 const popUpProps = ref({
     status: "",
     errorMessage: "",
     errorCode: "",
 });
 
-const isLoading = ref(false);
+const closePopup = () => {
+    popupVisible.value = false;
+};
 
-watch(isLoading, (newValue) => {
-    console.log("isLoading changed to:", newValue);
-});
-
-
-
+// Computed properties
 const isDisableSubmitResetPassword = computed(() => {
     const passwordValid = new_password.value.length >= 8 && new_password.value.length <= 30;
     const confirmPasswordValid = confirm_password.value.length >= 8 && confirm_password.value.length <= 30;
@@ -98,15 +87,14 @@ const isDisableConfirmPassword = computed(() => {
     return new_password.value.length < 8 || new_password.value.length > 30;
 });
 
-
 const formattedRemainingTime = computed(() => {
     if (remainingTime.value <= 0) return "00:00";
-
     const minutes = Math.floor(remainingTime.value / 60);
     const seconds = remainingTime.value % 60;
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 });
 
+// Countdown timer
 const startCountdown = () => {
     countdownInterval = setInterval(() => {
         const currentTime = Math.floor(Date.now() / 1000);
@@ -114,12 +102,18 @@ const startCountdown = () => {
 
         if (remainingTime.value === 0) {
             clearInterval(countdownInterval);
-            alert("Waktu reset password telah habis. Silakan coba lagi.");
-            router.push('/login');
+            popUpProps.value = {
+                status: "Gagal",
+                errorMessage: "Waktu reset password telah habis. Silakan coba lagi.",
+                errorCode: "410001"
+            };
+            popupVisible.value = true;
+            setTimeout(() => router.push('/login'), 3000);
         }
     }, 1000);
 };
 
+// Submit handler
 const submitResetPassword = async () => {
     if (isDisableSubmitResetPassword.value) {
         serverError.value = "Harap perbaiki kesalahan pada password sebelum melanjutkan.";
@@ -130,18 +124,19 @@ const submitResetPassword = async () => {
     serverError.value = '';
 
     try {
-        const response = await verifyUrl(new_password.value, full_signature.value);
+        const response = await verifyResetPassword(new_password.value, url_signature.value);
 
-        if (!response || response.status !== "success") {
-            throw new Error(response?.error_message || "Unknown error occurred");
+        if (response.error_code !== "000000") {
+            throw new Error(response.error_message || "Gagal mereset password");
         }
 
-        alert("Password berhasil direset! Anda akan dialihkan ke halaman login.");
-        setTimeout(() => {
-            router.push('/login');
-        }, 2000);
-
-
+        popUpProps.value = {
+            status: "Sukses",
+            errorMessage: "Password berhasil direset!",
+            errorCode: ""
+        };
+        popupVisible.value = true;
+        setTimeout(() => router.push('/login'), 2000);
     } catch (error) {
         console.error("[ResetPassword] ERROR:", error);
         serverError.value = error.message || "Gagal mereset password. Coba lagi.";
@@ -150,121 +145,49 @@ const submitResetPassword = async () => {
     }
 };
 
-const verifyUrl = async (newPasswordParam, urlSignatureParam) => {
+// API call
+const verifyResetPassword = async (newPassword, signature) => {
     const baseUrl = BASE_AUTH_URL;
-    const operation = "reset-password/verify-url";
+    const operation = "reset-password-verify-url";
+
     const params = {
-        new_password: newPasswordParam,
-        url_signature: urlSignatureParam
+        new_password: newPassword,
+        url_signature: signature
     };
 
-    console.log("[verifyUrl] Sending request with params:", params);
-    const response_be = await Auth_Process(baseUrl, operation, params);
-    console.log("[verifyUrl] Response:", response_be);
+    console.log("[verifyResetPassword] Request:", params);
+    const response = await Auth_Process(baseUrl, operation, params);
+    console.log("[verifyResetPassword] Response:", response);
 
-    if (response_be.status !== "success") {
-        console.error("[verifyUrl] ERROR:", response_be.error_message);
-        throw new Error(response_be.error_message);
-    }
-
-    return response_be;
+    return response;
 };
 
-////////////////////// PROCESS SIGNATURE //////////////////////
-
-const charToNum = { "k": "0", "b": "2", "d": "4", "f": "6", "h": "8" };
-
-function extractExpiryFromSignature(full_signature) {
-    let expiryStart = 5; // Posisi awal expiry dalam signature
-    let expiryLength = 10; // Panjang expiry yang dikodekan di BE
-    let extracted = "";
-
-    if (full_signature.length < expiryStart + expiryLength) {
-        console.error("[ResetPassword] ERROR: Signature terlalu pendek.");
-        return 0; 
-    }
-
-    for (let i = 0; i < expiryLength; i++) {
-        let char = full_signature[expiryStart + i];
-        extracted += charToNum[char] ?? char; // Ubah karakter yang sudah di-mapping
-    }
-
-    if (extracted.length !== expiryLength) {
-        console.error("[ResetPassword] ERROR: Failed to extract expiry.");
-        return 0;
-    }
-
-    return parseInt(extracted, 10);
-}
-
-// function extractSignature(full_signature) {
-//     let expiryStart = 5;
-//     let expiryLength = 10;
-
-//     if (full_signature.length < expiryStart + expiryLength + 8) {
-//         console.error("[ResetPassword] ERROR: Signature terlalu pendek.");
-//         return "";
-//     }
-
-//     return full_signature.slice(0, expiryStart) + full_signature.slice(expiryStart + expiryLength, -8);
-// }
-
-function extractSignature(full_signature) {
-    let expiryStart = 5;
-    let expiryLength = 10;
-
-    if (full_signature.length < expiryStart + expiryLength) {
-        console.error("[ResetPassword] ERROR: Signature terlalu pendek.");
-        return "";
-    }
-
-    return full_signature.slice(0, expiryStart) + full_signature.slice(expiryStart + expiryLength);
-}
-
-
+// Initialize component
 onMounted(() => {
-    full_signature.value = route.params.signature || '';
+    // Dapatkan signature dari route params
+    const fullSignature = route.params.signature;
 
-    if (!full_signature.value) {
-        console.error("[ResetPassword] ERROR: Invalid or missing full_signature.");
-        alert("Invalid or missing full_signature.");
-        router.push('/login');
-    }
-
-    console.log("[ResetPassword] Full Signature from params:", full_signature.value);
-
-    // Ekstrak nonce (8 karakter terakhir)
-    nonce.value = full_signature.value.slice(-8);
-    full_signature.value = full_signature.value.slice(0, -8);
-
-    console.log("[ResetPassword] Signature after removing nonce:", full_signature.value);
-
-    // Ekstrak signature asli tanpa expiry
-    signature.value = extractSignature(full_signature.value);
-    console.log("[ResetPassword] Signature after removing expiry:", signature.value);
-
-    // Validasi expiry time
-    expiry_tstamp.value = extractExpiryFromSignature(full_signature.value);
-    const currentTime = Math.floor(Date.now() / 1000);
-    remainingTime.value = Math.max(expiry_tstamp.value - currentTime, 0);
-
-    if (expiry_tstamp.value < currentTime) {
-        console.error("[ResetPassword] ERROR: Token expired.");
+    if (!fullSignature) {
+        console.error("[ResetPassword] ERROR: Signature tidak ditemukan");
         popUpProps.value = {
             status: "Gagal",
-            errorMessage: "URL Kadaluarsa",
-            errorCode: "",
+            errorMessage: "Link reset password tidak valid",
+            errorCode: "400002"
         };
         popupVisible.value = true;
-
-        alert("URL Kadaluarsa");
-        router.push('/login');
-    } else {
-        startCountdown();
+        setTimeout(() => router.push('/login'), 3000);
+        return;
     }
 
-    console.log("[ResetPassword] Nonce:", nonce.value);
-    console.log("[ResetPassword] Expiry Timestamp:", expiry_tstamp.value);
+    // Simpan signature
+    url_signature.value = fullSignature;
+
+    // Untuk demo, kita set expiry time 15 menit dari sekarang
+    // Di production, ini harus diambil dari decrypt signature
+    expiry_tstamp.value = Math.floor(Date.now() / 1000) + (15 * 60);
+    remainingTime.value = expiry_tstamp.value - Math.floor(Date.now() / 1000);
+
+    startCountdown();
 });
 
 onUnmounted(() => {
@@ -273,7 +196,6 @@ onUnmounted(() => {
     }
 });
 </script>
-
 <style scoped>
 .error-text {
     color: red;
