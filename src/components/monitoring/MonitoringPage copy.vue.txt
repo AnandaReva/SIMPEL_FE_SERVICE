@@ -1,0 +1,333 @@
+<template>
+    <v-container fluid class="pa-1 elevation-2 fill-height fill-width" :class="{ 'disable-interactions': isLoading }">
+
+        <v-progress-circular v-if="isLoading" color="secondary" indeterminate
+            class="loading-spinner"></v-progress-circular>
+
+
+
+
+
+        <v-dialog v-model="isShowDeviceList" max-width="500">
+            <template #default>
+                <v-card color="base">
+                    <v-card-title class="d-flex justify-space-between align-center">
+                        <span class="text-h6">Select Device</span>
+                        <v-btn icon @click="isShowDeviceList = false">
+                            <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                    </v-card-title>
+
+                    <v-card-text>
+                        <!-- Filter controls -->
+                        <div class="d-flex flex-wrap mb-4 gap-2">
+                            <v-select v-model="selectedStatus" :items="[
+                                { text: 'Semua', value: '' },
+                                { text: 'Aktif', value: '1' },
+                                { text: 'Tidak Aktif', value: '0' }
+                            ]" label="Status" dense outlined class="flex-1" />
+
+                            <v-select v-model="selectedOrderBy" :items="[
+                                { text: 'Waktu terakhir', value: 'last_tstamp' },
+                                { text: 'Waktu perangkat didaftarkan', value: 'create_timestamp' },
+                                { text: 'Nama perangkat', value: 'name' }
+                            ]" label="Urutkan berdasarkan" dense outlined class="flex-1" />
+
+                            <v-btn @click="toggleSortType" icon>
+                                <v-icon>{{ selectedSortType === 'ASC' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}</v-icon>
+                            </v-btn>
+                        </div>
+
+                        <!-- Search box -->
+                        <div class="d-flex align-center mb-4">
+                            <v-text-field v-model="filterDeviceList" label="Masukkan Nama device" dense outlined
+                                hide-details maxlength="30" @input="filterDeviceList = $event.slice(0, 30)"
+                                class="flex-grow-1" />
+                            <v-btn icon color="primary" class="ml-2" @click="searchDevices">
+                                <v-icon>mdi-magnify</v-icon>
+                            </v-btn>
+                        </div>
+
+                        <!-- Device list -->
+                        <v-sheet height="250" class="overflow-y-auto">
+                            <v-list v-if="filteredActiveDevices.length > 0">
+                                <v-list-item v-for="device in filteredActiveDevices" :key="device.device_id"
+                                    @click="handleAddDeviceToMonitor(device.device_id, device.device_name)"
+                                    class="hover:bg-grey-lighten-3">
+                                    <v-list-item-content>
+                                        <v-list-item-title>{{ device.device_name }}</v-list-item-title>
+                                        <v-list-item-subtitle>ID: {{ device.device_id }}</v-list-item-subtitle>
+                                    </v-list-item-content>
+                                </v-list-item>
+                            </v-list>
+                            <div v-else class="text-center text-grey">
+                                No active devices available
+                            </div>
+                        </v-sheet>
+                    </v-card-text>
+                </v-card>
+            </template>
+        </v-dialog>
+
+
+
+
+
+        <v-col style="border: 2px dashed red;">
+
+
+            <v-row style="border: 2px dashed blue;">
+
+
+                <v-container>
+ini
+
+
+                </v-container>
+        
+
+
+            </v-row>
+
+
+            <v-row style="border: 2px dashed yellow;">
+
+                nhu
+
+            </v-row>
+
+
+
+
+
+
+
+        </v-col>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <v-row dense class="pa-0 ma-0 " style="border: 2px dashed red;">
+            <v-col v-for="(device, index) in monitoredDevices" :key="device.device_id" cols="12" sm="6" md="6" lg="4"
+                xl="3" class="d-flex mx-auto border" style="border: 1px solid #42A5F5;">
+                <v-card elevation="2" rounded="lg" color="base" class="d-flex flex-column w-100 border" :class="{
+                    'min-h-60': $vuetify.display.smAndDown,
+                    'min-h-72': $vuetify.display.mdAndUp
+                }" style="aspect-ratio: 4 / 3; border: 1px solid #64B5F6;">
+                    <v-card-title class="d-flex justify-space-between align-center">
+                        <span class="text-h6 font-weight-bold">{{ device.device_name }}</span>
+                        <v-btn icon @click="removeDevice(index)">
+                            <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                    </v-card-title>
+
+                    <v-card-text class="d-flex flex-grow-1 pa-2">
+                        <v-row no-gutters class="flex-grow-1">
+                            <!-- Chart Area -->
+                            <v-col cols="10" class="pa-1 border" style="border: 1px solid #90CAF9;">
+                                <div class="bg-grey-lighten-3 d-flex align-center justify-center rounded-lg"
+                                    style="width: 100%; height: 100%;">
+                                    <span class="text-grey">Chart Area</span>
+                                </div>
+                            </v-col>
+
+                            <!-- Sensor Values -->
+                            <v-col cols="2" class="pa-1 border" style="border: 1px solid #90CAF9;">
+                                <v-row dense>
+                                    <v-col v-for="item in [
+                                        { label: 'Energy (kWh)', value: device.sensorData.energy },
+                                        { label: 'Voltage (V)', value: device.sensorData.voltage },
+                                        { label: 'Current (A)', value: device.sensorData.current },
+                                        { label: 'Frequency (Hz)', value: device.sensorData.frequency },
+                                        { label: 'Power Factor', value: device.sensorData.power_factor }
+                                    ]" :key="item.label" cols="12" class="mb-1 text-center">
+                                        <v-sheet
+                                            class="border border-primary font-weight-bold d-flex align-center justify-center mx-auto"
+                                            style="width: 5vw; height: 3vw;" rounded>
+                                            {{ formatValue(item.value) }}
+                                        </v-sheet>
+                                        <div class="text-caption mt-1">{{ item.label }}</div>
+                                    </v-col>
+                                </v-row>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
+
+
+
+
+        <v-container class="d-flex flex-column align-center pa-0 ma-0" style="border: 2px dashed #1976D2;">
+
+
+            <v-card class="text-center pa-4 rounded-lg elevation-2" color="base" style="width: auto; max-width: 100vw;">
+                <div v-if="monitoredDevices.length === 0">
+                    <v-icon size="64" color="grey">mdi-monitor-off</v-icon>
+                    <p class="text-h6 mt-4 mb-6">Tidak ada perangkat yang dipilih</p>
+                </div>
+
+                <div v-else>
+                    <p class="text-h6 mt-4 mb-6">Jumlah Perangkat di Monitor: {{ monitoredDevices.length }}</p>
+                </div>
+
+                <v-btn color="primary" @click="handleShowDeviceList">
+                    <v-icon start>mdi-plus</v-icon>
+                    Tambah Perangkat
+                </v-btn>
+            </v-card>
+
+
+
+
+        </v-container>
+
+
+
+
+
+
+
+
+
+
+
+    </v-container>
+</template>
+
+
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue'
+
+// State management
+const isLoading = ref(false)
+const isShowDeviceList = ref(false)
+const monitoredDevices = ref([])
+const activeDevices = ref([])
+const totalActiveDevices = ref(0)
+const lastFetchedPage = ref(0)
+const totalPages = ref(0)
+const pageSize = ref(10)
+const isFetching = ref(false)
+
+// Filter and sort options
+const selectedOrderBy = ref('last_tstamp')
+const selectedStatus = ref(1)
+const selectedSortType = ref('DESC')
+const filterDeviceList = ref('')
+
+// Filtered active devices (not already monitored)
+const filteredActiveDevices = computed(() => {
+    return activeDevices.value.filter(device =>
+        !monitoredDevices.value.some(m => m.device_id === device.device_id) &&
+        device.device_st === 1
+    )
+})
+
+// Toggle sort direction
+const toggleSortType = () => {
+    selectedSortType.value = selectedSortType.value === 'ASC' ? 'DESC' : 'ASC'
+}
+
+// Handle showing device list modal
+const handleShowDeviceList = () => {
+    if (monitoredDevices.value.length >= 50) {
+        alert('Maximum 50 devices can be monitored simultaneously.')
+        return
+    }
+    isShowDeviceList.value = true
+}
+
+// Add device to monitor
+const handleAddDeviceToMonitor = (deviceId, deviceName) => {
+    if (monitoredDevices.value.some(device => device.device_id === deviceId)) {
+        console.log(`Device ${deviceName} is already being monitored`)
+        isShowDeviceList.value = false
+        return
+    }
+
+    const newDevice = {
+        device_id: deviceId,
+        device_name: deviceName,
+        sensorData: {
+            energy: 0,
+            voltage: 0,
+            current: 0,
+            frequency: 0,
+            power_factor: 0
+        }
+    }
+
+    monitoredDevices.value = [...monitoredDevices.value, newDevice]
+    isShowDeviceList.value = false
+
+    // In a real application, you would initialize chart and websocket here
+}
+
+// Remove device from monitor
+const removeDevice = (index) => {
+    monitoredDevices.value.splice(index, 1)
+
+    // In a real application, you would clean up chart and websocket here
+}
+
+// Search for devices
+const searchDevices = () => {
+    totalActiveDevices.value = 0
+    lastFetchedPage.value = 0
+    activeDevices.value = []
+    getActiveDeviceList(1)
+}
+
+// Format sensor values
+const formatValue = (value) => {
+    if (value === undefined || value === null) return '--'
+    return Number(value).toFixed(2)
+}
+
+// Fetch active device list
+const getActiveDeviceList = (pageNumber) => {
+    isLoading.value = true
+
+    // Simulating API call
+    setTimeout(() => {
+        // In a real application, this would be an actual API call
+        const mockDevices = Array.from({ length: 20 }, (_, i) => ({
+            device_id: `device-${i + 1}`,
+            device_name: `Device ${i + 1}`,
+            device_st: 1,
+            last_tstamp: new Date().toISOString()
+        }))
+
+        activeDevices.value = [...activeDevices.value, ...mockDevices]
+        totalActiveDevices.value = 100
+        totalPages.value = 10
+        lastFetchedPage.value = pageNumber
+        isLoading.value = false
+    }, 1000)
+}
+
+// Initialize component
+onMounted(() => {
+    isLoading.value = true
+    getActiveDeviceList(1)
+})
+
+// Watch for filter/sort changes
+watch([selectedSortType, selectedOrderBy, selectedStatus], () => {
+    searchDevices()
+})
+</script>
+
+<style scoped></style>

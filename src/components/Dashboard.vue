@@ -380,7 +380,7 @@ let chart = null;
 let socket = null;
 
 
-// this returns undefined every time
+
 const formatValue = (newValue) => {
   return newValue === undefined || newValue === null ? "-" : newValue.toFixed(2);
 }
@@ -473,6 +473,7 @@ const updateChart = (newData) => {
 
 watch(currDeviceId, async (newDeviceId) => {
   console.log(`🔄 Device berubah: ${newDeviceId}, reinit chart!`);
+  //disconnectDevice(); // Putuskan koneksi WebSocket sebelumnya
   dataPoints.value = []; // Reset data saat ganti device
 
   await nextTick(); // ⏳ Tunggu sampai DOM update

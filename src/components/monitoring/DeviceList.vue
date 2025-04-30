@@ -1,5 +1,5 @@
 <template>
-    <div class="device-list px-0">
+    <v-container class="device-list px-0 ma-0">
         <p class="text-subtitle-2 font-weight-bold">Menampilkan:  {{devices.length}}/{{ totalDevices }}</p>
 
         <v-list bg-color="white" dense class="rounded-lg elevation-2">
@@ -70,7 +70,7 @@
                 </v-list-item>
             </template>
         </v-list>
-    </div>
+    </v-container>
 </template>
 
 <script setup>
