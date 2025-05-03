@@ -63,7 +63,7 @@
               <v-col cols="5" class="px-0">
                 <v-select v-model="selectedOrderByDeviceList" :items="[
                   { title: 'Waktu terakhir', value: 'last_tstamp' },
-                  { title: 'Waktu perangkat didaftarkan', value: 'create_timestamp' },
+                  { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
                   { title: 'Nama perangkat', value: 'name' }
                 ]" density="compact" label="Pengurutan" variant="outlined" style="height: 50px;" />
               </v-col>
@@ -279,7 +279,7 @@ import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { Process } from "@/utils/requestHelper";
 import { BASE_API_URL, WS_API_URL } from "@/configs/config";
 
-import { createSocketConnection } from "@/utils/wsHelper";
+import { CreateSocketConnection } from "@/utils/wsHelper";
 
 import CanvasJS from "@canvasjs/charts";
 //import CanvasJS, { addTheme } from "@canvasjs/charts";
@@ -545,10 +545,10 @@ const startWebSocket = async () => {
   const baseUrl = WS_API_URL;
   const params = { device_id: currDeviceId.value };
 
-  console.log("createSocketConnection params:", params);
+  console.log("CreateSocketConnection params:", params);
 
   try {
-    const result = await createSocketConnection(baseUrl, operation, params);
+    const result = await CreateSocketConnection(baseUrl, operation, params);
 
     if (result?.error) {
       console.error("⚠️ WebSocket gagal terhubung:", result.error);
@@ -598,7 +598,7 @@ const startWebSocket = async () => {
       };
       popupVisible.value = true;
 
-      searchDevices(); // Jalankan ulang pencarian perangkat
+    //  searchDevices(); // Jalankan ulang pencarian perangkat
     };
 
 

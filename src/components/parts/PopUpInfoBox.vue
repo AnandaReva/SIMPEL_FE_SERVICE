@@ -35,8 +35,10 @@ import { stringifyQuery } from 'vue-router';
 const properties = {
     success: ['primary', 'mdi-check-circle'],
     error: ['error', 'mdi-alert-circle'],
-    info: ['info', 'mdi-information']
+    info: ['info', 'mdi-information'],
+    warning: ['warning', 'mdi-alert']
 };
+
 
 
 //console.log("properties from parent: " , properties);

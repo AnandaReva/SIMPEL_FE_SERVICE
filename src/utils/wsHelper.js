@@ -4,59 +4,53 @@ import CryptoJS from "crypto-js";
 
 
 
-function generateToken(device_id) {
-    const session_id = localStorage.getItem("session_id") || "";
-    const session_hash = localStorage.getItem("session_hash") || "";
+function generateToken(sessionIdParam, sessionHashParam) {
 
-    if (!session_id || !session_hash) {
+
+    if (!sessionIdParam || !sessionHashParam) {
         console.error("⚠️ Missing session credentials. Token generation aborted.");
         return "";
     }
 
-    const message = session_id + device_id;
-    const token = CryptoJS.HmacSHA256(message, session_hash).toString();
+    const message = sessionIdParam + sessionHashParam;
+    const token = CryptoJS.HmacSHA256(message, sessionHashParam).toString();
     return token;
 }
 
 
-export async function createSocketConnection(base_url, process_name, params = {}) {
+export async function CreateSocketConnection(base_url, process_name, params = {}) {
     try {
         const session_id = localStorage.getItem("session_id") || "";
-        if (!session_id) throw new Error("Missing session_id. WebSocket connection aborted.");
+        const session_hash = localStorage.getItem("session_hash") || "";
 
-        const device_id = params.device_id;
-        if (!device_id) throw new Error("Missing device_id. WebSocket connection aborted.");
+        if (!session_id || !session_hash) {
+            console.error("⚠️ Missing session credentials. Token generation aborted.");
+            return null;
+        }
 
-        const token = generateToken(device_id);
-        if (!token) throw new Error("Invalid token. WebSocket connection aborted.");
+        const token = generateToken(session_id, session_hash);
+        if (!token) {
+            console.error("⚠️ Token generation failed.");
+            return null;
+        }
 
-        const socketUrl = `${base_url}${process_name}?token=${encodeURIComponent(token)}&session_id=${encodeURIComponent(session_id)}&device_id=${encodeURIComponent(device_id)}`;
+        const query = new URLSearchParams({
+            token: token,
+            session_id: session_id,
+            ...params,
+        }).toString();
+
+        const socketUrl = `${base_url}${process_name}?${query}`;
         const socket = new WebSocket(socketUrl);
 
         socket.onopen = () => {
             console.log("✅ WebSocket connected:", socketUrl);
         };
 
-        socket.onmessage = (event) => {
-            console.log("📡 Data received:", event.data);
-        };
-
-        socket.onclose = (event) => {
-            console.warn("❌ WebSocket disconnected:", event.reason);
-            // Reconnect setelah 3 detik
-            setTimeout(() => {
-                console.log("🔄 Reconnecting WebSocket...");
-                createSocketConnection(base_url, process_name, params);
-            }, 3000);
-        };
-
-        socket.onerror = (error) => {
-            console.error("⚠️ WebSocket error:", error);
-        };
-
         return socket;
     } catch (err) {
         console.error("🚨 WebSocket initialization error:", err.message);
-        return { error: err.message };
+        return null;
     }
 }
+

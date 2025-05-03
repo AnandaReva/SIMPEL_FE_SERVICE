@@ -1,11 +1,10 @@
 <template>
-    <v-container fluid class="pa-1 elevation-2 fill-height fill-width" :class="{ 'disable-interactions': isLoading }">
-
-        <v-progress-circular v-if="isLoading" color="secondary" indeterminate
-            class="loading-spinner"></v-progress-circular>
-
-
-
+    <v-container fluid class="pa-0 ma-0 elevation-2 fill-height fill-width"
+        :class="{ 'disable-interactions': isLoading }">
+        <!-- Overlay loading -->
+        <div v-if="isLoading" class="loading-overlay">
+            <v-progress-circular color="secondary" indeterminate size="64"></v-progress-circular>
+        </div>
 
 
         <v-dialog v-model="isShowDeviceList" max-width="500">
@@ -21,49 +20,45 @@
                     <v-card-text>
                         <!-- Filter controls -->
                         <div class="d-flex flex-wrap mb-0 ">
-                            <v-select v-model="selectedStatus" :items="[
-                                { text: 'Semua', value: '' },
-                                { text: 'Aktif', value: '1' },
-                                { text: 'Tidak Aktif', value: '0' }
-                            ]" label="Status" dense outlined class="flex-1" />
-
-                            <v-select v-model="selectedOrderBy" :items="[
-                                { text: 'Waktu terakhir', value: 'last_tstamp' },
-                                { text: 'Waktu perangkat didaftarkan', value: 'create_timestamp' },
-                                { text: 'Nama perangkat', value: 'name' }
-                            ]" label="Urutkan berdasarkan" dense outlined class="flex-1" />
-
-                            <v-btn @click="toggleSortType" icon>
-                                <v-icon>{{ selectedSortType === 'ASC' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}</v-icon>
+                            <v-select v-model="selectedOrderByActiveDeviceList" :items="[
+                                { title: 'Waktu terakhir', value: 'last_tstamp' },
+                                { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
+                                { title: 'Nama perangkat', value: 'name' }
+                            ]" density="compact" label="Pengurutan" variant="outlined" style="height: 50px;" />
+                            <v-btn @click="toogleSortType" icon>
+                                <v-icon>{{ selectedSortTypeActiveDeviceList === 'ASC' ? 'mdi-arrow-up' :
+                                    'mdi-arrow-down' }}</v-icon>
                             </v-btn>
                         </div>
 
                         <!-- Search box -->
                         <div class="d-flex align-center mb-4">
-                            <v-text-field v-model="filterDeviceList" label="Masukkan Nama device" dense outlined
-                                hide-details maxlength="30" @input="filterDeviceList = $event.slice(0, 30)"
-                                class="flex-grow-1" />
-                            <v-btn icon color="primary" class="ml-2" @click="searchDevices">
+                            <v-text-field v-model="filterActiveDeviceList" label="Search"
+                                placeholder="Masukkan Nama device" variant="solo" clearable class="px-1"
+                                style="max-height: 50px;" maxlength="50"
+                                :rules="[v => v.length <= 30 || 'Maksimal 30 karakter']"
+                                @input="filterActiveDeviceList = filterActiveDeviceList.slice(0, 30)">
+                            </v-text-field>
+                            <v-btn icon color="primary" class="ml-2" @click="searchActiveDevice">
                                 <v-icon>mdi-magnify</v-icon>
                             </v-btn>
                         </div>
 
-                        <!-- Device list -->
-                        <v-sheet height="250" class="overflow-y-auto">
-                            <v-list v-if="filteredActiveDevices.length > 0">
-                                <v-list-item v-for="device in filteredActiveDevices" :key="device.device_id"
-                                    @click="handleAddDeviceToMonitor(device.device_id, device.device_name)"
-                                    class="hover:bg-grey-lighten-3">
 
-                                    <v-list-item-title>{{ device.device_name }}</v-list-item-title>
-                                    <v-list-item-subtitle>ID: {{ device.device_id }}</v-list-item-subtitle>
+                        <div>
 
-                                </v-list-item>
-                            </v-list>
-                            <div v-else class="text-center text-grey">
-                                No active devices available
-                            </div>
-                        </v-sheet>
+                            <v-infinite-scroll :key="scrollKeyActiveDevices" id="ActiveDeviceBox" ref="ActiveDeviceBox"
+                                height="550" side="end" @load="loadActiveDevices" class="overflow-auto">
+                                <ActiveDeviceList :activeDevices="activeDevices" :monitoredDevices="monitoredDevices"
+                                    :totalActiveDevices="totalActiveDevices"
+                                    @select-device-to-monitor="selectDeviceToMonitor" />
+
+                            </v-infinite-scroll>
+
+
+                        </div>
+
+
                     </v-card-text>
                 </v-card>
             </template>
@@ -71,19 +66,33 @@
 
 
 
-
         <v-col class="d-flex flex-column fit-content" style=" border: 2px dashed red; overflow-y: auto;">
+
+            <v-row style="flex: 1; border: 2px dashed yellow;">
+                <v-container class="d-flex align-center justify-center">
+                    <v-card class="text-center pa-4 rounded-lg elevation-2" color="base" style="width: auto;">
+                        <strong>
+                            <span class="text-body-1 font-weight-medium" style="color: var(--v-theme-primary);">
+                                Zona Waktu: {{ userTimeZone }}
+                            </span>
+                        </strong>
+                    </v-card>
+                </v-container>
+            </v-row>
+
+
+
 
             <v-row style="flex: 11; border: 2px dashed blue;">
                 <div v-if="monitoredDevices.length != 1" class="device-grid pa-1" style="
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(700px, 1fr));
-  gap: 16px;
-  width: 100%;
-  min-height: 400px;
-  overflow-y: auto;
-  padding-right: 8px;
-">
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(700px, 1fr));
+            gap: 16px;
+            width: 100%;
+            min-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+            max-width: 100vw;">
 
 
                     <v-card v-for="device in allExceptLast" :key="device.device_id" elevation="2" rounded="lg"
@@ -94,7 +103,7 @@
                         <!-- Title -->
                         <v-card-title class="d-flex justify-space-between align-center">
                             <span class="text-h6 font-weight-bold">{{ device.device_name }}</span>
-                            <v-btn icon @click="removeDevice(index)">
+                            <v-btn icon @click="removeMonitoredDevice(index)">
                                 <v-icon>mdi-close</v-icon>
                             </v-btn>
                         </v-card-title>
@@ -103,11 +112,12 @@
                         <v-card-text class="pa-2" style="flex: 1; overflow: auto;">
                             <v-row no-gutters class="fill-height">
                                 <!-- Chart Area -->
-                                <v-col cols="10" class="pa-1 border" style="border: 1px solid #90CAF9;">
-                                    <div class="bg-grey-lighten-3 d-flex align-center justify-center rounded-lg"
-                                        style="width: 100%; height: 95%;">
-                                        <span class="text-grey">Chart Area</span>
+                                <v-col cols="10" class="pa-1 border" style="border: 5px solid #90CAF9;">
+                                    <div :id="`chartContainer-${device.device_id}`" style="width: 100%; height: 95%;">
+
+                                        ini
                                     </div>
+
                                 </v-col>
 
                                 <!-- Sensor Values -->
@@ -147,7 +157,7 @@
                                 <!-- Title -->
                                 <v-card-title class="d-flex justify-space-between align-center">
                                     <span class="text-h6 font-weight-bold">{{ lastDevice.device_name }}</span>
-                                    <v-btn icon @click="removeDevice(monitoredDevices.length - 1)">
+                                    <v-btn icon @click="removeMonitoredDevice(monitoredDevices.length - 1)">
                                         <v-icon>mdi-close</v-icon>
                                     </v-btn>
                                 </v-card-title>
@@ -157,10 +167,11 @@
                                     <v-row no-gutters class="fill-height">
                                         <!-- Chart Area -->
                                         <v-col cols="10" class="pa-1 border" style="border: 1px solid #90CAF9;">
-                                            <div class="bg-grey-lighten-3 d-flex align-center justify-center rounded-lg"
+                                            <div :id="`chartContainer-${lastDevice.device_id}`"
                                                 style="width: 100%; height: 95%;">
-                                                <span class="text-grey">Chart Area</span>
+                                                ini div
                                             </div>
+                                            ini cols
                                         </v-col>
 
                                         <!-- Sensor Values -->
@@ -194,6 +205,17 @@
 
 
             <v-row style="flex: 1; border: 2px dashed yellow;">
+
+
+                monitoredDevices:
+                {{JSON.stringify(monitoredDevices.map(d => ({
+                    device_id: d.device_id, device_name: d.device_name,
+                    connected:
+                        d.connected
+                })))}}
+
+
+
                 <v-container class="d-flex align-center justify-center">
 
 
@@ -207,7 +229,7 @@
                             <p class="text-h6 mt-4 mb-6">Jumlah Perangkat di Monitor: {{ monitoredDevices.length }}</p>
                         </div>
 
-                        <v-btn color="primary" @click="handleShowDeviceList">
+                        <v-btn v-if="globalWs" color="primary" @click="handleShowDeviceList">
                             <v-icon start>mdi-plus</v-icon>
                             Tambah Perangkat
                         </v-btn>
@@ -217,39 +239,26 @@
             </v-row>
         </v-col>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     </v-container>
+
+    <PopUpInfoBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
+        :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
+        @close="closePopup" />
 </template>
 
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import ActiveDeviceList from './ActiveDeviceList.vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 
+import { Process } from "@/utils/requestHelper";
+import { BASE_API_URL, WS_API_URL } from "@/configs/config";
+import { CreateSocketConnection } from "@/utils/wsHelper"
+
+import CanvasJS from "@canvasjs/charts";
+
+
+// grid
 const isOddDeviceCount = computed(() => monitoredDevices.value.length % 2 === 1);
 
 const allExceptLast = computed(() =>
@@ -263,125 +272,638 @@ const lastDevice = computed(() =>
 
 
 
-
 // State management
-const isLoading = ref(false)
+const popUpProps = ref({
+    status: "",
+    errorMessage: "",
+    errorCode: "",
+});
+
+const popupVisible = ref(false);
+const closePopup = () => {
+    popupVisible.value = false;
+};
+
+const isLoading = ref(false);
+
+watch(isLoading, (newValue) => {
+    console.log("isLoading changed to:", newValue);
+});
+
+
+
+
+
+
 const isShowDeviceList = ref(false)
-const monitoredDevices = ref([])
 const activeDevices = ref([])
-const totalActiveDevices = ref(0)
-const lastFetchedPage = ref(0)
-const totalPages = ref(0)
-const pageSize = ref(10)
-const isFetching = ref(false)
 
-// Filter and sort options
-const selectedOrderBy = ref('last_tstamp')
-const selectedStatus = ref(1)
-const selectedSortType = ref('DESC')
-const filterDeviceList = ref('')
 
-// Filtered active devices (not already monitored)
-const filteredActiveDevices = computed(() => {
-    return activeDevices.value.filter(device =>
-        !monitoredDevices.value.some(m => m.device_id === device.device_id) &&
-        device.device_st === 1
-    )
-})
 
-// Toggle sort direction
-const toggleSortType = () => {
-    selectedSortType.value = selectedSortType.value === 'ASC' ? 'DESC' : 'ASC'
-}
 
 // Handle showing device list modal
 const handleShowDeviceList = () => {
     if (monitoredDevices.value.length >= 50) {
-        alert('Maximum 50 devices can be monitored simultaneously.')
+        popUpProps.value = {
+            status: "error",
+            errorMessage: "Maximum 50 activeDevices can be monitored simultaneously",
+            errorCode: 0,
+        };
         return
     }
+
+    searchActiveDevice();
+
     isShowDeviceList.value = true
 }
 
-// Add device to monitor
-const handleAddDeviceToMonitor = (deviceId, deviceName) => {
-    if (monitoredDevices.value.some(device => device.device_id === deviceId)) {
-        console.log(`Device ${deviceName} is already being monitored`)
-        isShowDeviceList.value = false
-        return
+
+//////////////////// REALTIME MONITORING //////////////////////////
+const globalWs = ref(null);
+const monitoredDevices = ref([]);
+const maxDataLength = ref(50);
+
+const userTimeZone = ref("")
+
+// Helper functions
+const formatValue = (newValue) => {
+    return newValue === undefined || newValue === null ? "-" : newValue.toFixed(2);
+};
+
+
+function getUserTimezone() {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown";
+}
+const getLocalTimezoneOffset = () => {
+    const now = new Date();
+    return now.getTimezoneOffset() * 60 * 1000; // Convert minutes to milliseconds
+};
+
+function convertTimestampToLocal(timestamp) {
+    if (!timestamp) return "-";
+
+    // Format for parsing by Date (add 'T' and 'Z')
+    const formattedTimestamp = timestamp.replace(" ", "T") + "Z"; // ex: "2025-04-26T11:32:45Z"
+    const utcDate = new Date(formattedTimestamp);
+
+    if (isNaN(utcDate.getTime())) {
+        console.warn("❌ Invalid timestamp:", timestamp);
+        return "-";
     }
 
-    const newDevice = {
-        device_id: deviceId,
-        device_name: deviceName,
-        sensorData: {
-            energy: 0,
-            voltage: 0,
-            current: 0,
-            frequency: 0,
-            power_factor: 0
+    // Get local offset (negative for time ahead of UTC, positive for behind UTC)
+    const localOffset = getLocalTimezoneOffset(); // in milliseconds
+
+    // Convert to local time: UTC - (-offset) => UTC + offset
+    const localDate = new Date(utcDate.getTime() - localOffset);
+
+    // Format local date
+    return localDate.toLocaleString("id-ID", {
+        hour12: false,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+    });
+}
+
+
+// Update chart with new data for a specific device
+const updateChart = (deviceId, message) => {
+    const device = monitoredDevices.value.find(d => d.device_id === deviceId);
+    if (!device) return;
+
+    if (!device.chart) {
+        initChart(deviceId);
+        return;
+    }
+
+    try {
+        // Parse timestamp
+        let timestamp = message.timestamp;
+        if (!timestamp) {
+            console.warn("❌ Missing timestamp in message:", message);
+            return;
         }
+
+        // Format timestamp for Date object
+        const formattedTimestamp = timestamp.replace(" ", "T") + "Z";
+        const messageTime = new Date(formattedTimestamp);
+
+        if (isNaN(messageTime.getTime())) {
+            console.warn("❌ Invalid timestamp:", timestamp);
+            return;
+        }
+
+        // Add new data point
+        device.dataPoints.push({
+            x: messageTime,
+            y: parseFloat(message.power) || 0,
+        });
+
+        // Limit data points to maxDataLength
+        if (device.dataPoints.length > maxDataLength.value) {
+            device.dataPoints.shift();
+        }
+
+        // Update chart
+        device.chart.options.data[0].dataPoints = device.dataPoints;
+        device.chart.render();
+    } catch (error) {
+        console.error("❌ Error updating chart:", error);
+    }
+};
+
+// Initialize chart for a specific device
+const initChart = (deviceId) => {
+
+    console.log("---initChart---")
+    const device = monitoredDevices.value.find(d => d.device_id === deviceId);
+    if (!device) {
+        console.warn(`⚠️ Device with ID ${deviceId} not found!`);
+        return;
     }
 
-    monitoredDevices.value = [...monitoredDevices.value, newDevice]
-    isShowDeviceList.value = false
+    console.log(`Initializing chart for device ${deviceId}`, device.dataPoints);
 
-    // In a real application, you would initialize chart and websocket here
+    const containerId = `chartContainer-${deviceId}`;
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.warn(`⚠️ Chart container ${containerId} not found!`);
+        return;
+    }
+
+    // Clear previous chart element (if any)
+    container.innerHTML = "";
+
+    device.chart = new CanvasJS.Chart(container, {
+        theme: "light2",
+        title: {
+            text: `Grafik Daya Perangkat - ${device.device_name}`,
+            fontSize: 15,
+            fontColor: "#346285",
+        },
+        animationEnabled: true,
+        axisX: {
+            title: "Waktu (jam:mnt:dtk)",
+            valueFormatString: "HH:mm:ss",
+            labelFormatter: function (e) {
+                return e.value.toISOString().slice(11, 19);
+            },
+        },
+        axisY: {
+            title: "power (W)",
+        },
+        data: [
+            {
+                type: "line",
+                markerSize: 8,
+                markerColor: "#346285",
+                lineColor: "#badefa",
+                dataPoints: device.dataPoints.length
+                    ? device.dataPoints
+                    : [{ x: new Date(), y: 0 }],
+            },
+        ],
+    });
+
+    device.chart.render();
+};
+
+
+
+const initGlobalWebSocket = async () => {
+    console.log("-----initGlobalWebSocket----");
+
+    if (globalWs.value && globalWs.value.readyState === WebSocket.OPEN) {
+        console.log("✅ WebSocket already connected.");
+        return;
+    }
+
+    console.log("🌐 Membuka koneksi WebSocket baru...");
+    const operation = "user-connect";
+    const baseUrl = WS_API_URL;
+    const params = {};
+
+    const result = await CreateSocketConnection(baseUrl, operation, params);
+
+    if (!result) {
+        console.error("⚠️ WebSocket gagal terhubung:", result?.error);
+        popUpProps.value = {
+            status: "error",
+            errorMessage: "Gagal terhubung ke Server",
+            errorCode: "",
+        };
+        popupVisible.value = true;
+        return;
+    }
+
+    const socket = result;
+
+    socket.onopen = () => {
+        console.log("🌐 Global WebSocket connected:", socket.url);
+    };
+
+    socket.onerror = (err) => {
+        console.error("❌ WebSocket error:", err);
+        popUpProps.value = {
+            status: "error",
+            errorMessage: "Gagal terhubung ke server",
+            errorCode: "",
+        };
+        popupVisible.value = true;
+    };
+
+    socket.onclose = () => {
+        console.warn("⚠️ Global WebSocket closed.");
+        globalWs.value = null;
+        popUpProps.value = {
+            status: "error",
+            errorMessage: "Koneksi dengan server terputus",
+            errorCode: "",
+        };
+        popupVisible.value = true;
+    };
+
+    socket.onmessage = (event) => {
+        try {
+            const raw = JSON.parse(event.data);
+
+            // Jika 'message' adalah string dan kelihatan seperti JSON, parse lagi
+            let message;
+            if (typeof raw.message === "string" && raw.message.trim().startsWith("{")) {
+                message = JSON.parse(raw.message);
+            } else {
+                message = raw;
+            }
+            console.log("📨 Message from server:", message);
+            console.log("Raw Message : ", raw)
+            console.log("Type:", message?.type, "| Full message:", message);
+
+            switch (message?.type) {
+
+                case "unsubscribe":
+                    if (message?.actor === "server" && message?.device_id) {
+                        const index = monitoredDevices.value.findIndex(
+                            (d) => d.device_id === message.device_id
+                        );
+                        if (index !== -1) {
+                            console.log("🔄 Unsubscribe dari server, hapus device:", message.device_id);
+                            removeMonitoredDevice(index, true);
+
+                        }
+                    } else {
+                        console.warn("⚠️ initGlobalWebSocket - Unsubscribe message tidak valid:", message);
+                    }
+                    break;
+
+                case "sensor_data":
+                    if (message?.unit_id) {
+                        const device = monitoredDevices.value.find(d => d.device_id === message.unit_id);
+                        if (!device) return;
+
+                        device.sensorData = message;
+                        updateChart(message.unit_id, message);
+                    } else {
+                        console.warn("⚠️ initGlobalWebSocket -  Sensor data tidak valid:", message);
+                    }
+                    break;
+                case "subscribe_response":
+                    // do nothing, handle by selectDeviceToMonitor
+                case "unsubscribe_response":
+                    // do nothing, handle by removeMonitoredDevice
+                default:
+                    console.log("⚠️ initGlobalWebSocket -  Pesan tidak dikenali:", message);
+            }
+        } catch (err) {
+            console.error("❌ Error parsing WebSocket message:", err);
+        }
+    };
+
+    globalWs.value = socket;
+};
+
+
+
+
+const selectDeviceToMonitor = async (deviceId, deviceName) => {
+    console.log(`---selectDeviceToMonitor---`);
+
+    isLoading.value = true;
+    isShowDeviceList.value = false;
+
+    if (monitoredDevices.value.some(device => device.device_id === deviceId)) {
+        console.log(`Device: ${deviceId} is already being monitored`);
+        isShowDeviceList.value = false;
+        return;
+    }
+
+    await initGlobalWebSocket(); // Tunggu WebSocket siap
+
+    if (globalWs.value?.readyState !== WebSocket.OPEN) {
+        console.warn("❌ WebSocket belum terbuka");
+        return;
+    }
+
+    const subscribeMessage = {
+        type: "subscribe",
+        device_id: deviceId,
+    };
+
+    // Buat Promise untuk tunggu respons sukses/error dari server
+    const waitForSubscribeResponse = new Promise((resolve, reject) => {
+        const handler = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+
+                console.log("message: ", message)
+
+                if (message?.type === "subscribe_response" && message?.device_id === deviceId) {
+                    globalWs.value.removeEventListener("message", handler); // cleanup
+
+                    if (message.status === "success") {
+                        resolve(); // sukses
+                    } else if (message.status === "error") {
+
+                        reject(new Error("Gagal subscribe ke perangkat"));
+                    }
+                    else {
+                        reject(new Error("Status pesan tidak dikenali"));
+                    }
+                }
+            } catch (err) {
+                console.error("❌ Gagal parse message WebSocket:", err);
+            }
+        };
+
+        globalWs.value.addEventListener("message", handler);
+        globalWs.value.send(JSON.stringify(subscribeMessage));
+        console.log("📩 Sent subscribe message:", subscribeMessage);
+
+        // Timeout jaga-jaga
+        setTimeout(() => {
+            globalWs.value.removeEventListener("message", handler);
+            reject(new Error("⏳ Timeout menunggu respons subscribe"));
+        }, 5000);
+    });
+
+    try {
+        await waitForSubscribeResponse;
+
+        // Baru tambahkan jika sukses
+        const tempDevice = {
+            device_id: deviceId,
+            device_name: deviceName,
+            chart: null,
+            dataPoints: [],
+            sensorData: {},
+            subscribed: true,
+        };
+
+        monitoredDevices.value = [...monitoredDevices.value, tempDevice];
+        nextTick(() => initChart(deviceId));
+    } catch (error) {
+        console.warn("❌ Gagal tambah perangkat:", error.message);
+        popUpProps.value = {
+            status: "error",
+            errorMessage: `Gagal menyambungkan ke perangkat`,
+            errorCode: "",
+        };
+        popupVisible.value = true;
+    }
+
+
+    isLoading.value = false;
+};
+
+
+
+const removeMonitoredDevice = (index, isServerAction) => {
+    console.group("---removeMonitoredDevice---");
+    const device = monitoredDevices.value[index];
+    if (!device) return;
+
+    if (!isServerAction) {
+
+        // Kirim pesan unsubscribe ke server
+        if (globalWs.value?.readyState === WebSocket.OPEN) {
+            const unsubscribeMessage = {
+                type: "unsubscribe",
+                device_id: device.device_id,
+            };
+            globalWs.value.send(JSON.stringify(unsubscribeMessage));
+            console.log("📩 removeMonitoredDevice - Sent unsubscribe message:", unsubscribeMessage);
+        }
+    } else {
+
+        popUpProps.value = {
+            status: "warning",
+            errorMessage: `Koneksi perangkat ${device.device_name} diuputus oleh server`,
+            errorCode: "",
+        };
+        popupVisible.value = true;
+
+
+        console.log("removeMonitoredDevice - serverAction ")
+    }
+
+
+    // Destroy chart
+    if (device.chart) {
+        device.chart.destroy();
+        device.chart = null;
+    }
+
+    const containerId = `chartContainer-${device.device_id}`;
+    const container = document.getElementById(containerId);
+    if (container) container.innerHTML = "";
+
+    monitoredDevices.value.splice(index, 1);
+
+};
+
+
+//////////////////////// ACTIVE DEVICES /////////////////////////
+const isFetchingActiveDevices = ref(false); // mencegah race condition
+
+// Filter and sort options
+const selectedOrderByActiveDeviceList = ref('last_tstamp')
+const selectedSortTypeActiveDeviceList = ref('DESC')
+const filterActiveDeviceList = ref('')
+
+
+const toogleSortType = () => {
+    selectedSortTypeActiveDeviceList.value = selectedSortTypeActiveDeviceList.value === "ASC" ? "DESC" : "ASC";
 }
 
-// Remove device from monitor
-const removeDevice = (index) => {
-    monitoredDevices.value.splice(index, 1)
 
-    // In a real application, you would clean up chart and websocket here
+
+
+
+
+
+const totalActiveDevices = ref(0)
+const lastFetchedActiveDevicesPage = ref(0);
+const totalActiveDevicesPage = ref(0)
+const page_size = ref(10)
+const scrollKeyActiveDevices = ref(0);
+
+
+// Search for activeDevices
+const searchActiveDevice = () => {
+    totalActiveDevices.value = 0;
+    lastFetchedActiveDevicesPage.value = 0;
+    activeDevices.value = [];
+    scrollKeyActiveDevices.value += 1; // trigger reset v-infinite-scroll
+    getActiveDeviceList(1);
 }
 
-// Search for devices
-const searchDevices = () => {
-    totalActiveDevices.value = 0
-    lastFetchedPage.value = 0
-    activeDevices.value = []
-    getActiveDeviceList(1)
+// Append new activeDevices without duplicates
+function appendActiveDevices(activeDevices, additionalDevices) {
+    const activeDeviceMap = new Map();
+    activeDevices.forEach((device) => activeDeviceMap.set(device.device_id, device));
+
+    additionalDevices.forEach((newActiveDevice) => {
+        if (!activeDeviceMap.has(newActiveDevice.device_id)) {
+            activeDevices.push(newActiveDevice);
+            activeDeviceMap.set(newActiveDevice.device_id, newActiveDevice);
+        }
+    });
+
+    return activeDevices;
 }
 
-// Format sensor values
-const formatValue = (value) => {
-    if (value === undefined || value === null) return '--'
-    return Number(value).toFixed(2)
+function loadActiveDevices({ done }) {
+    console.group("--- loadActiveDevices() ---")
+    if (totalActiveDevicesPage.value === 0) {
+        done("empty");
+        return;
+    }
+    const fetchedPageNumber = lastFetchedActiveDevicesPage.value + 1;
+    console.log("last page:", lastFetchedActiveDevicesPage.value);
+    console.log("Fetched page number:", fetchedPageNumber);
+
+    setTimeout(async () => {
+        await getActiveDeviceList(fetchedPageNumber);
+
+        if (fetchedPageNumber < totalActiveDevicesPage.value) {
+            done("done");
+        } else {
+            done("empty");
+        }
+    }, 1000);
+    console.groupEnd();
 }
+
+
+
+
+
+
 
 // Fetch active device list
-const getActiveDeviceList = (pageNumber) => {
-    // isLoading.value = true
+async function getActiveDeviceList(pageNumberParam) {
+    console.log("---- getActiveDeviceList ----");
 
-    // Simulating API call
-    setTimeout(() => {
-        // In a real application, this would be an actual API call
-        const mockDevices = Array.from({ length: 20 }, (_, i) => ({
-            device_id: `device-${i + 1}`,
-            device_name: `Device ${i + 1}`,
-            device_st: 1,
-            last_tstamp: new Date().toISOString()
-        }))
+    if (isFetchingActiveDevices.value) {
+        console.log("Fetching activeDevices already in progress...");
+        return;
+    }
 
-        activeDevices.value = [...activeDevices.value, ...mockDevices]
-        totalActiveDevices.value = 100
-        totalPages.value = 10
-        lastFetchedPage.value = pageNumber
-        //  isLoading.value = false
-    }, 1000)
+    isFetchingActiveDevices.value = true;
+
+    try {
+        // Simulated API call
+        const operation = "get_device_list";
+        const baseUrl = BASE_API_URL;
+        const params = {
+            filter: filterActiveDeviceList.value,
+            order_by: selectedOrderByActiveDeviceList.value,
+            sort_type: selectedSortTypeActiveDeviceList.value,
+            page_number: pageNumberParam,
+            page_size: page_size.value,
+            st: 1, // 1 = active, 0 = inactive
+        };
+
+
+        console.log("getActiveDeviceList params:", params);
+        const response_be = await Process(baseUrl, operation, params);
+
+        if (response_be.status !== "success") {
+            console.error("getActiveDeviceList FAILED!!:", response_be.error_message);
+            let popUpMessage = "Gagal Mendapatkan Data Perangkat Aktif";
+
+
+            popUpProps.value = {
+                status: "error",
+                errorMessage: popUpMessage,
+                errorCode: response_be.error_code,
+            };
+            popupVisible.value = true;
+            return;
+        }
+
+
+        const responseBE = response_be.payload;
+        if (!responseBE.devices) {
+            console.log("Device list is empty");
+            return;
+        }
+
+
+        console.log("getActiveDeviceList SUCCESS!!");
+
+        activeDevices.value = appendActiveDevices(activeDevices.value, responseBE.devices);
+        totalActiveDevices.value = responseBE.total_data;
+        totalActiveDevicesPage.value = Math.ceil(responseBE.total_data / Number(page_size.value));
+        console.log("Total active devices:", totalActiveDevices.value);
+        console.log("Total active devices page:", totalActiveDevicesPage.value);
+        lastFetchedActiveDevicesPage.value = pageNumberParam;
+        console.log("Last fetched active devices page:", lastFetchedActiveDevicesPage.value);
+
+    } catch (err) {
+        console.error("ERROR WHILE GETTING ACTIVE DEVICES:", err);
+    } finally {
+        isFetchingActiveDevices.value = false;
+    }
 }
+
+
+
 
 // Initialize component
 onMounted(() => {
-    // isLoading.value = true
-    getActiveDeviceList(1)
+    initGlobalWebSocket();
+    userTimeZone.value = getUserTimezone();
+
+
 })
 
 // Watch for filter/sort changes
-watch([selectedSortType, selectedOrderBy, selectedStatus], () => {
-    searchDevices()
+watch([selectedSortTypeActiveDeviceList, selectedOrderByActiveDeviceList], () => {
+    searchActiveDevice(1)
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+.disable-interactions {
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.6;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.6);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
