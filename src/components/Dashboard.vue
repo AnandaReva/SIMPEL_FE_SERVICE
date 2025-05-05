@@ -284,7 +284,7 @@ import { CreateSocketConnection } from "@/utils/wsHelper";
 import CanvasJS from "@canvasjs/charts";
 //import CanvasJS, { addTheme } from "@canvasjs/charts";
 
-import DeviceList from "@/components/monitoring/DeviceList.vue";
+import DeviceList from "@/components/monitoring/DeviceListInfiniteScroll.vue";
 import AddDevice from "@/components/device_management/AddDevice.vue";
 import DetailDevice from "./device_management/DetailDevice.vue";
 import EditDevice from "@/components/device_management/EditDevice.vue";

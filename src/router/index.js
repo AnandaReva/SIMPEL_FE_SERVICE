@@ -6,6 +6,7 @@ import MonitoringPage from '@/components/monitoring/MonitoringPage.vue';
 
 
 import ReportPage from '@/components/reports/ReportPage.vue';
+import ReportDashboard from '@/components/reports/ReportDashboard.vue';
 
 
 import DeviceManagement from '@/components/device_management/DeviceManagement.vue';
@@ -35,10 +36,16 @@ const routes = [
         component: MonitoringPage,
         meta: { requiresAuth: true },
     },
-    {
+ /*    {
         path: '/report',
         name: 'reports',
         component: ReportPage,
+        meta: { requiresAuth: true },
+    },   */
+     {
+        path: '/report',
+        name: 'reports',
+        component: ReportDashboard,
         meta: { requiresAuth: true },
     },
     {

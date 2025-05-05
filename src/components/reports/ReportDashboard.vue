@@ -52,7 +52,7 @@
                             <v-infinite-scroll :key="scrollKeyDevices" id="DeviceListBox" ref="DeviceListBox"
                                 height="550" side="end" @load="loadDevices" class="overflow-auto">
                                 <DeviceListReport :devices="devices" :total_devices="totalDevices"
-                                    @select-device-2="handleSelectDevice" />
+                                    @select-device="handleSelectDevice" />
 
 
                                 <!-- @select-device-ini="handleSelectDevice" -->
@@ -127,7 +127,9 @@ import { ref, watch } from 'vue'
 import { BASE_API_URL } from '@/configs/config'
 import { Process } from '@/utils/requestHelper'
 
-import DeviceListReport from './DeviceListReport.vue'
+//import DeviceListReport from './DeviceListReport.vue'
+
+import DeviceListInfiniteScroll from '../monitoring/DeviceListInfiniteScroll.vue'
 
 // State
 const popUpProps = ref({ status: "", errorMessage: "", errorCode: "" })
@@ -149,7 +151,7 @@ const isFetchingDevices = ref(false);
 
 
 const handleSelectDevice = async ({ deviceId, deviceName }) => {
-  console.log("[PARENT] handleSelectDevice triggered: ", deviceId, deviceName);
+    console.log("[PARENT] handleSelectDevice triggered: ", deviceId, deviceName);
 }
 
 

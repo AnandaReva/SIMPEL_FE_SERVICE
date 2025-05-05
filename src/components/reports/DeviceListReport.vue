@@ -1,13 +1,13 @@
 <template>
     <v-container class="device-list px-0 ma-0">
         <p class="text-subtitle-2 font-weight-bold">
-            Menampilkan: {{ availableDevices.length }}/{{ totalActiveDevices }}
+            Menampilkan: {{ devices?.length }}/{{ total_devices }}
         </p>
 
         <v-list bg-color="white" dense class="rounded-lg elevation-2">
-            <template v-if="availableDevices.length > 0">
-                <template v-for="(device, index) in availableDevices" :key="device.device_id">
-                    <v-list-item @click="selectDeviceToMonitor(device)" class="device-item">
+            <template v-if="devices?.length > 0">
+                <template v-for="(device, index) in devices" :key="device.device_id">
+                    <v-list-item v-for="device in devices" :key="device.device_id" @click="selectDevice(device)">
                         <v-row align="center" no-gutters class="w-100">
                             <!-- Icon -->
                             <v-col cols="1" class="d-flex justify-center">
@@ -28,7 +28,7 @@
                         </v-row>
                     </v-list-item>
 
-                    <v-divider v-if="index < availableDevices.length - 1" class="mx-4" />
+                    <v-divider v-if="index < devices.length - 1" class="mx-4" />
                 </template>
             </template>
 
@@ -44,23 +44,23 @@
 <script setup>
 import IoTIcon from "@/assets/images/IoTIcon.png";
 import { FormatTimestamp } from "@/utils/utils";
-import { computed } from "vue";
+import { defineEmits } from "vue";
 
 // Props
-const props = defineProps(["activeDevices", "monitoredDevices", "totalActiveDevices"]);
+const props = defineProps(["devices", "total_devices"]);
 // Emit
-const emit = defineEmits(["select-device-to-monitor"]);
+const emits = defineEmits(["select-device-ini", "select-device-2"]);
 
-// Filter device yang belum dimonitor
-const availableDevices = computed(() => {
-    const monitoredIds = new Set(props.monitoredDevices.map(d => d.device_id));
-    return props.activeDevices.filter(d => !monitoredIds.has(d.device_id));
-});
 
 // Fungsi pemilihan
-function selectDeviceToMonitor(deviceData) {
+function selectDevice(deviceData) {
+    console.log("DeviceList.vue selectDevice id: : ", deviceData.device_id, " name: ", deviceData.device_name)
     if (deviceData.device_st === 0) return;
-    emit("select-device-to-monitor", deviceData.device_id, deviceData.device_name);
+    emits('select-device-2', {
+        deviceId: device.device_id,
+        deviceName: device.name
+    })
+
 }
 </script>
 

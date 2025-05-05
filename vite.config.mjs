@@ -13,7 +13,7 @@ import { fileURLToPath, URL } from 'node:url'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-   // wasm(),
+    // wasm(),
     //topLevelAwait(),
     Vue({
       template: { transformAssetUrls }
@@ -46,7 +46,11 @@ export default defineConfig({
     ],
   },
   server: {
-    port: 3000,
+    port: 3000, 
+    watch: {
+     // ignored: ['**/node_modules/**'], // Ignore node_modules to reduce the number of files being watched,
+      //usePolling: true, 
+    },
   },
   css: {
     preprocessorOptions: {

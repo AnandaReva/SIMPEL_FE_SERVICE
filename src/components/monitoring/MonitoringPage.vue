@@ -47,11 +47,10 @@
 
                         <div>
 
-                            <v-infinite-scroll :key="scrollKeyActiveDevices" id="ActiveDeviceBox" ref="ActiveDeviceBox"
+                            <v-infinite-scroll :key="scrollKeyActiveDevices" id="DeviceListBox" ref="DeviceListBox"
                                 height="550" side="end" @load="loadActiveDevices" class="overflow-auto">
-                                <ActiveDeviceList :activeDevices="activeDevices" :monitoredDevices="monitoredDevices"
-                                    :totalActiveDevices="totalActiveDevices"
-                                    @select-device-to-monitor="selectDeviceToMonitor" />
+                                <DeviceListInfiniteScroll :devices="available_devices_to_monitor" :total_devices="totalActiveDevices"
+                                    @select-device="selectDevice" />
 
                             </v-infinite-scroll>
 
@@ -84,7 +83,7 @@
 
 
             <v-row style="flex: 11; border: 2px dashed blue;">
-                <div v-if="monitoredDevices.length != 1" class="device-grid pa-1" style="
+                <div v-if="monitored_devices.length != 1" class="device-grid pa-1" style="
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(700px, 1fr));
             gap: 16px;
@@ -97,7 +96,7 @@
 
                     <v-card v-for="device in allExceptLast" :key="device.device_id" elevation="2" rounded="lg"
                         color="base" class="d-flex flex-column fill-height border" :class="{
-                            'mx-auto': isOddDeviceCount && index === monitoredDevices.length - 1
+                            'mx-auto': isOddDeviceCount && index === monitored_devices.length - 1
                         }" style="max-width: 1000px; min-height: 450px; border: 1px solid #64B5F6;">
 
                         <!-- Title -->
@@ -157,7 +156,7 @@
                                 <!-- Title -->
                                 <v-card-title class="d-flex justify-space-between align-center">
                                     <span class="text-h6 font-weight-bold">{{ lastDevice.device_name }}</span>
-                                    <v-btn icon @click="removeMonitoredDevice(monitoredDevices.length - 1)">
+                                    <v-btn icon @click="removeMonitoredDevice(monitored_devices.length - 1)">
                                         <v-icon>mdi-close</v-icon>
                                     </v-btn>
                                 </v-card-title>
@@ -207,8 +206,8 @@
             <v-row style="flex: 1; border: 2px dashed yellow;">
 
 
-                monitoredDevices:
-                {{JSON.stringify(monitoredDevices.map(d => ({
+                monitored_devices:
+                {{JSON.stringify(monitored_devices.map(d => ({
                     device_id: d.device_id, device_name: d.device_name,
                     connected:
                         d.connected
@@ -220,13 +219,13 @@
 
 
                     <v-card class="text-center pa-4 rounded-lg elevation-2" color="base" style="width: auto; ">
-                        <div v-if="monitoredDevices.length === 0">
+                        <div v-if="monitored_devices.length === 0">
                             <v-icon size="64" color="grey">mdi-monitor-off</v-icon>
                             <p class="text-h6 mt-4 mb-6">Tidak ada perangkat yang dipilih</p>
                         </div>
 
                         <div v-else>
-                            <p class="text-h6 mt-4 mb-6">Jumlah Perangkat di Monitor: {{ monitoredDevices.length }}</p>
+                            <p class="text-h6 mt-4 mb-6">Jumlah Perangkat di Monitor: {{ monitored_devices.length }}</p>
                         </div>
 
                         <v-btn v-if="globalWs" color="primary" @click="handleShowDeviceList">
@@ -248,7 +247,7 @@
 
 
 <script setup>
-import ActiveDeviceList from './ActiveDeviceList.vue';
+import DeviceListInfiniteScroll from './DeviceListInfiniteScroll.vue';
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 
 import { Process } from "@/utils/requestHelper";
@@ -259,14 +258,14 @@ import CanvasJS from "@canvasjs/charts";
 
 
 // grid
-const isOddDeviceCount = computed(() => monitoredDevices.value.length % 2 === 1);
+const isOddDeviceCount = computed(() => monitored_devices.value.length % 2 === 1);
 
 const allExceptLast = computed(() =>
-    isOddDeviceCount.value ? monitoredDevices.value.slice(0, -1) : monitoredDevices.value
+    isOddDeviceCount.value ? monitored_devices.value.slice(0, -1) : monitored_devices.value
 );
 
 const lastDevice = computed(() =>
-    isOddDeviceCount.value ? monitoredDevices.value[monitoredDevices.value.length - 1] : null
+    isOddDeviceCount.value ? monitored_devices.value[monitored_devices.value.length - 1] : null
 );
 
 
@@ -295,18 +294,23 @@ watch(isLoading, (newValue) => {
 
 
 
+
+
+
+
+
 const isShowDeviceList = ref(false)
-const activeDevices = ref([])
+const active_devices = ref([])
 
 
 
 
 // Handle showing device list modal
 const handleShowDeviceList = () => {
-    if (monitoredDevices.value.length >= 50) {
+    if (monitored_devices.value.length >= 50) {
         popUpProps.value = {
             status: "error",
-            errorMessage: "Maximum 50 activeDevices can be monitored simultaneously",
+            errorMessage: "Maximum 50 active_devices can be monitored simultaneously",
             errorCode: 0,
         };
         return
@@ -320,8 +324,25 @@ const handleShowDeviceList = () => {
 
 //////////////////// REALTIME MONITORING //////////////////////////
 const globalWs = ref(null);
-const monitoredDevices = ref([]);
+const monitored_devices = ref([]);
 const maxDataLength = ref(50);
+
+
+
+// Filter device yang belum dimonitor
+const available_devices_to_monitor = computed(() => {
+    const monitoredIds = new Set(monitored_devices.value.map(d => d.device_id));
+    return active_devices.value.filter(d => !monitoredIds.has(d.device_id));
+});
+
+
+watch(available_devices_to_monitor, (newVal) => {
+    console.log("Available devices updated:", newVal);
+});
+
+
+
+
 
 const userTimeZone = ref("")
 
@@ -372,7 +393,7 @@ function convertTimestampToLocal(timestamp) {
 
 // Update chart with new data for a specific device
 const updateChart = (deviceId, message) => {
-    const device = monitoredDevices.value.find(d => d.device_id === deviceId);
+    const device = monitored_devices.value.find(d => d.device_id === deviceId);
     if (!device) return;
 
     if (!device.chart) {
@@ -420,7 +441,7 @@ const updateChart = (deviceId, message) => {
 const initChart = (deviceId) => {
 
     console.log("---initChart---")
-    const device = monitoredDevices.value.find(d => d.device_id === deviceId);
+    const device = monitored_devices.value.find(d => d.device_id === deviceId);
     if (!device) {
         console.warn(`⚠️ Device with ID ${deviceId} not found!`);
         return;
@@ -546,7 +567,7 @@ const initGlobalWebSocket = async () => {
 
                 case "unsubscribe":
                     if (message?.actor === "server" && message?.device_id) {
-                        const index = monitoredDevices.value.findIndex(
+                        const index = monitored_devices.value.findIndex(
                             (d) => d.device_id === message.device_id
                         );
                         if (index !== -1) {
@@ -561,7 +582,7 @@ const initGlobalWebSocket = async () => {
 
                 case "sensor_data":
                     if (message?.unit_id) {
-                        const device = monitoredDevices.value.find(d => d.device_id === message.unit_id);
+                        const device = monitored_devices.value.find(d => d.device_id === message.unit_id);
                         if (!device) return;
 
                         device.sensorData = message;
@@ -571,7 +592,7 @@ const initGlobalWebSocket = async () => {
                     }
                     break;
                 case "subscribe_response":
-                    // do nothing, handle by selectDeviceToMonitor
+                    // do nothing, handle by selectDevice
                 case "unsubscribe_response":
                     // do nothing, handle by removeMonitoredDevice
                 default:
@@ -588,13 +609,13 @@ const initGlobalWebSocket = async () => {
 
 
 
-const selectDeviceToMonitor = async (deviceId, deviceName) => {
-    console.log(`---selectDeviceToMonitor---`);
+const selectDevice = async (deviceId, deviceName) => {
+    console.log(`---selectDevice---`);
 
     isLoading.value = true;
     isShowDeviceList.value = false;
 
-    if (monitoredDevices.value.some(device => device.device_id === deviceId)) {
+    if (monitored_devices.value.some(device => device.device_id === deviceId)) {
         console.log(`Device: ${deviceId} is already being monitored`);
         isShowDeviceList.value = false;
         return;
@@ -662,7 +683,7 @@ const selectDeviceToMonitor = async (deviceId, deviceName) => {
             subscribed: true,
         };
 
-        monitoredDevices.value = [...monitoredDevices.value, tempDevice];
+        monitored_devices.value = [...monitored_devices.value, tempDevice];
         nextTick(() => initChart(deviceId));
     } catch (error) {
         console.warn("❌ Gagal tambah perangkat:", error.message);
@@ -682,7 +703,7 @@ const selectDeviceToMonitor = async (deviceId, deviceName) => {
 
 const removeMonitoredDevice = (index, isServerAction) => {
     console.group("---removeMonitoredDevice---");
-    const device = monitoredDevices.value[index];
+    const device = monitored_devices.value[index];
     if (!device) return;
 
     if (!isServerAction) {
@@ -720,7 +741,7 @@ const removeMonitoredDevice = (index, isServerAction) => {
     const container = document.getElementById(containerId);
     if (container) container.innerHTML = "";
 
-    monitoredDevices.value.splice(index, 1);
+    monitored_devices.value.splice(index, 1);
 
 };
 
@@ -751,28 +772,28 @@ const page_size = ref(10)
 const scrollKeyActiveDevices = ref(0);
 
 
-// Search for activeDevices
+// Search for active_devices
 const searchActiveDevice = () => {
     totalActiveDevices.value = 0;
     lastFetchedActiveDevicesPage.value = 0;
-    activeDevices.value = [];
+    active_devices.value = [];
     scrollKeyActiveDevices.value += 1; // trigger reset v-infinite-scroll
     getActiveDeviceList(1);
 }
 
-// Append new activeDevices without duplicates
-function appendActiveDevices(activeDevices, additionalDevices) {
+// Append new active_devices without duplicates
+function appendActiveDevices(active_devices, additionalDevices) {
     const activeDeviceMap = new Map();
-    activeDevices.forEach((device) => activeDeviceMap.set(device.device_id, device));
+    active_devices.forEach((device) => activeDeviceMap.set(device.device_id, device));
 
     additionalDevices.forEach((newActiveDevice) => {
         if (!activeDeviceMap.has(newActiveDevice.device_id)) {
-            activeDevices.push(newActiveDevice);
+            active_devices.push(newActiveDevice);
             activeDeviceMap.set(newActiveDevice.device_id, newActiveDevice);
         }
     });
 
-    return activeDevices;
+    return active_devices;
 }
 
 function loadActiveDevices({ done }) {
@@ -808,7 +829,7 @@ async function getActiveDeviceList(pageNumberParam) {
     console.log("---- getActiveDeviceList ----");
 
     if (isFetchingActiveDevices.value) {
-        console.log("Fetching activeDevices already in progress...");
+        console.log("Fetching active_devices already in progress...");
         return;
     }
 
@@ -855,7 +876,7 @@ async function getActiveDeviceList(pageNumberParam) {
 
         console.log("getActiveDeviceList SUCCESS!!");
 
-        activeDevices.value = appendActiveDevices(activeDevices.value, responseBE.devices);
+        active_devices.value = appendActiveDevices(active_devices.value, responseBE.devices);
         totalActiveDevices.value = responseBE.total_data;
         totalActiveDevicesPage.value = Math.ceil(responseBE.total_data / Number(page_size.value));
         console.log("Total active devices:", totalActiveDevices.value);
@@ -878,13 +899,15 @@ onMounted(() => {
     initGlobalWebSocket();
     userTimeZone.value = getUserTimezone();
 
-
 })
 
 // Watch for filter/sort changes
 watch([selectedSortTypeActiveDeviceList, selectedOrderByActiveDeviceList], () => {
     searchActiveDevice(1)
 })
+
+
+
 </script>
 
 <style scoped>
