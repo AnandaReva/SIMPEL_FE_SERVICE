@@ -7,7 +7,7 @@
         <v-list bg-color="white" dense class="rounded-lg elevation-2">
             <template v-if="devices?.length > 0">
                 <template v-for="(device, index) in devices" :key="device.device_id">
-                    <v-list-item v-for="device in devices" :key="device.device_id" @click="selectDevice(device)">
+                    <v-list-item @click="emitSelect(device)" class="device-item">
                         <v-row align="center" no-gutters class="w-100">
                             <!-- Icon -->
                             <v-col cols="1" class="d-flex justify-center">
@@ -44,24 +44,32 @@
 <script setup>
 import IoTIcon from "@/assets/images/IoTIcon.png";
 import { FormatTimestamp } from "@/utils/utils";
-import { defineEmits } from "vue";
+
+
 
 // Props
 const props = defineProps(["devices", "total_devices"]);
 // Emit
-const emits = defineEmits(["select-device-ini", "select-device-2"]);
+const emit = defineEmits(["select-device"]);
 
 
-// Fungsi pemilihan
-function selectDevice(deviceData) {
-    console.log("DeviceList.vue selectDevice id: : ", deviceData.device_id, " name: ", deviceData.device_name)
-    if (deviceData.device_st === 0) return;
-    emits('select-device-2', {
-        deviceId: device.device_id,
-        deviceName: device.name
+// // Fungsi pemilihan
+// function selectDevice(deviceData) {
+//     console.log("DeviceList.vue selectDevice id: : ", deviceData.device_id, " name: " , deviceData.device_name)
+//     if (deviceData.device_st === 0) return;
+//     emit("select-device", deviceData.device_id, deviceData.device_name);
+// }
+
+
+const emitSelect = (device) => {
+    emit('select-device', {
+        id: device.device_id,
+        name: device.device_name
     })
-
 }
+
+
+
 </script>
 
 <style scoped>

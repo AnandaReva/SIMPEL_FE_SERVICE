@@ -42,6 +42,28 @@ export function FormatTimestamp(epoch) {
   });
 };
 
+
+export function FormatToLocal(datetimeStr, timezone = Intl.DateTimeFormat().resolvedOptions().timeZone) {
+  if (!datetimeStr) return '';
+
+
+
+
+  const date = new Date(datetimeStr);
+  return date.toLocaleString('id-ID', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: timezone,
+  }).replace(/\./g, ':');
+}
+
+
+
 export function ConvertToEpoch(dateInput) {
   if (!dateInput) return null;
 
@@ -105,3 +127,14 @@ export async function ConvertImageToBase64(file) {
     return null;
   }
 };
+
+
+export function FormatSize(bytes) {
+  if (bytes === 0 || bytes == null) return '0 B';
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  const size = bytes / Math.pow(1024, i);
+
+  return `${size.toFixed(2)} ${units[i]}`;
+}

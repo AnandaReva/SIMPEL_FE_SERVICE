@@ -50,7 +50,7 @@ watch(route, (newRoute) => {
 
   currRouteName.value = newRoute.name
 
-  console.log("Current route Name:", currRouteName.value);
+  //console.log("Current route Name:", currRouteName.value);
 
   showHeaderFooter.value = newRoute.name !== 'login' && newRoute.name !== 'verify-otp' && newRoute.name !== 'reset-password' && checkLocalStorage()
 }, { immediate: true }); // immediate: true agar dijalankan saat pertama kali komponen dimuat

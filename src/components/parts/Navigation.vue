@@ -32,9 +32,8 @@ try {
 
 // Definisi semua item menu
 const allItems = [
-  { title: 'Dashboard', value: 'dashboard', icon: 'mdi-view-dashboard' },
   { title: 'Monitoring', value: 'monitoring', icon: 'mdi-chart-line' },
-  { title: 'Laporan', value: 'reports', icon: 'mdi-chart-bar', roleRestricted: true },
+  { title: 'Laporan', value: 'report', icon: 'mdi-chart-bar', roleRestricted: true },
   { title: 'Perangkat', value: 'devices', icon: 'mdi-access-point', roleRestricted: true },
   { title: 'Pengguna', value: 'users', icon: 'mdi-account-group', roleRestricted: true },
   { title: 'Pengaturan', value: 'settings', icon: 'mdi-cog' },

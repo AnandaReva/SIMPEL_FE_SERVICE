@@ -6,7 +6,7 @@ import MonitoringPage from '@/components/monitoring/MonitoringPage.vue';
 
 
 import ReportPage from '@/components/reports/ReportPage.vue';
-import ReportDashboard from '@/components/reports/ReportDashboard.vue';
+import DetailYearReport from '@/components/reports/DetailYearReport.vue';
 
 
 import DeviceManagement from '@/components/device_management/DeviceManagement.vue';
@@ -22,32 +22,35 @@ import VerifyResetPassword from '@/components/auths/VerifyResetPassword.vue';
 const routes = [
     {
         path: '/',
-        redirect: '/dashboard'
+        redirect: '/monitoring'
     },
-    {
-        path: '/dashboard',
-        name: 'dashboard',
-        component: DashboardPage,
-        meta: { requiresAuth: true },
-    },
+    // {
+    //     path: '/dashboard',
+    //     name: 'dashboard',
+    //     component: DashboardPage,
+    //     meta: { requiresAuth: true },
+    // },
     {
         path: '/monitoring',
         name: 'monitoring',
         component: MonitoringPage,
         meta: { requiresAuth: true },
     },
- /*    {
-        path: '/report',
-        name: 'reports',
+    {
+        path: '/report/',
+        name: 'report',
         component: ReportPage,
         meta: { requiresAuth: true },
-    },   */
-     {
-        path: '/report',
-        name: 'reports',
-        component: ReportDashboard,
+    },
+    {
+        path: '/report/:year',
+        name: 'reportYear',
+        component: DetailYearReport,
         meta: { requiresAuth: true },
     },
+
+
+    
     {
         path: '/users',
         name: 'users',

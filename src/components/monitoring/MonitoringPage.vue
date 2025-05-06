@@ -49,8 +49,8 @@
 
                             <v-infinite-scroll :key="scrollKeyActiveDevices" id="DeviceListBox" ref="DeviceListBox"
                                 height="550" side="end" @load="loadActiveDevices" class="overflow-auto">
-                                <DeviceListInfiniteScroll :devices="available_devices_to_monitor" :total_devices="totalActiveDevices"
-                                    @select-device="selectDevice" />
+                                <DeviceListInfiniteScroll :devices="available_devices_to_monitor"
+                                    :total_devices="totalActiveDevices" @select-device="selectDevice" />
 
                             </v-infinite-scroll>
 
@@ -65,9 +65,10 @@
 
 
 
-        <v-col class="d-flex flex-column fit-content" style=" border: 2px dashed red; overflow-y: auto;">
+        <v-col v-if="monitored_devices.length > 0" class="d-flex flex-column fit-content"
+            style=" overflow-y: auto;">
 
-            <v-row style="flex: 1; border: 2px dashed yellow;">
+            <v-row style="flex: 1">
                 <v-container class="d-flex align-center justify-center">
                     <v-card class="text-center pa-4 rounded-lg elevation-2" color="base" style="width: auto;">
                         <strong>
@@ -82,7 +83,7 @@
 
 
 
-            <v-row style="flex: 11; border: 2px dashed blue;">
+            <v-row style="flex: 11;">
                 <div v-if="monitored_devices.length != 1" class="device-grid pa-1" style="
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(700px, 1fr));
@@ -203,40 +204,42 @@
             </v-row>
 
 
-            <v-row style="flex: 1; border: 2px dashed yellow;">
+            <v-row class="d-flex align-center justify-center py-5">
+                
+                                <v-btn v-if="globalWs" color="primary" @click="handleShowDeviceList">
+                                    <v-icon start>mdi-plus</v-icon>
+                                    Tambah Perangkat
+                                </v-btn>
 
-
-                monitored_devices:
-                {{JSON.stringify(monitored_devices.map(d => ({
-                    device_id: d.device_id, device_name: d.device_name,
-                    connected:
-                        d.connected
-                })))}}
-
-
-
-                <v-container class="d-flex align-center justify-center">
-
-
-                    <v-card class="text-center pa-4 rounded-lg elevation-2" color="base" style="width: auto; ">
-                        <div v-if="monitored_devices.length === 0">
-                            <v-icon size="64" color="grey">mdi-monitor-off</v-icon>
-                            <p class="text-h6 mt-4 mb-6">Tidak ada perangkat yang dipilih</p>
-                        </div>
-
-                        <div v-else>
-                            <p class="text-h6 mt-4 mb-6">Jumlah Perangkat di Monitor: {{ monitored_devices.length }}</p>
-                        </div>
-
-                        <v-btn v-if="globalWs" color="primary" @click="handleShowDeviceList">
-                            <v-icon start>mdi-plus</v-icon>
-                            Tambah Perangkat
-                        </v-btn>
-                    </v-card>
-
-                </v-container>
             </v-row>
         </v-col>
+
+
+        <v-col v-else class="d-flex align-center justify-center">
+
+            <v-card class="text-center pa-4 rounded-lg elevation-2" color="base" style="width: auto; ">
+
+                <div v-if="monitored_devices.length === 0">
+                    <v-icon size="64" color="grey">mdi-monitor-off</v-icon>
+                    <p class="text-h6 mt-4 mb-6">Tidak ada perangkat yang dipilih</p>
+                </div>
+
+                <div v-else>
+                    <p class="text-h6 mt-4 mb-6">Jumlah Perangkat di Monitor: {{ monitored_devices.length }}</p>
+                </div>
+
+                <v-btn v-if="globalWs" color="primary" @click="handleShowDeviceList">
+                    <v-icon start>mdi-plus</v-icon>
+                    Tambah Perangkat
+                </v-btn>
+            </v-card>
+
+        </v-col>
+
+
+
+
+
 
     </v-container>
 
@@ -247,7 +250,7 @@
 
 
 <script setup>
-import DeviceListInfiniteScroll from './DeviceListInfiniteScroll.vue';
+import DeviceListInfiniteScroll from '@/components/parts/DeviceListInfiniteScroll.vue';
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 
 import { Process } from "@/utils/requestHelper";
@@ -592,9 +595,9 @@ const initGlobalWebSocket = async () => {
                     }
                     break;
                 case "subscribe_response":
-                    // do nothing, handle by selectDevice
+                // do nothing, handle by selectDevice
                 case "unsubscribe_response":
-                    // do nothing, handle by removeMonitoredDevice
+                // do nothing, handle by removeMonitoredDevice
                 default:
                     console.log("⚠️ initGlobalWebSocket -  Pesan tidak dikenali:", message);
             }
@@ -609,8 +612,13 @@ const initGlobalWebSocket = async () => {
 
 
 
-const selectDevice = async (deviceId, deviceName) => {
+const selectDevice = async (deviceFromEmit) => {
     console.log(`---selectDevice---`);
+
+    console.log(`selectDevice - deviceFromEmit: `, deviceFromEmit);
+    const deviceId = deviceFromEmit.id;
+    const deviceName = deviceFromEmit.name;
+
 
     isLoading.value = true;
     isShowDeviceList.value = false;
