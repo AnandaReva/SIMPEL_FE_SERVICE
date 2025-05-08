@@ -49,8 +49,8 @@ exp success:
 
 */
 export async function Auth_Process(baseUrl, process_name, params = {}) {
-    console.group("---Auth_Process---")
-  
+  console.group("---Auth_Process---")
+
   try {
     const fullUrl = `${baseUrl}${process_name}`;
     console.log("📡 Request ke:", fullUrl);
@@ -124,15 +124,11 @@ import { DeepSortObject } from "./utils.js";
 import router from "@/router";
 
 export async function Process(apiUrl, process_name, params = {}) {
-  console.groupCollapsed("---Process", process_name, "---")
-
+  console.groupCollapsed("--- Process:", process_name, "---");
 
   try {
-
     const fullUrl = `${apiUrl}process`;
     console.log("📡 Request ke:", fullUrl);
-    // console.log("🔄 Parameters:", params);
-
 
     // Urutkan params berdasarkan huruf a-z
     params = DeepSortObject(params);
@@ -144,52 +140,38 @@ export async function Process(apiUrl, process_name, params = {}) {
 
     // Stringify body untuk enkripsi
     const bodyString = JSON.stringify(params);
-    console.log("HMAC message: ", bodyString);
-    console.log("HMAC key: ", session_hash);
+    console.log("🔏 HMAC message:", bodyString);
+    console.log("🔑 HMAC key:", session_hash);
 
     // Generate HMAC-SHA256 hash
     const signature = HmacSHA256(bodyString, session_hash).toString();
+    console.log("🧾 HMAC signature:", signature);
 
-    console.log("HMAC signature: ", signature);
     // Konfigurasi headers
     const headers = {
       "Content-Type": "application/json",
-      session_id: session_id,
-      signature: signature,
+      session_id,
+      signature,
       process: process_name,
     };
-    //  console.log("headers: ", headers);
 
     // Kirim request ke backend
     const { data } = await axios.post(fullUrl, params, { headers });
     console.log("✅ Response:", data);
 
-    // Ambil errorCode, errorMessage, dan payload dari response
-    const errorCode = data?.ErrorCode || "999999";
-    const errorMessage = data?.ErrorMessage || "Unknown error";
-    const payload = data?.Payload || {};
+    const errorCode = data?.error_code || "999999";
+    const errorMessage = data?.error_message || "Unknown error";
+    const payload = data?.payload || {};
 
-    // Jika errorCode adalah "000000" berarti sukses
-    if (errorCode === "000000") {
-      return {
-        error_code: errorCode,
-        error_message: "",
-        payload: payload,
-        status: "success",
-      };
-    } else {
-      // Jika errorCode bukan "000000", anggap error
-      return {
-        error_code: errorCode,
-        error_message: errorMessage,
-        payload: payload,
-        status: "error",
-      };
-    }
+    return {
+      error_code: errorCode,
+      error_message: errorCode === "000000" ? "" : errorMessage,
+      payload,
+      status: errorCode === "000000" ? "success" : "error",
+    };
   } catch (error) {
     console.error("🚨 Request error:", error);
 
-    // Pastikan response ada sebelum mengakses data
     const errorCode =
       error.response?.status?.toString() ||
       (error.message === "Network Error" ? "503" : "999999");
@@ -197,10 +179,8 @@ export async function Process(apiUrl, process_name, params = {}) {
     const errorMessage = error.response?.data?.ErrorMessage || "Unknown error";
     const payload = error.response?.data?.Payload || {};
 
-    // Jika errorCode adalah "401", hapus localStorage dan redirect ke login
     if (errorCode === "401") {
-      console.warn("⚠️ Unauthorized (401) detected. Clearing localStorage...");
-
+      console.warn("⚠️ Unauthorized (401) detected. Clearing session and redirecting...");
       localStorage.removeItem("session_id");
       localStorage.removeItem("session_hash");
       localStorage.removeItem("user_data");
@@ -213,14 +193,10 @@ export async function Process(apiUrl, process_name, params = {}) {
     return {
       error_code: errorCode,
       error_message: errorMessage,
-      payload: payload,
+      payload,
       status: "error",
     };
-
   } finally {
     console.groupEnd();
   }
-
-
 }
-

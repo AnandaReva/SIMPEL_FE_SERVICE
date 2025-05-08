@@ -43,13 +43,20 @@ export function FormatTimestamp(epoch) {
 };
 
 
-export function FormatToLocal(datetimeStr, timezone = Intl.DateTimeFormat().resolvedOptions().timeZone) {
-  if (!datetimeStr) return '';
+export function GetLocalTimeZone() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+}
 
 
 
+export function FormatToLocal(datetimeStr, timezone) {
+  if (!datetimeStr) return ''
 
-  const date = new Date(datetimeStr);
+  const safeTimezone = (typeof timezone === 'string' && timezone.trim() !== '')
+    ? timezone
+    : Intl.DateTimeFormat().resolvedOptions().timeZone
+
+  const date = new Date(datetimeStr)
   return date.toLocaleString('id-ID', {
     year: 'numeric',
     month: '2-digit',
@@ -58,9 +65,10 @@ export function FormatToLocal(datetimeStr, timezone = Intl.DateTimeFormat().reso
     minute: '2-digit',
     second: '2-digit',
     hour12: false,
-    timeZone: timezone,
-  }).replace(/\./g, ':');
+    timeZone: safeTimezone,
+  }).replace(/\./g, ':')
 }
+
 
 
 

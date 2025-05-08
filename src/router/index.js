@@ -5,8 +5,10 @@ import MonitoringPage from '@/components/monitoring/MonitoringPage.vue';
 
 
 
-import ReportPage from '@/components/reports/ReportPage.vue';
-import DetailYearReport from '@/components/reports/DetailYearReport.vue';
+import YearlyReport from '@/components/reports/YearlyReport.vue';
+import MonthlyReport from '@/components/reports/MonthlyReport.vue';
+import DailyReport from '@/components/reports/DailyReport.vue'
+import DayDetailReport from '@/components/reports/DayDetailReport.vue';
 
 
 import DeviceManagement from '@/components/device_management/DeviceManagement.vue';
@@ -38,14 +40,27 @@ const routes = [
     },
     {
         path: '/report/',
-        name: 'report',
-        component: ReportPage,
+        name: 'report-year',
+        component: YearlyReport,
         meta: { requiresAuth: true },
     },
     {
         path: '/report/:year',
-        name: 'reportYear',
-        component: DetailYearReport,
+        name: 'report-month',
+        component: MonthlyReport,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/report/:year/:month',
+        name: 'report-daily',
+        component: DailyReport,
+        meta: { requiresAuth: true },
+    },
+
+    {
+        path: '/report/:year/:month/:curr_date_day',
+        name: 'report-daily-detail',
+        component: DayDetailReport,
         meta: { requiresAuth: true },
     },
 
