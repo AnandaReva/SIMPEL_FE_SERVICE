@@ -146,3 +146,84 @@ export function FormatSize(bytes) {
 
   return `${size.toFixed(2)} ${units[i]}`;
 }
+
+
+
+
+
+
+
+export function GetMonthNameLocal(monthNumber) {
+  const month_names_local = [
+    { id: 1, name: 'Januari' },
+    { id: 2, name: 'Februari' },
+    { id: 3, name: 'Maret' },
+    { id: 4, name: 'April' },
+    { id: 5, name: 'Mei' },
+    { id: 6, name: 'Juni' },
+    { id: 7, name: 'Juli' },
+    { id: 8, name: 'Agustus' },
+    { id: 9, name: 'September' },
+    { id: 10, name: 'Oktober' },
+    { id: 11, name: 'November' },
+    { id: 12, name: 'Desember' }
+  ]
+
+  const month = month_names_local.find(m => m.id === monthNumber)
+  return month ? month.name : 'Bulan Tidak Diketahui'
+}
+
+
+
+
+export function GetDayNameLocal(dayNumber) {
+  const day_names_local = [
+    { id: 1, name: 'Senin' },
+    { id: 2, name: 'Selasa' },
+    { id: 3, name: 'Rabu' },
+    { id: 4, name: 'Kamis' },
+    { id: 5, name: 'Jumat' },
+    { id: 6, name: 'Sabtu' },
+    { id: 7, name: 'Minggu' },
+  ]
+
+  const found = day_names_local.find(d => d.id === dayNumber)
+  return found ? found.name : '-'
+}
+
+export function FormatCustomDateTime(timestamp, options = {}) {
+  if (!timestamp) return '-'
+
+  const date = new Date(timestamp)
+  const {
+    day = false,
+    month = false,
+    year = false,
+    weekday = false,
+    hour = false,
+    minute = false,
+    second = false
+  } = options
+
+  const parts = []
+
+  if (weekday) {
+    const dayName = GetDayNameLocal(date.getDay() === 0 ? 7 : date.getDay())
+    parts.push(dayName)
+  }
+
+  const dateParts = []
+  if (day) dateParts.push(date.getDate())
+  if (month) dateParts.push(GetMonthNameLocal(date.getMonth() + 1))
+  if (year) dateParts.push(date.getFullYear())
+  if (dateParts.length > 0) parts.push(dateParts.join(' '))
+
+  const timeParts = []
+  if (hour) timeParts.push(date.getHours().toString().padStart(2, '0'))
+  if (minute) timeParts.push(date.getMinutes().toString().padStart(2, '0'))
+  if (second) timeParts.push(date.getSeconds().toString().padStart(2, '0'))
+
+  const timeString = timeParts.join('.')
+
+  return `${parts.join(', ')} ${timeString}`.trim()
+}

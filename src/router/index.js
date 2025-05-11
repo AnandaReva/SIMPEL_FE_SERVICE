@@ -58,7 +58,7 @@ const routes = [
     },
 
     {
-        path: '/report/:year/:month/:curr_date_day',
+        path: '/report/:year/:month/:date_day',
         name: 'report-daily-detail',
         component: DayDetailReport,
         meta: { requiresAuth: true },

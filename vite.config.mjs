@@ -48,8 +48,8 @@ export default defineConfig({
   server: {
     port: 3000, 
     watch: {
-     // ignored: ['**/node_modules/**'], // Ignore node_modules to reduce the number of files being watched,
-      //usePolling: true, 
+     ignored: ['**/node_modules/**'], // Ignore node_modules to reduce the number of files being watched,
+      usePolling: true, 
     },
   },
   css: {

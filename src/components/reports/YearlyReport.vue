@@ -84,7 +84,7 @@
                 </v-btn>
 
                 <v-card-title class="text-h4 font-weight-bold text-black mb-0 px-0"> {{ curr_device.name
-                    }}</v-card-title>
+                }}</v-card-title>
                 <v-card-title class="text-h5 font-weight-bold text-primary mb-0 px-0">📊 LAPORAN
                     PERANGKAT</v-card-title>
             </v-row>
@@ -94,123 +94,188 @@
 
 
 
-                <!-- Bagian atas: Tabel data -->
-                <!--    {{ year_list }} -->
-
-                <!--    {{ year_list }}
-                {{ year_list.length }} -->
-                <v-container class="flex-grow-1 pa-0" style="overflow-y: auto;">
-                    <v-data-table-server :items="year_list" :items-length="year_list_totalData"
-                        v-model:items-per-page="year_list_pageSize" class="elevation-1 text-body-2" fixed-header
-                        height="450" dense no-data-text="Tidak ada data tahun yang tersedia.">
-                        <!-- Custom header with sub-headers -->
-                        <template #headers>
-                            <tr>
-                                <th rowspan="2">No</th>
-                                <th rowspan="2">Tahun</th>
-                                <th rowspan="2">Waktu Pertama</th>
-                                <th rowspan="2">Waktu Terakhir</th>
-                                <th rowspan="2">Total Energi (kWh)</th>
-                                <th rowspan="2">Jumlah Data</th>
-                                <th rowspan="2">Interval (d)</th>
-                                <th rowspan="2">Ukuran</th>
-                                <th colspan="3" class="text-center">Tegangan (Volt)</th>
-                                <th colspan="3" class="text-center">Arus (Ampere)</th>
-                                <th colspan="3" class="text-center">Daya (W)</th>
-                                <th colspan="3" class="text-center">Frekuensi (Hz)</th>
-                                <th colspan="3" class="text-center">PF</th>
-                                <th colspan="3" class="text-center">Aksi</th>
-                            </tr>
-                            <tr>
-                                <th class="text-center">Maks</th>
-                                <th class="text-center">Min</th>
-                                <th class="text-center">Rata-rata</th>
-                                <th class="text-center">Maks</th>
-                                <th class="text-center">Min</th>
-                                <th class="text-center">Rata-rata</th>
-                                <th class="text-center">Maks</th>
-                                <th class="text-center">Min</th>
-                                <th class="text-center">Rata-rata</th>
-                                <th class="text-center">Maks</th>
-                                <th class="text-center">Min</th>
-                                <th class="text-center">Rata-rata</th>
-                                <th class="text-center">Maks</th>
-                                <th class="text-center">Min</th>
-                                <th class="text-center">Rata-rata</th>
-                                <th class="text-center">Lihat</th>
-                                <th class="text-center">CSV</th>
-                                <th class="text-center">Excel</th>
-                            </tr>
-                        </template>
-
-                        <!-- Data rows -->
-                        <template #item="{ item, index }">
-                            <tr>
-                                <td class="text-center">{{ index + 1 }}</td>
-                                <td class="text-center">{{ item.year }}</td>
-                                <td class="text-center">{{ FormatToLocal(item.first_record_timestamp) }}</td>
-                                <td class="text-center">{{ FormatToLocal(item.last_record_timestamp) }}</td>
-                                <td class="text-center">{{ item.energy_consumed_count.toFixed(2) }} kWh</td>
-                                <td class="text-center">{{ item.total_data }}</td>
-                                <td class="text-center">{{ item.data_interval }} s</td>
-                                <td class="text-center">{{ FormatSize(item.total_size_bytes) }}</td>
-
-                                <!-- Voltage -->
-                                <td class="text-center">{{ item.voltage?.max?.toFixed(2) ?? '-' }}</td>
-                                <td class="text-center">{{ item.voltage?.min?.toFixed(2) ?? '-' }}</td>
-                                <td class="text-center">{{ item.voltage?.avg?.toFixed(2) ?? '-' }}</td>
-
-                                <!-- Current -->
-                                <td class="text-center">{{ item.current?.max?.toFixed(2) ?? '-' }}</td>
-                                <td class="text-center">{{ item.current?.min?.toFixed(2) ?? '-' }}</td>
-                                <td class="text-center">{{ item.current?.avg?.toFixed(2) ?? '-' }}</td>
-
-                                <!-- Power -->
-                                <td class="text-center">{{ item.power?.max?.toFixed(2) ?? '-' }}</td>
-                                <td class="text-center">{{ item.power?.min?.toFixed(2) ?? '-' }}</td>
-                                <td class="text-center">{{ item.power?.avg?.toFixed(2) ?? '-' }}</td>
-
-                                <!-- Frequency -->
-                                <td class="text-center">{{ item.frequency?.max?.toFixed(2) ?? '-' }}</td>
-                                <td class="text-center">{{ item.frequency?.min?.toFixed(2) ?? '-' }}</td>
-                                <td class="text-center">{{ item.frequency?.avg?.toFixed(2) ?? '-' }}</td>
-
-                                <!-- Power Factor -->
-                                <td class="text-center">{{ item.power_factor?.max?.toFixed(2) ?? '-' }}</td>
-                                <td class="text-center">{{ item.power_factor?.min?.toFixed(2) ?? '-' }}</td>
-                                <td class="text-center">{{ item.power_factor?.avg?.toFixed(2) ?? '-' }}</td>
-
-                                <!-- Action -->
-                                <td class="text-center">
-                                    <v-btn size="x-small" variant="text" color="primary" @click="selectYear(item.year)">
-                                        <v-icon start small>mdi-eye</v-icon> Detail
-                                    </v-btn>
-                                </td>
-                                <td class="text-center">
-                                    <v-btn size="x-small" color="success" variant="text" class="me-2"
-                                        @click.stop="downloadData('csv', item.year)">
-                                        <v-icon start>mdi-file-delimited</v-icon> CSV
-                                    </v-btn>
-                                </td>
-                                <td class="text-center">
-                                    <v-btn size="small" color="success" variant="text"
-                                        @click.stop="downloadData('excel', item.year)">
-                                        <v-icon start>mdi-file-excel</v-icon> Excel
-                                    </v-btn>
-                                </td>
-                            </tr>
-                        </template>
-                    </v-data-table-server>
 
 
+                <v-card class="mb-6" elevation="2">
+                    <v-card-title color="primary" class="text-h6 font-weight-bold">Detail</v-card-title>
+                    <div class="table-container">
 
-                    <v-col v-if="year_list.length <= 0" class="fill-height d-flex align-center justify-center">
-                        <div class="text-center">
-                            Tidak ada Data
+
+                        Total Tahun = {{ year_list_totalData }}
+
+                        <v-data-table-server :items="year_list" :items-length="year_list_totalData"
+                            :items-per-page="year_list_pageSize" :items-per-page-options="[
+                                { value: 5, title: '5' },
+                                { value: 10, title: '10' },
+                                { value: 20, title: '20' },
+                                { value: 50, title: '50' }
+                            ]" @update:items-per-page="(newSize) => year_list_pageSize = newSize"
+                            class="elevation-1 text-body-2" dense no-data-text="Tidak ada data tahun yang tersedia.">
+                            <!-- Custom header with sub-headers -->
+                            <template #headers>
+                                <tr>
+                                    <th rowspan="2">No</th>
+                                    <!-- Tahun -->
+                                    <th rowspan="2" class="text-center">
+                                        <div class="d-flex align-center justify-center" @click="toggleSortYear('year')">
+                                            Tahun
+                                            <v-icon size="x-small" class="ms-1">
+                                                {{
+                                                    year_orderBy === 'year'
+                                                        ? (year_sortType === 'desc' ? 'mdi-chevron-down' : 'mdi-chevron-up')
+                                                        : 'mdi-swap-vertical'
+                                                }}
+                                            </v-icon>
+                                        </div>
+                                    </th>
+
+                                    <th rowspan="2">Waktu Pertama</th>
+                                    <th rowspan="2">Waktu Terakhir</th>
+
+                                    <!-- Total Energi -->
+                                    <th rowspan="2" class="text-center">
+                                        <div class="d-flex align-center justify-center"
+                                            @click="toggleSortYear('energy_consumed_count')">
+                                            Total Energi (kWh)
+                                            <v-icon size="x-small" class="ms-1">
+                                                {{
+                                                    year_orderBy === 'energy_consumed_count'
+                                                        ? (year_sortType === 'desc' ? 'mdi-chevron-down' : 'mdi-chevron-up')
+                                                        : 'mdi-swap-vertical'
+                                                }}
+                                            </v-icon>
+                                        </div>
+                                    </th>
+
+                                    <!-- Jumlah Data -->
+                                    <th rowspan="2" class="text-center">
+                                        <div class="d-flex align-center justify-center"
+                                            @click="toggleSortYear('total_data')">
+                                            Jumlah Data
+                                            <v-icon size="x-small" class="ms-1">
+                                                {{
+                                                    year_orderBy === 'total_data'
+                                                        ? (year_sortType === 'desc' ? 'mdi-chevron-down' : 'mdi-chevron-up')
+                                                        : 'mdi-swap-vertical'
+                                                }}
+                                            </v-icon>
+                                        </div>
+                                    </th>
+
+                                    <th rowspan="2">Interval (s)</th>
+                                    <th rowspan="2">Ukuran</th>
+                                    <th colspan="3" class="text-center">Tegangan (Volt)</th>
+                                    <th colspan="3" class="text-center">Arus (Ampere)</th>
+                                    <th colspan="3" class="text-center">Daya (W)</th>
+                                    <th colspan="3" class="text-center">Frekuensi (Hz)</th>
+                                    <th colspan="3" class="text-center">PF</th>
+                                    <th colspan="3" class="text-center">Aksi</th>
+                                </tr>
+                                <tr>
+                                    <th class="text-center">Maks</th>
+                                    <th class="text-center">Min</th>
+                                    <th class="text-center">Rata-rata</th>
+                                    <th class="text-center">Maks</th>
+                                    <th class="text-center">Min</th>
+                                    <th class="text-center">Rata-rata</th>
+                                    <th class="text-center">Maks</th>
+                                    <th class="text-center">Min</th>
+                                    <th class="text-center">Rata-rata</th>
+                                    <th class="text-center">Maks</th>
+                                    <th class="text-center">Min</th>
+                                    <th class="text-center">Rata-rata</th>
+                                    <th class="text-center">Maks</th>
+                                    <th class="text-center">Min</th>
+                                    <th class="text-center">Rata-rata</th>
+                                    <th class="text-center">Lihat</th>
+                                    <th class="text-center">CSV</th>
+                                    <th class="text-center">Excel</th>
+                                </tr>
+                            </template>
+
+                            <!-- Data rows -->
+                            <template #item="{ item, index }">
+                                <tr>
+                                    <td class="text-center">{{ index + 1 }}</td>
+                                    <td class="text-center">{{ item.year }}</td>
+                                    <td class="text-center">{{ FormatToLocal(item.first_record_timestamp) }}</td>
+                                    <td class="text-center">{{ FormatToLocal(item.last_record_timestamp) }}</td>
+                                    <td class="text-center">{{ item.energy_consumed_count.toFixed(2) }} kWh</td>
+                                    <td class="text-center">{{ item.total_data }}</td>
+                                    <td class="text-center">{{ item.data_interval.toFixed(2) }} s</td>
+                                    <td class="text-center">{{ FormatSize(item.total_size_bytes) }}</td>
+
+                                    <!-- Voltage -->
+                                    <td class="text-center">{{ item.voltage.max.toFixed(2) }}</td>
+                                    <td class="text-center">{{ item.voltage.min.toFixed(2) }}</td>
+                                    <td class="text-center">{{ item.voltage.avg.toFixed(2) }}</td>
+
+                                    <!-- Current -->
+                                    <td class="text-center">{{ item.current.max.toFixed(2) }}</td>
+                                    <td class="text-center">{{ item.current.min.toFixed(2) }}</td>
+                                    <td class="text-center">{{ item.current.avg.toFixed(2) }}</td>
+
+                                    <!-- Power -->
+                                    <td class="text-center">{{ item.power.max.toFixed(2) }}</td>
+                                    <td class="text-center">{{ item.power.min.toFixed(2) }}</td>
+                                    <td class="text-center">{{ item.power.avg.toFixed(2) }}</td>
+
+                                    <!-- Frequency -->
+                                    <td class="text-center">{{ item.frequency.max.toFixed(2) }}</td>
+                                    <td class="text-center">{{ item.frequency.min.toFixed(2) }}</td>
+                                    <td class="text-center">{{ item.frequency.avg.toFixed(2) }}</td>
+
+                                    <!-- Power Factor -->
+                                    <td class="text-center">{{ item.power_factor.max.toFixed(2) }}</td>
+                                    <td class="text-center">{{ item.power_factor.min.toFixed(2) }}</td>
+                                    <td class="text-center">{{ item.power_factor.avg.toFixed(2) }}</td>
+
+                                    <!-- Action -->
+                                    <td class="text-center">
+                                        <v-btn size="x-small" variant="text" color="primary"
+                                            @click="selectYear(item.year)">
+                                            <v-icon start small>mdi-eye</v-icon> Detail
+                                        </v-btn>
+                                    </td>
+                                    <td class="text-center">
+                                        <v-btn size="x-small" color="success" variant="text" class="me-2"
+                                            @click.stop="downloadData('csv', item.year)">
+                                            <v-icon start>mdi-file-delimited</v-icon> CSV
+                                        </v-btn>
+                                    </td>
+                                    <td class="text-center">
+                                        <v-btn size="small" color="success" variant="text"
+                                            @click.stop="downloadData('excel', item.year)">
+                                            <v-icon start>mdi-file-excel</v-icon> Excel
+                                        </v-btn>
+                                    </td>
+                                </tr>
+                            </template>
+                        </v-data-table-server>
+
+                        <v-col v-if="year_list.length <= 0" class="fill-height d-flex align-center justify-center">
+                            <div class="text-center">
+                                Tidak ada Data
+                            </div>
+                        </v-col>
+
+                        <div class="d-flex justify-space-between mt-4">
+                            <v-btn @click="prevPage" :disabled="isDisablePrevButton()" prepend-icon="mdi-chevron-left">
+                                Sebelumnya
+                            </v-btn>
+                            <v-btn @click="nextPage" :disabled="isDisableNextButton()" append-icon="mdi-chevron-right">
+                                Berikutnya
+                            </v-btn>
                         </div>
-                    </v-col>
-                </v-container>
 
+
+
+
+                    </div>
+
+
+
+                </v-card>
 
 
             </v-col>
@@ -315,18 +380,6 @@ const curr_device = ref({
 //////////////////// DEVICES ////////////////////
 
 
-watch(() => curr_device.value.id, (newId) => {
-    if (newId) {
-        loadYearList({
-            page: year_list_pageNumber.value,
-            itemsPerPage: year_list_pageSize.value,
-            sortBy: [{
-                key: year_orderBy.value,
-                order: year_sortType.value,
-            }]
-        });
-    }
-});
 
 
 const selectedOrderByDeviceList = ref("last_tstamp"); // Default: Waktu terakhir
@@ -484,112 +537,167 @@ async function getDeviceList(pageNumberParam) {
 
 
 
-
-
-
 ////////////////////// REPORT //////////////////////
-
-
-
+const start_year = ref(null) // Cursor pagination, null = dari tahun terbaru
+const next_start_year = ref(null)
+const prev_start_year = ref(null)
 const year_list = ref([])
-
-
-//pagination
-const year_list_pageNumber = ref(1)
-const year_list_pageSize = ref(10) // default
-const year_sortType = ref("desc") // deafult [asc, desc]
-const year_orderBy = ref("year") // default  [year , record_count]
-const year_totalPage = ref(0)
 const year_list_totalData = ref(0)
+const year_list_pageSize = ref(10)
+const paginationDirection = ref("next") // 'next' or 'prev'
 
 
-const loadYearList = ({ page, itemsPerPage, sortBy }) => {
-    // Update pagination values
-    year_list_pageNumber.value = page || 1
-    year_list_pageSize.value = itemsPerPage || 10
+const max_year = ref(null)
+const min_year = ref(null)
 
-    // Update sorting values
-    if (sortBy && sortBy.length > 0) {
-        const sort = sortBy[0]
-        year_orderBy.value = sort.key
-        year_sortType.value = sort.order === 'desc' ? 'desc' : 'asc'
-    } else {
-        year_orderBy.value = 'year'
-        year_sortType.value = 'desc'
+// Sorting
+const year_orderBy = ref("year")
+const year_sortType = ref("desc") // default sort descending
+
+
+
+watch(year_list_pageSize, async (newSize) => {
+    console.log("year_list_pageSize - year_list_pageSize: ", year_list_pageSize)
+    if (!curr_device.value?.id) return
+    start_year.value = null
+    paginationDirection.value = "next"
+    await getReportYearList()
+})
+
+
+// Calculate next/prev years based on current data and sort type
+const calculatePaginationYears = () => {
+    if (year_list.value.length === 0) {
+        next_start_year.value = null
+        prev_start_year.value = null
+        return
     }
 
-    // Update query parameters for sorting and pagination
-    getReportYearList()
+    const firstYear = year_list.value[0].year
+    const lastYear = year_list.value[year_list.value.length - 1].year
+
+    if (year_sortType.value === 'desc') {
+        // Descending order (newest first)
+        next_start_year.value = lastYear - 1
+        prev_start_year.value = firstYear + 1
+    } else {
+        // Ascending order (oldest first)
+        next_start_year.value = lastYear + 1
+        prev_start_year.value = firstYear - 1
+    }
+}
+
+// Pagination functions
+const nextPage = async () => {
+    paginationDirection.value = "next"
+    start_year.value = next_start_year.value
+    await getReportYearList()
+}
+
+const prevPage = async () => {
+    paginationDirection.value = "prev"
+    start_year.value = prev_start_year.value
+    await getReportYearList()
+}
+
+const isDisableNextButton = () => {
+    if (!year_list.value.length) return true
+    if (year_sortType.value === 'desc') {
+        return year_list.value[year_list.value.length - 1].year <= min_year.value
+    } else {
+        return year_list.value[year_list.value.length - 1].year >= max_year.value
+    }
+}
+
+const isDisablePrevButton = () => {
+    if (!year_list.value.length) return true
+    if (year_sortType.value === 'desc') {
+        return year_list.value[0].year >= max_year.value
+    } else {
+        return year_list.value[0].year <= min_year.value
+    }
 }
 
 
+const toggleSortYear = (column) => {
+    // Jika mengklik kolom yang sama, toggle sort type
+    if (year_orderBy.value === column) {
+        year_sortType.value = year_sortType.value === 'asc' ? 'desc' : 'asc'
+    }
+    // Jika mengklik kolom berbeda, set ke default sort desc
+    else {
+        year_orderBy.value = column
+        year_sortType.value = 'desc'
+    }
+
+    // Reset pagination when changing sort order
+    start_year.value = null
+    paginationDirection.value = "next"
+    getReportYearList()
+}
+// Main data fetching function
 const getReportYearList = async () => {
-    console.log("---getReportYearList---")
     if (isFetchingYears.value) return
 
     isFetchingYears.value = true
     isLoading.value = true
 
+    let params = {
+        device_id: curr_device.value.id,
+        page_size: year_list_pageSize.value,
+        sort_type: year_sortType.value,
+        order_by: year_orderBy.value
+    }
+
+    if (start_year.value !== null) {
+        params.start_year = start_year.value
+        params.direction = paginationDirection.value
+    }
+
     try {
-        const operation = 'get_report_year_list'
-        const params = {
-            device_id: curr_device.value.id,
-            page_number: year_list_pageNumber.value,
-            page_size: year_list_pageSize.value,
-            order_by: year_orderBy.value,
-            sort_type: year_sortType.value
-        }
-
-        console.log("getReportYearList - params:", params)
-
+        const operation = "get_report_year_list"
         const response_be = await Process(BASE_API_URL, operation, params)
 
-        if (response_be.status !== "success") {
-            console.error("getReportYearList FAILED!!:", response_be.error_message)
-
-            popUpProps.value = {
-                status: "error",
-                errorMessage: "Gagal Mendapatkan Data Tahun Tersedia",
-                errorCode: response_be.error_code,
-            }
-            popupVisible.value = true
+        if (response_be.error_code !== "000000") {
+            console.error("getReportYearList FAILED:", response_be.error_message)
             return
         }
 
-
-
         const responseBE = response_be.payload
-        console.log("getReportYearList - responseBE: ", responseBE)
 
+        // Replace data instead of appending
         year_list.value = responseBE.year_list || []
-        year_totalPage.value = Math.ceil(responseBE.total_data / year_list_pageSize.value)
-        year_list_totalData.value = responseBE.total_data || 0
+        year_list_totalData.value = responseBE.total_year || 0
+
+        max_year.value = responseBE.max_year
+        min_year.value = responseBE.min_year
+
+
+        // Calculate next/prev years on client side
+        calculatePaginationYears()
 
     } catch (error) {
-        console.error('Error fetching years:', error)
+        console.error("Error fetching years:", error)
     } finally {
         isFetchingYears.value = false
         isLoading.value = false
     }
 }
 
+// Watch for device changes
+watch(() => curr_device.value.id, async (newId) => {
+    if (newId) {
+        // Reset pagination and data when device changes
+        start_year.value = null
+        next_start_year.value = null
+        prev_start_year.value = null
+        year_list.value = []
+        year_list_totalData.value = 0
+        paginationDirection.value = "next"
 
-
-function selectYear(yearSelected) {
-    console.log("---selectYear---")
-    console.log("selectYear - yearSelected: ", yearSelected);
-
-    // Assuming curr_device is a reactive reference (e.g., Vue ref) or an object containing device details
-    console.log("selectYear - device_id: ", curr_device.value.id);  // Access device_id correctly
-
-    // Navigate to the reportYear route with dynamic parameters
-    router.push({
-        name: 'report-month',
-        params: { year: Number(yearSelected) }
-    });
-
-}
-
+        await getReportYearList()
+    }
+})
 
 //////////////////// CHART ///////////////////////
 // Watch year dan render chart saat datanya ada
@@ -703,6 +811,22 @@ function downloadData(tipe, year) {
     // Contoh pemanggilan API download atau pembuatan file
     console.log(`Downloading ${tipe} for year ${year}`);
     // Lakukan pemanggilan API / logika lainnya sesuai kebutuhan
+}
+
+
+
+
+function selectYear(yearSelected) {
+    console.groupCollapsed('-- selectYear ---:', yearSelected)
+
+    console.log("---Day---")
+    console.log("selectyear - yearSelected: ", yearSelected);
+
+    router.push({
+        name: 'report-month',
+        params: { year: Number(yearSelected) }
+    });
+
 }
 
 
