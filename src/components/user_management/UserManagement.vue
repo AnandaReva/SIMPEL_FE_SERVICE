@@ -1,75 +1,131 @@
 <template>
     <v-container fluid class="pa-2 elevation-0 fill-height" :class="{ 'disable-interactions': isLoading }">
+        <!-- Drawer untuk tampilan mobile -->
+        <v-navigation-drawer v-model="drawer" temporary location="left" width="400" class="elevation-2">
+            <v-card color="base" elevation="0" style="height: 100%;">
+                <v-card-title class="d-flex justify-space-between align-center">
+                    <span class="text-h6">Daftar Perangkat</span>
+                    <v-btn icon @click.stop="drawer = false">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-card-title>
 
-        <h2 class="text-h5 font-weight-bold px-2" style="color: var(--v-theme-primary);"> Manajemen Pengguna</h2>
+                <v-card-text>
+                    <!-- Konten daftar perangkat -->
+                    <div class="d-flex flex-wrap mb-0">
+                        <v-select v-model="selectedOrderByDeviceList" :items="[
+                            { title: 'Waktu terakhir', value: 'last_tstamp' },
+                            { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
+                            { title: 'Nama perangkat', value: 'name' }
+                        ]" density="compact" label="Pengurutan" variant="outlined" style="height: 50px;" />
 
-            <v-card color="base" class="pa-4 ma-2 w-100 " style="border-radius: 20px; height: 90%;">
-
-                <!-- FILTER -->
-                <v-row class="d-flex align-center justify-space-between mb-4" no-gutters>
-                    <v-col cols="5">
-                        <v-select v-model="selectedStatusUserList" :items="[
-                            { title: 'Semua', value: '' },
+                        <v-select v-model="selectedStatusDeviceList" :items="[
+                            { title: 'Semua', value: null },
                             { title: 'Aktif', value: 1 },
                             { title: 'Tidak Aktif', value: 0 }
-                        ]" density="compact" label="Status" variant="outlined" hide-details />
-                    </v-col>
+                        ]" density="compact" label="Status" variant="outlined" style="height: 50px;" />
 
-                    <v-col cols="5">
-                        <v-select v-model="selectedOrderByUserList" :items="[
-                            { title: 'Waktu terakhir', value: 'last_tstamp' },
-                            { title: 'Waktu pengguna mendaftar', value: 'create_timestamp' },
-                            { title: 'Nama pengguna', value: 'full_name' }
-                        ]" density="compact" label="Pengurutan" variant="outlined" hide-details />
-                    </v-col>
-
-                    <v-col cols="2" class="d-flex justify-center">
-                        <v-btn @click="toogleSortType" variant="outlined" class="rounded"
-                            style="width: 50px; height: 50px; min-width: 50px;">
-                            <v-icon>{{ selectedStatusUserList === 'ASC' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}</v-icon>
+                        <v-btn @click="toogleSortType" icon>
+                            <v-icon>
+                                {{ selectedSortTypeDeviceList === 'ASC' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
+                            </v-icon>
                         </v-btn>
-                    </v-col>
-                </v-row>
+                    </div>
 
-                <!-- SEARCH -->
-                <v-row class="d-flex align-center mb-4" no-gutters>
-                    <v-col cols="11">
-                        <v-text-field v-model="filterUserList" label="Search" placeholder="Masukkan Nama Pengguna"
-                            variant="solo" clearable density="compact" maxlength="30" hide-details
-                            @input="filterUserList = filterUserList.slice(0, 30)" />
-                    </v-col>
-
-                    <v-col cols="1" class="d-flex justify-center">
-                        <v-btn color="primary" @click="searchUsers" class="rounded-circle"
-                            style="width: 50px; height: 50px; min-width: 50px;">
+                    <div class="d-flex align-center mb-4">
+                        <v-text-field v-model="filterDeviceList" label="Search" placeholder="Masukkan Nama device"
+                            variant="solo" clearable class="px-1" style="max-height: 50px;" maxlength="50"
+                            :rules="[v => !v || v.length <= 30 || 'Maksimal 30 karakter']"
+                            @input="filterDeviceList = filterDeviceList.slice(0, 30)" />
+                        <v-btn icon color="primary" class="ml-2" @click="searchDevices">
                             <v-icon>mdi-magnify</v-icon>
                         </v-btn>
-                    </v-col>
-                </v-row>
+                    </div>
 
-                <!-- USER LIST -->
-                <v-row class="overflow-auto" style="height: calc(100% - 200px);">
-                    <v-col cols="12" class="px-0">
-                        <v-infinite-scroll :key="scrollKeyUsers" id="UserBox" ref="UserBox" side="end" @load="loadUsers"
-                            class="overflow-auto">
-                            <UserList :users="users" :totalUsers="totalUsers" @select-user="handleUserSelection"
-                                @view-user-detail="handleDetailUser" />
+                    <div>
+                        <v-infinite-scroll :key="scrollKeyDevices" id="DeviceListBox" ref="DeviceListBox" height="550"
+                            side="end" @load="loadDevices" class="overflow-auto">
+                            <DeviceListInfiniteScroll :devices="devices" :total_devices="total_devices"
+                                @select-device="selectDevice" />
                         </v-infinite-scroll>
-                    </v-col>
-                </v-row>
-
+                    </div>
+                </v-card-text>
             </v-card>
+        </v-navigation-drawer>
+
+        <v-row>
+            <!-- Daftar Perangkat - Tampilan desktop -->
+            <v-col cols="12" md="4" lg="3" class="d-none d-md-flex">
+                <v-card color="base" elevation="0" style="height: 100%; width: 100%;">
+                    <v-card-title class="d-flex justify-space-between align-center">
+                        <span class="text-h6">Daftar Perangkat</span>
+                        <v-btn icon @click.stop="drawer = false">
+                            <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                    </v-card-title>
+
+                    <v-card-text>
+                        <!-- Konten yang sama seperti di drawer -->
+                        <div class="d-flex flex-wrap mb-0">
+                            <v-select v-model="selectedOrderByDeviceList" :items="[
+                                { title: 'Waktu terakhir', value: 'last_tstamp' },
+                                { title: 'Waktu perangkat didaftarkan', value: 'create_tstamp' },
+                                { title: 'Nama perangkat', value: 'name' }
+                            ]" density="compact" label="Pengurutan" variant="outlined" style="height: 50px;" />
+
+                            <v-select v-model="selectedStatusDeviceList" :items="[
+                                { title: 'Semua', value: null },
+                                { title: 'Aktif', value: 1 },
+                                { title: 'Tidak Aktif', value: 0 }
+                            ]" density="compact" label="Status" variant="outlined" style="height: 50px;" />
+
+                            <v-btn @click="toogleSortType" icon>
+                                <v-icon>
+                                    {{ selectedSortTypeDeviceList === 'ASC' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
+                                </v-icon>
+                            </v-btn>
+                        </div>
+
+                        <div class="d-flex align-center mb-4">
+                            <v-text-field v-model="filterDeviceList" label="Search" placeholder="Masukkan Nama device"
+                                variant="solo" clearable class="px-1" style="max-height: 50px;" maxlength="50"
+                                :rules="[v => !v || v.length <= 30 || 'Maksimal 30 karakter']"
+                                @input="filterDeviceList = filterDeviceList.slice(0, 30)" />
+                            <v-btn icon color="primary" class="ml-2" @click="searchDevices">
+                                <v-icon>mdi-magnify</v-icon>
+                            </v-btn>
+                        </div>
+
+                        <div>
+                            <v-infinite-scroll :key="scrollKeyDevices" id="DeviceListBox" ref="DeviceListBox"
+                                height="550" side="end" @load="loadDevices" class="overflow-auto">
+                                <DeviceListInfiniteScroll :devices="devices" :total_devices="total_devices"
+                                    @select-device="selectDevice" />
+                            </v-infinite-scroll>
+                        </div>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+            <!-- Konten utama -->
+            <v-col cols="12" md="8" lg="9">
+                <v-card color="base" elevation="2" rounded="xl" class="pa-4" style="width: 100%; height: 100%;">
+                    <!-- Tombol toggle drawer untuk mobile -->
+                    <v-btn icon @click.stop="drawer = !drawer" class="d-md-none">
+                        <v-icon>mdi-menu</v-icon>
+                    </v-btn>
+
+                    <!-- Konten utama Anda di sini -->
+                </v-card>
+            </v-col>
+        </v-row>
     </v-container>
 </template>
-
 
 <script setup>
 import { ref, watch } from 'vue';
 import { BASE_API_URL } from '@/configs/config';
 import { Process } from '@/utils/requestHelper';
-
-//import UserList from './UserList.vue';
-
 
 const popupVisible = ref(false);
 const popUpProps = ref({
@@ -78,143 +134,102 @@ const popUpProps = ref({
     errorCode: "",
 });
 const isLoading = ref(false);
+const drawer = ref(false);
 
-
-
+//////////////////// DEVICES ////////////////////
+const selectedOrderByDeviceList = ref("last_tstamp");
+const selectedStatusDeviceList = ref(1);
+const selectedSortTypeDeviceList = ref("DESC");
+const filterDeviceList = ref('');
+const devices = ref([]);
+const total_devices = ref(0);
+const scrollKeyDevices = ref(0);
 
 //////////////////// USERS ////////////////////
-
 const selectedOrderByUserList = ref("last_tstamp");
 const selectedStatusUserList = ref(1);
-const selectedSortTypeUserList = ref("DESC")
+const selectedSortTypeUserList = ref("DESC");
 const filterUserList = ref('');
-
-
 const users = ref([]);
 const page_size = ref(10);
 const totalPagesUsers = ref(0);
-const totalUsers = ref();
+const totalUsers = ref(0);
 const currUserData = ref({});
-
-
-const toogleSortType = () => {
-    selectedSortTypeUserList.value = selectedSortTypeUserList.value === "ASC" ? "DESC" : "ASC";
-}
-watch(selectedSortTypeUserList, (newSortType) => {
-    //console.log(`��� Sorting berubah: ${newSortType}`);
-    searchUsers();
-});
-
-
-watch(selectedOrderByUserList, (newOrderBy) => {
-    // console.log(`��� Order By berubah: ${newOrderBy}`);
-    searchUsers();
-});
-
-watch(selectedStatusUserList, (newStatus) => {
-    //console.log(`��� Status pengguna berubah: ${newStatus}`);
-    searchUsers();
-});
-
-
-
 const lastFetchedPageUsers = ref(0);
-const scrollKeyUsers = ref(0);
-
-function resetScrollUsers() {
-    scrollKeyUsers.value += 1;
-}
-
-const isFetchingUsers = ref(false); // mencegah race condition
+const isFetchingUsers = ref(false);
 const isFetchingUserData = ref(false);
 
-function handleUserSelection(userId, userName) {
-
-    console.log("Selected User:", userId, userName);
-}
-
-
-async function handleEditUser(userIdParam) {
-    console.log("handleEditUser - user id: ", userIdParam);
-
-    const isSuccess = await getUserData(userIdParam); // Tunggu hasil sebelum lanjut
-    if (!isSuccess) {
-        console.error("Failed to get user data");
-        return;
+// Watch untuk responsive drawer
+watch(() => drawer.value, (newVal) => {
+    if (window.innerWidth >= 1080 && newVal) {
+        drawer.value = false;
     }
+});
 
-    console.log("getUserData SUCCESS!!");
+// Device functions
+const toogleSortType = () => {
+    selectedSortTypeDeviceList.value = selectedSortTypeDeviceList.value === "ASC" ? "DESC" : "ASC";
+};
 
-}
+const searchDevices = () => {
+    // Implementasi pencarian perangkat
+    console.log("Searching devices...");
+};
 
-async function handleDetailUser(userIdParam) {
-    console.group("---handleDetailUser----")
-    console.log("handleDetailUser - user id: ", userIdParam);
+const loadDevices = ({ done }) => {
+    // Implementasi infinite scroll perangkat
+    console.log("Loading devices...");
+    done("empty");
+};
 
-}
+const selectDevice = (device) => {
+    // Implementasi pemilihan perangkat
+    console.log("Selected device:", device);
+};
 
 
-///////// INFINITE SCROLL USERS //////////
-function loadUsers({ done }) {
-    console.group("--- loadUsers() ---")
+
+// User functions
+const searchUsers = () => {
+    totalUsers.value = 0;
+    lastFetchedPageUsers.value = 0;
+    users.value = [];
+    getUserList(1);
+};
+
+const loadUsers = ({ done }) => {
     if (totalPagesUsers.value === 0) {
         done("empty");
         return;
     }
+
     const fetchedPageNumber = lastFetchedPageUsers.value + 1;
-    console.log("last page:", lastFetchedPageUsers.value);
-    console.log("Fetched page number:", fetchedPageNumber);
 
     setTimeout(async () => {
         await getUserList(fetchedPageNumber);
-
-        if (fetchedPageNumber < totalPagesUsers.value) {
-            done("done");
-        } else {
-            done("empty");
-        }
+        done(fetchedPageNumber < totalPagesUsers.value ? "done" : "empty");
     }, 1000);
-    console.groupEnd();
-}
+};
 
-function appendUsers(users, additionalUsers) {
+const appendUsers = (users, additionalUsers) => {
     const userMap = new Map();
-    users.forEach((user) => {
-        userMap.set(user.user_id, user);
-    });
-
+    users.forEach((user) => userMap.set(user.user_id, user));
     additionalUsers.forEach((newUser) => {
         if (!userMap.has(newUser.user_id)) {
             users.push(newUser);
             userMap.set(newUser.user_id, newUser);
         }
     });
-
     return users;
-}
-
-
-function searchUsers() {
-    totalUsers.value = 0;
-    resetScrollUsers();
-    lastFetchedPageUsers.value = 0;
-    users.value = []; // Reset daftar pengguna sebelum pencarian baru
-    getUserList(1); // Fetch data dengan parameter baru
-}
-
+};
 
 async function getUserList(pageNumberParam) {
-    console.log("----getUserList----")
-    if (isFetchingUsers.value == true) {
-        console.log("Fetching users already in progress...");
-        return;
-    }
+    if (isFetchingUsers.value) return;
 
     isFetchingUsers.value = true;
 
     try {
         const operation = "get_user_list";
-        const baseUrl = BASE_API_URL;
         const params = {
             filter: filterUserList.value,
             order_by: selectedOrderByUserList.value,
@@ -224,17 +239,12 @@ async function getUserList(pageNumberParam) {
             st: selectedStatusUserList.value,
         };
 
-        console.log("getUserList params:", params);
-        const response_be = await Process(baseUrl, operation, params);
+        const response_be = await Process(BASE_API_URL, operation, params);
 
         if (response_be.status !== "success") {
-            console.error("getUserList FAILED!!:", response_be.error_message);
-            let popUpMessage = "Gagal Mendapatkan Data Pengguna Aktif";
-
-
             popUpProps.value = {
                 status: "error",
-                errorMessage: popUpMessage,
+                errorMessage: "Gagal Mendapatkan Data Pengguna Aktif",
                 errorCode: response_be.error_code,
             };
             popupVisible.value = true;
@@ -242,56 +252,33 @@ async function getUserList(pageNumberParam) {
         }
 
         const responseBE = response_be.payload;
-        if (!responseBE.users) {
-            console.log("User list is empty");
-            return;
+        if (responseBE.users) {
+            users.value = appendUsers(users.value, responseBE.users);
+            totalUsers.value = responseBE.total_data;
+            totalPagesUsers.value = Math.ceil(responseBE.total_data / page_size.value);
+            lastFetchedPageUsers.value = pageNumberParam;
         }
-
-        console.log("getUserList SUCCESS!!");
-        users.value = appendUsers(users.value, responseBE.users);
-        totalUsers.value = responseBE.total_data;
-        totalPagesUsers.value = Math.ceil(responseBE.total_data / Number(page_size.value));
-        lastFetchedPageUsers.value = pageNumberParam;
-
-        console.log("totalPagesUsers: ", totalPagesUsers.value);
-        console.log("totalUsers: ", totalUsers.value);
     } catch (err) {
         console.error("ERROR WHILE GETTING USERS:", err);
     } finally {
-
         isFetchingUsers.value = false;
     }
 }
 
-
 async function getUserData(userIdParam) {
-    console.group("---getUserData----")
+    if (isFetchingUserData.value) return false;
 
-    if (isFetchingUserData.value == true) {
-        console.log("Fetching user data already in progress...");
-        return false;
-    }
-
-    console.log("getUserData - user id: ", userIdParam);
+    isFetchingUserData.value = true;
 
     try {
         const operation = "get_user_data";
-        const baseUrl = BASE_API_URL;
-        const params = {
-            user_id: userIdParam,
-        };
-
-        console.log("getUserData params:", params);
-        const response_be = await Process(baseUrl, operation, params);
+        const params = { user_id: userIdParam };
+        const response_be = await Process(BASE_API_URL, operation, params);
 
         if (response_be.status !== "success") {
-            console.error("getUserData FAILED!!:", response_be.error_message);
-            let popUpMessage = "Gagal Mendapatkan Data Pengguna";
-
-
             popUpProps.value = {
                 status: "error",
-                errorMessage: popUpMessage,
+                errorMessage: "Gagal Mendapatkan Data Pengguna",
                 errorCode: response_be.error_code,
             };
             popupVisible.value = true;
@@ -299,35 +286,33 @@ async function getUserData(userIdParam) {
         }
 
         const responseBE = response_be.payload;
-        if (!responseBE.user_data) {
-            console.log("User data is empty");
-            return false;
+        if (responseBE.user_data) {
+            currUserData.value = responseBE.user_data;
+            return true;
         }
-        console.log("getUserData responseBE.user_data: ", responseBE.user_data);
-
-        currUserData.value = responseBE.user_data;
-
-        console.log("getUserData SUCCESS!!");
-        return true;
-
-
+        return false;
     } catch (err) {
-        console.error("getUserData FAILED!!:", response_be.error_message);
-        let popUpMessage = "Gagal Mendapatkan Data Pengguna";
-
-
-        popUpProps.value = {
-            status: "error",
-            errorMessage: popUpMessage,
-            errorCode: response_be.error_code,
-        };
-        popupVisible.value = true;
-
+        console.error("getUserData FAILED!!:", err);
+        return false;
     } finally {
-
         isFetchingUserData.value = false;
     }
+}
 
-    console.groupEnd();
+function handleUserSelection(userId, userName) {
+    console.log("Selected User:", userId, userName);
+}
+
+async function handleEditUser(userIdParam) {
+    const isSuccess = await getUserData(userIdParam);
+    if (!isSuccess) {
+        console.error("Failed to get user data");
+        return;
+    }
+    console.log("getUserData SUCCESS!!");
+}
+
+function handleDetailUser(userIdParam) {
+    console.log("handleDetailUser - user id:", userIdParam);
 }
 </script>

@@ -4,9 +4,16 @@
             Menampilkan: {{ devices?.length }}/{{ total_devices }}
         </p>
 
+<!--         {{devices  }} -->
+
         <v-list bg-color="white" dense class="rounded-lg elevation-2">
             <template v-if="devices?.length > 0">
+
+
                 <template v-for="(device, index) in devices" :key="device.device_id">
+
+
+                  {{ device.device_id }}
                     <v-list-item @click="emitSelect(device)" class="device-item">
                         <v-row align="center" no-gutters class="w-100">
                             <!-- Icon -->
@@ -62,11 +69,16 @@ const emit = defineEmits(["select-device"]);
 
 
 const emitSelect = (device) => {
-    emit('select-device', {
-        id: device.device_id,
-        name: device.device_name
-    })
+    try {
+        emit('select-device', {
+            id: device.device_id,
+            name: device.device_name
+        })
+    } catch (err) {
+        console.error("Gagal emit select-device:", err)
+    }
 }
+
 
 
 

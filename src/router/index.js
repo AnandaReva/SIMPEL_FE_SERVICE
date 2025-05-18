@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginPage from '@/components/Login.vue';
-import DashboardPage from '@/components/Dashboard.vue';
+//import DashboardPage from '@/components/Dashboard.vue';
 import MonitoringPage from '@/components/monitoring/MonitoringPage.vue';
 
 
@@ -13,6 +13,8 @@ import DayDetailReport from '@/components/reports/DayDetailReport.vue';
 
 import DeviceManagement from '@/components/device_management/DeviceManagement.vue';
 import UserManagementPage from '@/components/user_management/UserManagement.vue';
+import AddDevice from '@/components/device_management/AddDevice.vue';
+import EditDevice from '@/components/device_management/EditDevice.vue';
 
 import SettingsPage from '@/components/Settings.vue';
 
@@ -65,7 +67,7 @@ const routes = [
     },
 
 
-    
+
     {
         path: '/users',
         name: 'users',
@@ -74,10 +76,24 @@ const routes = [
     },
 
 
+    // device managements
+
     {
         path: '/device',
-        name: 'devices',
+        name: 'device-management',
         component: DeviceManagement,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/device/add',
+        name: 'device-add',
+        component: AddDevice,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/device/edit/:device_name',
+        name: 'device-edit',
+        component: EditDevice,
         meta: { requiresAuth: true },
     },
 
@@ -139,7 +155,7 @@ router.beforeEach((to, from, next) => {
 
     // Jika sudah login dan mencoba ke /login, redirect ke /dashboard
     if (to.name === 'login' && isAuthenticated) {
-        return next('/dashboard');
+        return next('/monitoring');
     }
 
     // Jika memerlukan autentikasi dan belum login, redirect ke /login

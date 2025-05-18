@@ -11,7 +11,7 @@
             <template #default>
                 <v-card color="base">
                     <v-card-title class="d-flex justify-space-between align-center">
-                        <span class="text-h6">Select Device</span>
+                        <span class="text-h6">Pilih Perangkat Aktif</span>
                         <v-btn icon @click="isShowDeviceList = false">
                             <v-icon>mdi-close</v-icon>
                         </v-btn>
@@ -45,7 +45,8 @@
                         </div>
 
 
-                        <div>
+                        <div >
+
 
                             <v-infinite-scroll :key="scrollKeyActiveDevices" id="DeviceListBox" ref="DeviceListBox"
                                 height="550" side="end" @load="loadActiveDevices" class="overflow-auto">
@@ -65,8 +66,7 @@
 
 
 
-        <v-col v-if="monitored_devices.length > 0" class="d-flex flex-column fit-content"
-            style=" overflow-y: auto;">
+        <v-col v-if="monitored_devices.length > 0" class="d-flex flex-column fit-content" style=" overflow-y: auto;">
 
             <v-row style="flex: 1">
                 <v-container class="d-flex align-center justify-center">
@@ -205,11 +205,11 @@
 
 
             <v-row class="d-flex align-center justify-center py-5">
-                
-                                <v-btn v-if="globalWs" color="primary" @click="handleShowDeviceList">
-                                    <v-icon start>mdi-plus</v-icon>
-                                    Tambah Perangkat
-                                </v-btn>
+
+                <v-btn v-if="globalWs" color="primary" @click="handleShowDeviceList">
+                    <v-icon start>mdi-plus</v-icon>
+                    Tambah Perangkat
+                </v-btn>
 
             </v-row>
         </v-col>
