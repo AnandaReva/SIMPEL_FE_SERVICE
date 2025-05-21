@@ -635,7 +635,7 @@ function renderEnergyChart() {
         title: { text: `Proporsi Konsumsi Energi Tahun ${curr_year.value}` },
         data: [{
             type: "doughnut",
-            indexLabel: "{label}: {y} kWh",
+            indexLabel: "{label}: {y}",
             yValueFormatString: "#,##0.##\" kWh\"",
             showInLegend: true,
             legendText: "{label}",

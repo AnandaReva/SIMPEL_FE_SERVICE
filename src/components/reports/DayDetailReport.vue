@@ -467,7 +467,7 @@ const getReportDayDetail = async () => {
     // Gunakan langsung month_name dari API tanpa mapping
     hour_list.value = (response.payload.hour_list || [])
       .map(hour => ({
-        hour: hour.hour,
+        hour: convertHourSingleDigit(hour.hour),
         hour_date_num: hour.hour_date_num,
         first_record_timestamp: hour.first_record_timestamp,
         last_record_timestamp: hour.last_record_timestamp,
@@ -495,6 +495,10 @@ const getReportDayDetail = async () => {
   } finally {
     isLoading.value = false;
   }
+}
+
+function convertHourSingleDigit(hour) {
+  return hour.toString().padStart(2, '0');
 }
 
 
@@ -599,7 +603,7 @@ function renderEnergyChart() {
 
   const dataPoints = hour_list.value.map((hour) => ({
     y: hour.energy_consumed_count,
-    label: hour.month_name,
+    label: hour.hour,
     indexLabelFontColor: "#444",
     indexLabelPlacement: "outside"
   }));

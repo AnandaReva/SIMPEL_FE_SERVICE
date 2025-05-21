@@ -13,7 +13,6 @@
                 <template v-for="(device, index) in devices" :key="device.device_id">
 
 
-                  {{ device.device_id }}
                     <v-list-item @click="emitSelect(device)" class="device-item">
                         <v-row align="center" no-gutters class="w-100">
                             <!-- Icon -->

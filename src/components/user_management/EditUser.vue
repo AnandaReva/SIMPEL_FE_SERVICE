@@ -8,7 +8,7 @@
             <v-col cols="12">
 
 
-                <v-btn @click="backToDeviceManagPage()" color="primary" elevation="2" class="ma-0">
+                <v-btn @click="backToUserManagPage()" color="primary" elevation="2" class="ma-0">
                     <v-icon>mdi-arrow-left</v-icon>
                 </v-btn>
                 <v-card flat class="px-4 py-2 mb-4">
@@ -26,18 +26,18 @@
                     <!-- Informasi Dasar Perangkat -->
                     <v-card outlined class="mb-4">
 
-                        <!-- original device{{ original_device_data }} <br>
-                        curr {{ curr_device_data }} -->
+                        <!-- original user{{ original_user_data }} <br>
+                        curr {{ curr_user_data }} -->
                         <v-card-text>
                             <v-row>
                                 <v-col cols="12" md="6" class="mb-4">
                                     <p class="text-subtitle-1 font-weight-medium mb-2">Nama Perangkat</p>
                                     <v-card flat class="pa-3 d-flex align-center">
                                         <v-icon size="24" color="primary" class="mr-2">mdi-access-point-network</v-icon>
-                                        <v-text-field maxlength="50" v-model="curr_device_data.name"
+                                        <v-text-field maxlength="50" v-model="curr_user_data.name"
                                             label="Nama Perangkat" outlined dense
                                             prepend-inner-icon="mdi-access-point-network" class="mb-4"
-                                            :rules="device_name_rules" required></v-text-field>
+                                            :rules="user_name_rules" required></v-text-field>
                                     </v-card>
                                 </v-col>
 
@@ -45,11 +45,11 @@
                                     <p class="text-subtitle-1 font-weight-medium mb-2">Password</p>
                                     <v-card flat class="pa-3 d-flex align-center">
                                         <v-icon size="24" color="primary" class="mr-2">mdi-lock</v-icon>
-                                        <v-text-field v-model="curr_device_data.password" label="Password" outlined
+                                        <v-text-field v-model="curr_user_data.password" label="Password" outlined
                                             dense prepend-inner-icon="mdi-lock"
-                                            :type="showPassword ? 'text' : 'device_password'"
+                                            :type="showPassword ? 'text' : 'user_password'"
                                             :append-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                                            @click:append="showPassword = !showPassword" :rules="device_password_rules"
+                                            @click:append="showPassword = !showPassword" :rules="user_password_rules"
                                             required></v-text-field>
                                     </v-card>
                                 </v-col>
@@ -57,7 +57,7 @@
                                 <v-col cols="12" md="6">
                                     <p class="text-subtitle-1 font-weight-medium mb-2">Interval Pembacaan (Detik)</p>
                                     <v-card flat class="pa-3">
-                                        <v-text-field v-model.number="curr_device_data.read_interval" type="number"
+                                        <v-text-field v-model.number="curr_user_data.read_interval" type="number"
                                             outlined dense prepend-inner-icon="mdi-timer" :rules="read_interval_rules"
                                             required></v-text-field>
                                     </v-card>
@@ -66,12 +66,12 @@
                                 <v-col cols="12" md="6">
                                     <p class="text-subtitle-1 font-weight-medium mb-2">Waktu Ditambahkan</p>
                                     <v-card flat class="pa-3">{{
-                                        FormatTimestamp(curr_device_data?.create_timestamp) || '-' }}</v-card>
+                                        FormatTimestamp(curr_user_data?.create_timestamp) || '-' }}</v-card>
                                 </v-col>
                                 <v-col cols="12" md="6">
                                     <p class="text-subtitle-1 font-weight-medium mb-2">Waktu Terakhir</p>
                                     <v-card flat class="pa-3">{{
-                                        FormatTimestamp(curr_device_data?.last_timestamp) || '-' }}</v-card>
+                                        FormatTimestamp(curr_user_data?.last_timestamp) || '-' }}</v-card>
                                 </v-col>
 
                                 <v-col cols="12" md="6">
@@ -80,8 +80,8 @@
 
 
 
-                                        <span v-if="curr_device_data?.status === 1"> Aktif</span>
-                                        <span v-else-if="curr_device_data?.status === 0">Tidak Aktif</span>
+                                        <span v-if="curr_user_data?.status === 1"> Aktif</span>
+                                        <span v-else-if="curr_user_data?.status === 0">Tidak Aktif</span>
                                         <span v-else>Tidak Diketahui</span>
 
 
@@ -93,10 +93,10 @@
 
 
 
-                    <!-- original image {{ original_device_image.file_name }} file_id {{ original_device_image.file_id }}
+                    <!-- original image {{ original_user_image.file_name }} file_id {{ original_user_image.file_id }}
                     <br>
-                    curr image {{ curr_device_image.file_name }} file_id {{ curr_device_image.file_id }} <br>
-                    new image {{ new_device_image.file_name }} file_id {{ new_device_image.file_id }} <br> -->
+                    curr image {{ curr_user_image.file_name }} file_id {{ curr_user_image.file_id }} <br>
+                    new image {{ new_user_image.file_name }} file_id {{ new_user_image.file_id }} <br> -->
                     <!-- Gambar Perangkat -->
                     <v-card outlined class="mb-4">
                         <v-card-title class="d-flex align-center">
@@ -105,7 +105,7 @@
                         </v-card-title>
 
                         <v-card-text class="text-center">
-                            <v-img v-if="displayedImage" :src="getDeviceImageSrc(displayedImage)" max-height="200"
+                            <v-img v-if="displayedImage" :src="getUserImageSrc(displayedImage)" max-height="200"
                                 contain class="mx-auto" />
                             <p v-else class="text-caption text-grey">Tidak ada gambar</p>
 
@@ -117,7 +117,7 @@
                             <!-- Tombol ikon -->
                             <div class="d-flex justify-center mt-2">
                                 <v-tooltip text="Hapus Gambar">
-                                    <template v-if="curr_device_image.file_data || new_device_image.file_data"
+                                    <template v-if="curr_user_image.file_data || new_user_image.file_data"
                                         #activator="{ props }">
                                         <v-btn v-bind="props" icon color="error" @click="handleImageDelete">
                                             <v-icon>mdi-trash-can</v-icon>
@@ -126,7 +126,7 @@
                                 </v-tooltip>
 
                                 <v-tooltip text="Kembalikan Gambar Lama">
-                                    <template v-if="curr_device_image.file_data != original_device_image.file_data"
+                                    <template v-if="curr_user_image.file_data != original_user_image.file_data"
                                         #activator="{ props }">
                                         <v-btn v-bind="props" icon color="primary" class="ml-2"
                                             @click="handleCurrImageBack">
@@ -146,12 +146,12 @@
 
 
 
-                    <!--       original {{ original_device_detail_data }} <br>
-                    existing{{ existing_device_detail_data }} <br>
-                    new {{ new_device_detail_data }} -->
+                    <!--       original {{ original_user_detail_data }} <br>
+                    existing{{ existing_user_detail_data }} <br>
+                    new {{ new_user_detail_data }} -->
 
 
-                    <!-- Device Data -->
+                    <!-- User Data -->
                     <v-card outlined class="mb-4">
                         <v-card-title class="d-flex align-center">
                             <v-icon size="24" color="primary" class="mr-2">mdi-information</v-icon>
@@ -161,20 +161,20 @@
                             <div class="scrollable-container pa-0 border ma-0"
                                 style="max-height: 300px; overflow-y: auto;">
                                 <!-- Existing Data Fields -->
-                                <v-container v-for="(currData, index) in existing_device_detail_data"
+                                <v-container v-for="(currData, index) in existing_user_detail_data"
                                     :key="'existing-' + index">
 
 
                                     <v-row>
                                         <v-col cols="5.5" class="px-1 py-0">
                                             <v-text-field v-model="currData.title" outlined label="Judul"
-                                                :error-messages="existing_device_detail_errors[index]?.title || ''"
-                                                @blur="validateDeviceDetailData(currData, index, false)"></v-text-field>
+                                                :error-messages="existing_user_detail_errors[index]?.title || ''"
+                                                @blur="validateUserDetailData(currData, index, false)"></v-text-field>
                                         </v-col>
                                         <v-col cols="5.5" class="px-1 py-0">
                                             <v-text-field v-model="currData.data" outlined label="Isi Data"
-                                                :error-messages="existing_device_detail_errors[index]?.data || ''"
-                                                @blur="validateDeviceDetailData(currData, index, false)"></v-text-field>
+                                                :error-messages="existing_user_detail_errors[index]?.data || ''"
+                                                @blur="validateUserDetailData(currData, index, false)"></v-text-field>
                                         </v-col>
                                         <v-col cols="1" class="d-flex align-center px-0">
                                             <v-btn @click="removeExistingDataField(index)" color="error"
@@ -186,18 +186,18 @@
                                 </v-container>
 
                                 <!-- New Data Fields -->
-                                <v-container v-for="(newData, index) in new_device_detail_data" :key="'new-' + index">
+                                <v-container v-for="(newData, index) in new_user_detail_data" :key="'new-' + index">
                                     <v-row>
                                         <v-col cols="5.5" class="px-1 py-0">
                                             <v-text-field v-model="newData.title" outlined label="Judul"
-                                                :error-messages="new_device_detail_errors[index]?.title || ''"
-                                                @blur="validateDeviceDetailData(newData, index, true)"></v-text-field>
+                                                :error-messages="new_user_detail_errors[index]?.title || ''"
+                                                @blur="validateUserDetailData(newData, index, true)"></v-text-field>
                                         </v-col>
                                         <v-col cols="5.5" class="px-1 py-0">
 
                                             <v-text-field v-model="newData.data" outlined label="Isi Data"
-                                                :error-messages="new_device_detail_errors[index]?.data || ''"
-                                                @blur="validateDeviceDetailData(newData, index, true)"></v-text-field>
+                                                :error-messages="new_user_detail_errors[index]?.data || ''"
+                                                @blur="validateUserDetailData(newData, index, true)"></v-text-field>
                                         </v-col>
                                         <v-col cols="1" class="d-flex align-center px-0">
                                             <v-btn @click="removeNewDataField(index)" color="error"
@@ -230,7 +230,7 @@
             <v-col>
                 <div class="d-flex justify-center" style="max-width: 300px; width: 100%; margin: 0 auto;">
                     <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="2"
-                        :disabled="isDisableSubmitBtn" @click="submitDeviceUpdate">
+                        :disabled="isDisableSubmitBtn" @click="submitUserUpdate">
                         Perbarui Data Perangkat
                     </v-btn>
                 </div>
@@ -299,7 +299,7 @@ const user_role = ref("user_guset");
 
 
 // Inisialisasi awal
-const curr_device_data = ref({
+const curr_user_data = ref({
     name: "",
     password: "",
     read_interval: null,
@@ -310,7 +310,7 @@ const curr_device_data = ref({
 
 
 
-const original_device_data = ref({
+const original_user_data = ref({
     name: "",
     password: "",
     read_interval: null,
@@ -325,25 +325,25 @@ const original_device_data = ref({
 
 ////////// IMAGE //////////
 // Inisialisasi awal
-const curr_device_image = ref({
+const curr_user_image = ref({
     file_id: null,
     file_data: null,  // str
     file_name: null, // str
 })
 
-const new_device_image = ref({
+const new_user_image = ref({
     file_id: null,
     file_data: null,  // str
     file_name: null, // str
 });
 
-const original_device_image = ref({
+const original_user_image = ref({
     file_data: null,  // str
     file_name: null, // str
 });
 
 // Fungsi untuk menghasilkan data URL dari base64
-function getDeviceImageSrc(base64Image) {
+function getUserImageSrc(base64Image) {
     if (!base64Image || typeof base64Image !== 'string') return null;
 
     let mime = '';
@@ -364,7 +364,7 @@ function getDeviceImageSrc(base64Image) {
 
 // Ambil yang terbaru: jika ada gambar baru, tampilkan itu. Kalau tidak, ambil yang lama.
 const displayedImage = computed(() => {
-    return new_device_image.value.file_data || curr_device_image.value.file_data || "";
+    return new_user_image.value.file_data || curr_user_image.value.file_data || "";
 });
 
 
@@ -377,16 +377,16 @@ const resetFileInput = () => {
 
 const handleImageDelete = () => {
 
-    new_device_image.value = {};
-    curr_device_image.value = {}
+    new_user_image.value = {};
+    curr_user_image.value = {}
     resetFileInput();
 };
 
 const handleCurrImageBack = () => {
 
-    new_device_image.value = {};
+    new_user_image.value = {};
 
-    curr_device_image.value = original_device_image.value;
+    curr_user_image.value = original_user_image.value;
 
     resetFileInput();
 };
@@ -396,7 +396,7 @@ const handleFileUpload = (event) => {
     const file = event.target.files[0];
 
     if (!file) {
-        new_device_image.value = {};
+        new_user_image.value = {};
         return;
     }
 
@@ -410,7 +410,7 @@ const handleFileUpload = (event) => {
             errorCode: "",
         };
 
-        new_device_image.value = {};
+        new_user_image.value = {};
 
 
         return;
@@ -422,9 +422,9 @@ const handleFileUpload = (event) => {
         const base64Full = reader.result; // contoh: "data:image/jpeg;base64,/9j/4AAQ..."
         const base64Clean = base64Full.split(",")[1]; // hanya ambil bagian setelah koma
 
-        new_device_image.value.file_data = base64Clean;
-        new_device_image.value.file_name = file.name;
-        curr_device_image.value = {};
+        new_user_image.value.file_data = base64Clean;
+        new_user_image.value.file_name = file.name;
+        curr_user_image.value = {};
 
     };
 
@@ -439,13 +439,13 @@ const fileInputRef = ref(null);
 
 
 // Validation rules
-const device_name_rules = [
+const user_name_rules = [
     (v) => !!v || "Nama perangkat harus diisi",
     (v) => v.length >= 2 || "Nama perangkat minimal 2 karakter",
     (v) => v.length <= 255 || "Nama perangkat maksimal 255 karakter",
 ];
 
-const device_password_rules = [
+const user_password_rules = [
     (v) => !!v || "Password harus diisi",
     (v) => v.length >= 8 || "Password minimal 8 karakter",
     (v) => v.length <= 255 || "Password maksimal 255 karakter",
@@ -461,35 +461,35 @@ const read_interval_rules = [
 
 
 /////////// DATA //////////////
-// Device detail Data Management
-const existing_device_detail_data = ref([]); // Existing data (can edit key and value)
-const new_device_detail_data = ref([]);  // New data to be added
-const original_device_detail_data = ref([]);
+// User detail Data Management
+const existing_user_detail_data = ref([]); // Existing data (can edit key and value)
+const new_user_detail_data = ref([]);  // New data to be added
+const original_user_detail_data = ref([]);
 
 
-const updated_existing_device_detail_data = ref([]);
-const deleted_existing_device_detail_data = ref([]);
-const added_existing_device_detail_data = ref([]);
+const updated_existing_user_detail_data = ref([]);
+const deleted_existing_user_detail_data = ref([]);
+const added_existing_user_detail_data = ref([]);
 
 
 
 // Methods
 const addNewDataField = () => {
-    if (new_device_detail_data.value.length === 0 ||
-        (new_device_detail_data.value[new_device_detail_data.value.length - 1].title &&
-            new_device_detail_data.value[new_device_detail_data.value.length - 1].data)) {
-        new_device_detail_data.value.push({ title: "", data: "" });
+    if (new_user_detail_data.value.length === 0 ||
+        (new_user_detail_data.value[new_user_detail_data.value.length - 1].title &&
+            new_user_detail_data.value[new_user_detail_data.value.length - 1].data)) {
+        new_user_detail_data.value.push({ title: "", data: "" });
     }
 };
 
 const removeExistingDataField = (index) => {
-    const deletedItem = existing_device_detail_data.value[index];
-    deleted_existing_device_detail_data.value.push(deletedItem);
-    existing_device_detail_data.value.splice(index, 1);
+    const deletedItem = existing_user_detail_data.value[index];
+    deleted_existing_user_detail_data.value.push(deletedItem);
+    existing_user_detail_data.value.splice(index, 1);
 };
 
 const removeNewDataField = (index) => {
-    new_device_detail_data.value.splice(index, 1);
+    new_user_detail_data.value.splice(index, 1);
 };
 
 /* const requiredifNewData = (item) => {
@@ -534,14 +534,14 @@ const requiredifCurrTitle = (item) => {
 
 const noDuplicateTitles = (itemParam, index, isNewData) => {
     const allItems = [
-        ...existing_device_detail_data.value,
-        ...new_device_detail_data.value
+        ...existing_user_detail_data.value,
+        ...new_user_detail_data.value
     ];
 
     const duplicate = allItems.some((otherItem, otherIndex) => {
-        if (isNewData && otherIndex >= existing_device_detail_data.value.length) {
+        if (isNewData && otherIndex >= existing_user_detail_data.value.length) {
             return (
-                otherIndex !== (index + existing_device_detail_data.value.length) &&
+                otherIndex !== (index + existing_user_detail_data.value.length) &&
                 otherItem.title &&
                 otherItem.title.trim() === itemParam.title.trim()
             );
@@ -559,20 +559,20 @@ const noDuplicateTitles = (itemParam, index, isNewData) => {
 };
  */
 const isDisableAddContainer = computed(() => {
-    if (new_device_detail_data.value.length === 0) return false;
-    const lastItem = new_device_detail_data.value[new_device_detail_data.value.length - 1];
+    if (new_user_detail_data.value.length === 0) return false;
+    const lastItem = new_user_detail_data.value[new_user_detail_data.value.length - 1];
     return !lastItem.title.trim() || !lastItem.data.trim();
 });
 
-const existing_device_detail_errors = ref([]);
-const new_device_detail_errors = ref([]);
+const existing_user_detail_errors = ref([]);
+const new_user_detail_errors = ref([]);
 
-const validateDeviceDetailData = (item, index, isNew = false) => {
+const validateUserDetailData = (item, index, isNew = false) => {
     const title = item.title?.trim();
     const data = item.data?.trim();
     const allItems = [
-        ...existing_device_detail_data.value,
-        ...new_device_detail_data.value
+        ...existing_user_detail_data.value,
+        ...new_user_detail_data.value
     ];
 
     let titleError = "";
@@ -583,7 +583,7 @@ const validateDeviceDetailData = (item, index, isNew = false) => {
 
     const isDuplicate = allItems.some((otherItem, otherIndex) => {
         const isSameItem = isNew
-            ? otherIndex === index + existing_device_detail_data.value.length
+            ? otherIndex === index + existing_user_detail_data.value.length
             : otherIndex === index;
         return !isSameItem && otherItem.title?.trim() === title;
     });
@@ -594,9 +594,9 @@ const validateDeviceDetailData = (item, index, isNew = false) => {
 
     // Update global error list
     if (isNew) {
-        new_device_detail_errors.value[index] = { title: titleError, data: dataError };
+        new_user_detail_errors.value[index] = { title: titleError, data: dataError };
     } else {
-        existing_device_detail_errors.value[index] = { title: titleError, data: dataError };
+        existing_user_detail_errors.value[index] = { title: titleError, data: dataError };
     }
 
     return { title: titleError, data: dataError };
@@ -604,7 +604,7 @@ const validateDeviceDetailData = (item, index, isNew = false) => {
 
 
 
-const isDeviceDetailDataEqual = (arr1, arr2) => {
+const isUserDetailDataEqual = (arr1, arr2) => {
     if (arr1.length !== arr2.length) return false;
 
     return arr1.every((item, idx) => {
@@ -613,7 +613,7 @@ const isDeviceDetailDataEqual = (arr1, arr2) => {
     });
 };
 
-const getEditedDeviceData = (originalDataParam, existingDataParam) => {
+const getEditedUserData = (originalDataParam, existingDataParam) => {
     const newDeleted = [];
     const newUpdated = [];
     const newAdded = [];
@@ -648,14 +648,14 @@ const getEditedDeviceData = (originalDataParam, existingDataParam) => {
         }
     }
 
-    deleted_existing_device_detail_data.value = [...newDeleted];
-    updated_existing_device_detail_data.value = [...newUpdated];
-    added_existing_device_detail_data.value = [...newAdded];
+    deleted_existing_user_detail_data.value = [...newDeleted];
+    updated_existing_user_detail_data.value = [...newUpdated];
+    added_existing_user_detail_data.value = [...newAdded];
 
-    console.group("--- getEditedDeviceData ---");
-    console.log("Deleted:", deleted_existing_device_detail_data.value);
-    console.log("Updated:", updated_existing_device_detail_data.value);
-    console.log("Added:", added_existing_device_detail_data.value);
+    console.group("--- getEditedUserData ---");
+    console.log("Deleted:", deleted_existing_user_detail_data.value);
+    console.log("Updated:", updated_existing_user_detail_data.value);
+    console.log("Added:", added_existing_user_detail_data.value);
     console.groupEnd();
 };
 
@@ -667,63 +667,63 @@ const isDisableSubmitBtn = computed(() => {
     console.groupCollapsed("--- isDisableSubmitBtn ---");
 
     // 1. Validasi nama perangkat
-    const isDeviceNameValid = curr_device_data.value?.name?.length >= 2 &&
-        curr_device_data.value.name.length <= 255;
-    console.log("isDeviceNameValid:", isDeviceNameValid, curr_device_data.value?.name);
+    const isUserNameValid = curr_user_data.value?.name?.length >= 2 &&
+        curr_user_data.value.name.length <= 255;
+    console.log("isUserNameValid:", isUserNameValid, curr_user_data.value?.name);
 
     // 2. Validasi password perangkat
-    const isPasswordValid = curr_device_data.value?.password?.length >= 8 &&
-        curr_device_data.value.password.length <= 255;
-    console.log("isPasswordValid:", isPasswordValid, curr_device_data.value?.password);
+    const isPasswordValid = curr_user_data.value?.password?.length >= 8 &&
+        curr_user_data.value.password.length <= 255;
+    console.log("isPasswordValid:", isPasswordValid, curr_user_data.value?.password);
 
     // 3. Validasi interval pembacaan
-    const isReadIntervalValid = typeof curr_device_data.value.read_interval === "number" &&
-        curr_device_data.value.read_interval >= 1 &&
-        curr_device_data.value.read_interval <= 120;
-    console.log("isReadIntervalValid:", isReadIntervalValid, curr_device_data.value?.read_interval);
+    const isReadIntervalValid = typeof curr_user_data.value.read_interval === "number" &&
+        curr_user_data.value.read_interval >= 1 &&
+        curr_user_data.value.read_interval <= 120;
+    console.log("isReadIntervalValid:", isReadIntervalValid, curr_user_data.value?.read_interval);
 
-    // 4. Validasi data device detail yang ada
-    const isCurrDeviceDetailsDataValid = existing_device_detail_data.value.every(item =>
+    // 4. Validasi data user detail yang ada
+    const isCurrUserDetailsDataValid = existing_user_detail_data.value.every(item =>
         item?.title?.trim() && item?.data?.trim());
-    console.log("isCurrDeviceDetailsDataValid:", isCurrDeviceDetailsDataValid);
+    console.log("isCurrUserDetailsDataValid:", isCurrUserDetailsDataValid);
 
-    // 5. Validasi data device detail baru
-    const isNewDeviceDetailsDataValid = new_device_detail_data.value.every(item =>
+    // 5. Validasi data user detail baru
+    const isNewUserDetailsDataValid = new_user_detail_data.value.every(item =>
         item?.title?.trim() && item?.data?.trim());
-    console.log("isNewDeviceDetailsDataValid:", isNewDeviceDetailsDataValid);
+    console.log("isNewUserDetailsDataValid:", isNewUserDetailsDataValid);
 
     // 6. Apakah ada perubahan data?
     const isFieldChanged =
-        curr_device_data.value?.name !== original_device_data.value?.name ||
-        curr_device_data.value?.password !== original_device_data.value?.password ||
-        curr_device_data.value?.read_interval !== original_device_data.value?.read_interval;
+        curr_user_data.value?.name !== original_user_data.value?.name ||
+        curr_user_data.value?.password !== original_user_data.value?.password ||
+        curr_user_data.value?.read_interval !== original_user_data.value?.read_interval;
 
-    const isDeviceDetailChanged = !isDeviceDetailDataEqual(
-        existing_device_detail_data.value,
-        original_device_detail_data.value
+    const isUserDetailChanged = !isUserDetailDataEqual(
+        existing_user_detail_data.value,
+        original_user_detail_data.value
     );
 
-    const isNewDeviceDetailFilled = new_device_detail_data.value.some(
+    const isNewUserDetailFilled = new_user_detail_data.value.some(
         item => item.title?.trim() || item.data?.trim()
     );
 
-    const isImageChanged = !!new_device_image.value?.file_data || !!new_device_image.value?.file_name;
+    const isImageChanged = !!new_user_image.value?.file_data || !!new_user_image.value?.file_name;
 
-    const isDataChanged = isFieldChanged || isDeviceDetailChanged || isNewDeviceDetailFilled || isImageChanged;
+    const isDataChanged = isFieldChanged || isUserDetailChanged || isNewUserDetailFilled || isImageChanged;
 
     console.log("isFieldChanged:", isFieldChanged);
-    console.log("isDeviceDetailChanged:", isDeviceDetailChanged);
-    console.log("isNewDeviceDetailFilled:", isNewDeviceDetailFilled);
+    console.log("isUserDetailChanged:", isUserDetailChanged);
+    console.log("isNewUserDetailFilled:", isNewUserDetailFilled);
     console.log("isImageChanged:", isImageChanged);
     console.log("isDataChanged:", isDataChanged);
 
     // 7. Hasil akhir tombol disable?
     const result = !(
-        isDeviceNameValid &&
+        isUserNameValid &&
         isPasswordValid &&
         isReadIntervalValid &&
-        isCurrDeviceDetailsDataValid &&
-        isNewDeviceDetailsDataValid &&
+        isCurrUserDetailsDataValid &&
+        isNewUserDetailsDataValid &&
         isDataChanged
     );
 
@@ -735,7 +735,7 @@ const isDisableSubmitBtn = computed(() => {
 
 const pending_submit_data = ref({});
 
-const submitDeviceUpdate = () => {
+const submitUserUpdate = () => {
     // === Initialize basic payload ===
     pending_submit_data.value = {
         data: {}
@@ -744,57 +744,57 @@ const submitDeviceUpdate = () => {
     // === Compare simple fields (name, password, read_interval) ===
     const changedFields = ['name', 'password', 'read_interval'];
     changedFields.forEach(field => {
-        if (curr_device_data.value[field] !== original_device_data.value[field]) {
-            pending_submit_data.value[field] = curr_device_data.value[field];
+        if (curr_user_data.value[field] !== original_user_data.value[field]) {
+            pending_submit_data.value[field] = curr_user_data.value[field];
         }
     });
 
-    // === Compare Device Detail Data ===
-    getEditedDeviceData(original_device_detail_data.value, existing_device_detail_data.value);
+    // === Compare User Detail Data ===
+    getEditedUserData(original_user_detail_data.value, existing_user_detail_data.value);
 
-    if (updated_existing_device_detail_data.value.length > 0) {
+    if (updated_existing_user_detail_data.value.length > 0) {
         pending_submit_data.value.data.update = Object.fromEntries(
-            updated_existing_device_detail_data.value.map(item => [item.title, item.data])
+            updated_existing_user_detail_data.value.map(item => [item.title, item.data])
         );
     }
 
-    if (added_existing_device_detail_data.value.length > 0) {
+    if (added_existing_user_detail_data.value.length > 0) {
         pending_submit_data.value.data.insert = Object.fromEntries(
-            added_existing_device_detail_data.value.map(item => [item.title, item.data])
+            added_existing_user_detail_data.value.map(item => [item.title, item.data])
         );
     }
 
-    if (new_device_detail_data.value.length > 0) {
+    if (new_user_detail_data.value.length > 0) {
         pending_submit_data.value.data.insert = {
             ...pending_submit_data.value.data.insert,
-            ...Object.fromEntries(new_device_detail_data.value.map(item => [item.title, item.data]))
+            ...Object.fromEntries(new_user_detail_data.value.map(item => [item.title, item.data]))
         };
     }
 
-    if (deleted_existing_device_detail_data.value.length > 0) {
-        pending_submit_data.value.data.delete = deleted_existing_device_detail_data.value.map(item => item.title);
+    if (deleted_existing_user_detail_data.value.length > 0) {
+        pending_submit_data.value.data.delete = deleted_existing_user_detail_data.value.map(item => item.title);
     }
 
     // === Handle Image ===
-    const hasNewImage = new_device_image.value.file_data && new_device_image.value.file_name;
-    const hasOriginalImage = original_device_image.value.file_id && original_device_image.value.file_data;
+    const hasNewImage = new_user_image.value.file_data && new_user_image.value.file_name;
+    const hasOriginalImage = original_user_image.value.file_id && original_user_image.value.file_data;
 
     if (hasNewImage) {
         if (hasOriginalImage) {
             // Update image
             pending_submit_data.value.image = {
                 update: {
-                    file_id: original_device_image.value.file_id,
-                    file_name: new_device_image.value.file_name,
-                    file_data: new_device_image.value.file_data
+                    file_id: original_user_image.value.file_id,
+                    file_name: new_user_image.value.file_name,
+                    file_data: new_user_image.value.file_data
                 }
             };
         } else {
             // Insert image
             pending_submit_data.value.image = {
                 insert: {
-                    file_name: new_device_image.value.file_name,
-                    file_data: new_device_image.value.file_data
+                    file_name: new_user_image.value.file_name,
+                    file_data: new_user_image.value.file_data
                 }
             };
         }
@@ -802,7 +802,7 @@ const submitDeviceUpdate = () => {
         // Delete image (new image kosong, original masih ada)
         pending_submit_data.value.image = {
             delete: {
-                file_id: original_device_image.value.file_id
+                file_id: original_user_image.value.file_id
             }
         };
     }
@@ -817,8 +817,8 @@ const submitDeviceUpdate = () => {
         delete pending_submit_data.value.image;
     }
 
-    console.group(`---submitDeviceUpdate---`);
-    console.log("submitDeviceUpdate - pending_submit_data.value:", pending_submit_data.value);
+    console.group(`---submitUserUpdate---`);
+    console.log("submitUserUpdate - pending_submit_data.value:", pending_submit_data.value);
     console.groupEnd();
 
     popUpConfirmProps.value = {
@@ -838,12 +838,12 @@ const handleConfirm = async () => {
 
     if (!pending_submit_data.value) return;
 
-    const isSuccess = updateDeviceData(original_device_data.value.id, pending_submit_data.value)
+    const isSuccess = updateUserData(original_user_data.value.id, pending_submit_data.value)
     if (isSuccess) {
         pending_submit_data.value = null;
 
 
-        router.push({ name: "device-management" })
+        router.push({ name: "user-management" })
 
 
 
@@ -863,19 +863,19 @@ const handleCancel = () => {
 
 
 
-async function updateDeviceData(deviceIdparam, deviceChangeFieldsParam) {
+async function updateUserData(userIdparam, userChangeFieldsParam) {
     const baseUrl = BASE_API_URL;
-    const operation = "update_device_data";
+    const operation = "update_user_data";
 
-    console.group("-----updateDeviceData----");
+    console.group("-----updateUserData----");
     isLoading.value = true;
 
-    console.log("updateDeviceData - deviceIdparam:", deviceIdparam);
-    console.log("updateDeviceData - deviceChangeFieldsParam:", deviceChangeFieldsParam);
+    console.log("updateUserData - userIdparam:", userIdparam);
+    console.log("updateUserData - userChangeFieldsParam:", userChangeFieldsParam);
 
     const params = {
-        device_id: deviceIdparam,
-        change_fields: deviceChangeFieldsParam,
+        user_id: userIdparam,
+        change_fields: userChangeFieldsParam,
     };
     console.log("Final params:", params);
 
@@ -896,13 +896,13 @@ async function updateDeviceData(deviceIdparam, deviceChangeFieldsParam) {
             errorCode: "DEVICE_UPDATED",
         };
 
-        const newDeviceId = response_be.payload?.device_id;
-        console.log("New device ID:", newDeviceId);
+        const newUserId = response_be.payload?.user_id;
+        console.log("New user ID:", newUserId);
 
         return true;
 
     } catch (error) {
-        console.error("Error updating device:", error);
+        console.error("Error updating user:", error);
 
         popUpInfoProps.value = {
             status: "error",
@@ -937,24 +937,24 @@ onMounted(() => {
 
     const allowedRoles = ["system master", "system_admin"];
     if (!allowedRoles.includes(user_role.value?.trim())) {
-        router.push({ name: "device-management" });
+        router.push({ name: "user-management" });
     }
 
-    const rawDeviceData = sessionStorage.getItem("device_management");
+    const rawUserData = sessionStorage.getItem("user_management");
 
     try {
-        const parsedData = JSON.parse(rawDeviceData);
+        const parsedData = JSON.parse(rawUserData);
 
         // Buang 'data' dan 'image' dari parsedData
         const { data, image, ...rest } = parsedData;
 
         // Assign hanya properti selain 'data' dan 'image'
-        Object.assign(curr_device_data.value, rest);
+        Object.assign(curr_user_data.value, rest);
 
         console.log("onMounted - parsedData: ", parsedData);
 
-        // Simpan original device (shallow copy cukup, tergantung kebutuhan)
-        original_device_data.value = { ...curr_device_data.value };
+        // Simpan original user (shallow copy cukup, tergantung kebutuhan)
+        original_user_data.value = { ...curr_user_data.value };
 
         // === Handle data field ===
         if (data) {
@@ -964,10 +964,10 @@ onMounted(() => {
             }));
 
 
-            if (original_device_detail_data.value.length === 0) {
+            if (original_user_detail_data.value.length === 0) {
                 const deepCopy = JSON.parse(JSON.stringify(dataArray));
-                original_device_detail_data.value = deepCopy;
-                existing_device_detail_data.value = JSON.parse(JSON.stringify(deepCopy));
+                original_user_detail_data.value = deepCopy;
+                existing_user_detail_data.value = JSON.parse(JSON.stringify(deepCopy));
             }
 
         }
@@ -975,39 +975,39 @@ onMounted(() => {
         // === Handle image field ===
         if (image) {
             console.log("onMounted - image: ", image)
-            original_device_image.value = { ...image };
-            curr_device_image.value = { ...image };
+            original_user_image.value = { ...image };
+            curr_user_image.value = { ...image };
         }
 
     } catch (error) {
-        console.error("Failed to parse device_management data:", error);
-        router.push({ name: "device-management" });
+        console.error("Failed to parse user_management data:", error);
+        router.push({ name: "user-management" });
     }
 
 });
 
 
 watch(
-    () => curr_device_data.value,
+    () => curr_user_data.value,
     (newVal) => {
         if (!newVal) return;
 
         console.log("--- Watch Triggered ---", newVal);
 
-        updated_existing_device_detail_data.value = [];
-        deleted_existing_device_detail_data.value = [];
-        added_existing_device_detail_data.value = [];
+        updated_existing_user_detail_data.value = [];
+        deleted_existing_user_detail_data.value = [];
+        added_existing_user_detail_data.value = [];
 
         // Handle image updates
         if (newVal.image?.file_id) {
-            curr_device_image.value.image = {
+            curr_user_image.value.image = {
                 file_id: newVal.image.file_id,
                 file_name: newVal.image.file_name || "",
             };
         }
 
         if (newVal.image?.file_data) {
-            curr_device_image.value.image.file_data = newVal.image.file_data || "";
+            curr_user_image.value.image.file_data = newVal.image.file_data || "";
         }
     },
     { immediate: true, deep: true }
@@ -1019,7 +1019,7 @@ watch(
 
 
 
-const backToDeviceManagPage = () => {
-    router.push({ name: "device-management" });
+const backToUserManagPage = () => {
+    router.push({ name: "user-management" });
 };
 </script>

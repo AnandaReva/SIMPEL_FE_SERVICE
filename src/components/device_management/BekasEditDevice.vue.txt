@@ -348,53 +348,64 @@ const getEditedDeviceData = (originalDataParam, existingDataParam) => {
         return arr.some(item => item.title === title && item.data === data);
     };
 
+    // 1. Cek deleted berdasarkan title & data (tidak ada di existing)
     originalDataParam.forEach(originalItem => {
-        const stillExists = existingDataParam.some(item => item.title === originalItem.title);
+        const stillExists = existingDataParam.some(item =>
+            item.title === originalItem.title && item.data === originalItem.data
+        );
         if (!stillExists && !isDuplicate(newDeleted, originalItem.title, originalItem.data)) {
             newDeleted.push(originalItem);
         }
     });
 
+    // 2. Cek added dan updated
     existingDataParam.forEach(existingItem => {
         const originalItem = originalDataParam.find(item => item.title === existingItem.title);
 
         if (!originalItem) {
-            if (!isDuplicate(newAdded, existingItem.title, existingItem.data)) {
-                newAdded.push(existingItem);
+            // Cek apakah sebenarnya ini rename (title berubah tapi data sama)
+            const renamedFrom = originalDataParam.find(item =>
+                item.data === existingItem.data && item.title !== existingItem.title
+            );
+
+            if (renamedFrom) {
+                if (!isDuplicate(newDeleted, renamedFrom.title, renamedFrom.data)) {
+                    newDeleted.push(renamedFrom);
+                }
+                if (!isDuplicate(newAdded, existingItem.title, existingItem.data)) {
+                    newAdded.push(existingItem);
+                }
+            } else {
+                // Benar-benar data baru
+                if (!isDuplicate(newAdded, existingItem.title, existingItem.data)) {
+                    newAdded.push(existingItem);
+                }
             }
-        } else if (originalItem.data !== existingItem.data) {
-            if (!isDuplicate(newUpdated, existingItem.title, existingItem.data)) {
+        } else {
+            // Title sama, data beda → updated
+            if (originalItem.data !== existingItem.data &&
+                !isDuplicate(newUpdated, existingItem.title, existingItem.data)) {
                 newUpdated.push({
                     title: existingItem.title,
                     data: existingItem.data
                 });
             }
-        } else {
-            const originalItemWithSameData = originalDataParam.find(
-                item => item.data === existingItem.data && item.title !== existingItem.title
-            );
-
-            if (originalItemWithSameData &&
-                !isDuplicate(newDeleted, originalItemWithSameData.title, originalItemWithSameData.data) &&
-                !isDuplicate(newAdded, existingItem.title, existingItem.data)) {
-                newDeleted.push(originalItemWithSameData);
-                newAdded.push(existingItem);
-            }
         }
     });
 
-
-
+    // Assign ke variabel reactive kamu
     deletedCurrDeviceDetailsData.value = [...newDeleted];
     updatedCurrDeviceDetailsData.value = [...newUpdated];
     addedCurrDeviceDetailsData.value = [...newAdded];
-    console.group("---getEditedDeviceData---");
-    console.log("deletedCurrDeviceDetailsData.value: ", deletedCurrDeviceDetailsData.value);
-    console.log("updatedCurrDeviceDetailsData.value: ", updatedCurrDeviceDetailsData.value);
-    console.log("addedCurrDeviceDetailsData.value: ", addedCurrDeviceDetailsData.value);
-    console.groupEnd();
 
+    // Debug
+    console.group("--- getEditedDeviceData ---");
+    console.log("Deleted:", newDeleted);
+    console.log("Updated:", newUpdated);
+    console.log("Added:", newAdded);
+    console.groupEnd();
 };
+
 
 ////////////// DEVICE IMAGE //////////////
 

@@ -370,8 +370,8 @@ const verifyToken = async () => {
   localStorage.setItem("session_id", response_be.payload.session_id);
   localStorage.setItem("session_hash", response_be.payload.session_hash);
 
-  // Setelah login berhasil, alihkan ke dashboard
-  router.push({ name: "dashboard" });
+  // Setelah login berhasil, alihkan ke monitoring
+  router.push({ name: "monitoring" });
 };
 
 

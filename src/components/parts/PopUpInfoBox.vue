@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+
 import { stringifyQuery } from 'vue-router';
 
 const properties = {

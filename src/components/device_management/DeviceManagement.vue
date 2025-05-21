@@ -18,7 +18,7 @@
 
 
                     <!-- Konten daftar perangkat -->
-                    <div class="d-flex flex-wrap mb-0">
+                    <div class="d-flex flex-wrap mb-0 ">
                         <v-col v-if="user_role == 'system master' || user_role == 'system admin'" cols="12"
                             class="d-flex justify-end align-center px-0">
                             <span class="mr-3 text-subtitle-1 font-weight-medium" style="color: #555;">
@@ -83,8 +83,8 @@
                             Tambah Perangkat
                         </span>
 
-                        <v-btn @click="toEditPage(currDeviceDataLocal.device_id)" color="primary" icon rounded="circle"
-                            elevation="2" class="ma-0" style="width: 48px; height: 48px;">
+                        <v-btn @click="toAddPage()" color="primary" icon rounded="circle" elevation="2" class="ma-0"
+                            style="width: 48px; height: 48px;">
                             <v-icon size="24">mdi-plus</v-icon>
                         </v-btn>
                     </v-col>
@@ -126,7 +126,7 @@
                         <div>
                             <v-infinite-scroll :key="scrollKeyDevices" id="DeviceListBox" ref="DeviceListBox"
                                 height="550" side="end" @load="loadDevices" class="overflow-auto">
-                                <DeviceListInfiniteScroll :devices="devices" :total_devices="total_devices"
+                                <UserListInfiniteScroll :devices="devices" :total_devices="total_devices"
                                     @select-device="selectDevice" />
                             </v-infinite-scroll>
                         </div>
@@ -134,11 +134,15 @@
                 </v-card>
             </v-col>
 
-            <!-- Tombol sticky di kiri atas, hanya terlihat di layar kecil -->
-            <v-btn icon @click.stop="drawer = !drawer" class="d-md-none"
-                style="position: sticky; top: 10px; left: 0; z-index: 100;">
-                <v-icon>mdi-arrow-expand-right</v-icon>
-            </v-btn>
+
+            <div style="position: fixed; top: 50px; left: 10px; z-index: 100;">
+
+                <v-btn icon @click.stop="drawer = !drawer" class="d-md-none" color="info">
+                    <v-icon>mdi-arrow-right</v-icon>
+                </v-btn>
+
+            </div>
+
 
 
             <v-col cols="12" md="8" lg="9">
@@ -151,13 +155,11 @@
 
 
                         <!-- Parent -->
-
-
-
-
                         <div>
 
-                            <Detaildevice :curr_device_detail_data="curr_device" @select-device="selectDevice" />
+                            <Detaildevice :curr_device="curr_device" @select-device="selectDevice"
+                                @delete-device="deleteDevice" @write-popUp-info-box="writePopUpInfoBox" />
+
                         </div>
 
 
@@ -175,6 +177,17 @@
                 </v-card>
             </v-col>
         </v-row>
+
+
+        <PopUpInfoBox v-if="popUpInfoVisible" class="popup-container" :status="popUpInfoProps.status"
+            :errorMessage="popUpInfoProps.errorMessage" :errorCode="popUpInfoProps.errorCode"
+            :visible="popUpInfoVisible" @close="closePopUpInfo" />
+
+        <PopUpConfirmationBox v-if="popUpConfirmVisible" class="popup-container" :title="popUpConfirmProps.title"
+            :message="popUpConfirmProps.message" :status="popUpConfirmProps.status" :visible="popUpConfirmVisible"
+            @confirm="handleConfirm" @cancel="handleConfirmCancel" />
+
+
     </v-container>
 </template>
 
@@ -185,17 +198,37 @@ import { Process } from '@/utils/requestHelper';
 import Detaildevice from './DetailDevice.vue';
 
 import { useRouter } from 'vue-router';
+import UserListInfiniteScroll from '../parts/UserListInfiniteScroll.vue';
 
 const router = useRouter();
 
 
-const popupVisible = ref(false);
-const popUpProps = ref({
+/////// STATE MANAGEEMNT /////////
+
+const popUpConfirmVisible = ref(false);
+
+const popUpConfirmProps = ref({
+    title: "",
+    message: "",
+    status: "",
+});
+
+/////
+
+const popUpInfoVisible = ref(false);
+
+const closePopUpInfo = () => {
+    popUpInfoVisible.value = false;
+};
+const popUpInfoProps = ref({
     status: "",
     errorMessage: "",
     errorCode: "",
 });
 const isLoading = ref(false);
+
+
+
 const drawer = ref(false);
 
 
@@ -347,12 +380,12 @@ async function getDeviceList(pageNumberParam) {
 
         if (response_be.status !== "success") {
             console.error("getDeviceList FAILED!!:", response_be.error_message);
-            popUpProps.value = {
+            popUpInfoProps.value = {
                 status: "error",
                 errorMessage: "Gagal Mendapatkan Data Perangkat Aktif",
                 errorCode: response_be.error_code,
             };
-            popupVisible.value = true;
+            popUpInfoVisible.value = true;
             return false;
         }
 
@@ -383,41 +416,18 @@ async function getDeviceList(pageNumberParam) {
 function selectDevice(deviceSelected) {
     console.log("---selectDevice---")
 
+    isLoading.value = true;
+
     console.log("selectDevice - deviceSelected: ", deviceSelected.id)
-
-
-    // Object.assign(curr_device.value, {
-    //     id: responseBE.device_id,
-    //     name: responseBE.device_name,
-    // });
-
-    // curr_device.value = deviceSelected.id
-
-    // const id = deviceSelected.id
-    // console.log("selectDevice - id: ", id)
-
-    // if (deviceSelected.id === curr_device.value.id) {
-    //     console.log("device ", deviceSelected.id, "already selected")
-    //     return;
-    // }
-
-    // console.log("selectdevice - curr_device.value.id: ", curr_device.value.id)
-
-
 
     getDeviceDetail(deviceSelected.id);
 
-    drawer.value = false
-
-
-
+    drawer.value = false;
+    isLoading.value = false;
 }
 
 
 ////////// DEVICE DETAIL ////////////
-
-
-
 async function getDeviceDetail(deviceIdParam) {
     console.log("----getDeviceDetail----")
     if (isFetchingDeviceDetail.value == true) {
@@ -440,12 +450,12 @@ async function getDeviceDetail(deviceIdParam) {
 
         if (response_be.status !== "success") {
             console.error("getDeviceDetail FAILED!!:", response_be.error_message);
-            popUpProps.value = {
+            popUpInfoProps.value = {
                 status: "error",
                 errorMessage: "Gagal Mendapatkan Data Perangkat Aktif",
                 errorCode: response_be.error_code,
             };
-            popupVisible.value = true;
+            popUpInfoVisible.value = true;
             return false;
         }
 
@@ -489,17 +499,148 @@ async function getDeviceDetail(deviceIdParam) {
 }
 
 
-function toAddPage() {
-
-    router.push({ name: "device-add" })
 
 
 
+////////// DELETE DEVICE ////////////
+const curr_device_delete = ref(null);
+
+function deleteDevice(deviceIdParam) {
+    if (!deviceIdParam) {
+        console.log("deleteDevice - deviceIdParam not Valid :", deviceIdParam)
+        return;
+    }
+
+    curr_device_delete.value = deviceIdParam;
+
+    // Set fungsi confirm dinamis
+
+
+    confirmAction.value = async () => {
+
+        isLoading.value = true;
+        const isSuccess = await deleteDeviceData(deviceIdParam);
+
+        if (isSuccess) {
+            popUpInfoProps.value = {
+                status: "success",
+                errorMessage: "Sukses Menghapus Perangkat",
+                errorCode: "",
+            };
+            curr_device_delete.value = null;
+            curr_device.value = { id: null, name: null };
+        }
+
+        isLoading.value = false;
+    };
+
+    popUpConfirmProps.value = {
+        title: "Konfirmasi Hapus Perangkat",
+        message: "Apakah Anda yakin ingin menghapus perangkat ini?",
+        status: "info",
+    };
+
+    popUpConfirmVisible.value = true;
 }
 
 
 
 
+const isDeletingDevice = ref(false)
+async function deleteDeviceData(deviceIdParam) {
+    console.log("----deleteDevice----")
+    if (isDeletingDevice.value == true) {
+        console.log("delete device already in progress...");
+        return false;
+    }
+
+    isDeletingDevice.value = true;
+
+    try {
+        const operation = "delete_device_data";
+        const baseUrl = BASE_API_URL;
+
+        const params = {
+            device_id: deviceIdParam
+        };
+
+        console.log("deleteDevice params:", params);
+        const response_be = await Process(baseUrl, operation, params);
+
+        if (response_be.status !== "success") {
+            console.error("deleteDevice FAILED!!:", response_be.error_message);
+            popUpInfoProps.value = {
+                status: "error",
+                errorMessage: "Gagal Menghapus Perangkat",
+                errorCode: response_be.error_code,
+            };
+            popUpInfoVisible.value = true;
+            return false;
+        }
+
+        console.log("deleteDevice SUCCESS!!");
+
+
+        return true;
+
+    } catch (err) {
+        console.error("ERROR WHILE DELETING DEVICE DATA:", err);
+        return false;
+    } finally {
+        isDeletingDevice.value = false;
+    }
+}
+
+///////////////////////////////////
+
+function writePopUpInfoBox(statusParam, errorCodeParam, errorMessageParam) {
+    popUpInfoProps.value = {
+        status: statusParam,
+        errorMessage: errorMessageParam,
+        errorCode: errorCodeParam,
+    };
+    popUpInfoVisible.value = true;
+}
+
+
+
+
+
+
+const confirmAction = ref(null);
+
+
+const handleConfirm = async () => {
+    popUpConfirmVisible.value = false;
+    isLoading.value = true;
+
+    try {
+        if (confirmAction.value) {
+            await confirmAction.value();
+        }
+    } catch (error) {
+        console.error("Error during confirm action:", error);
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: error.message || "Terjadi kesalahan",
+            errorCode: error.code || "UNKNOWN_ERROR",
+        };
+    } finally {
+        popUpInfoVisible.value = true;
+        isLoading.value = false;
+    }
+};
+
+const handleConfirmCancel = () => {
+    curr_device_delete.value = null;
+    confirmAction.value = null;
+    popUpConfirmVisible.value = false;
+};
+
+
+function toAddPage() {
+    router.push({ name: "device-add" })
+}
 
 onMounted(() => {
     // get user role

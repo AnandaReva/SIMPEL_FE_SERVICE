@@ -597,20 +597,31 @@ function destroyCharts() {
   chartInstances.value = []
 }
 
+
+
+
 function renderEnergyChart() {
   if (typeof CanvasJS === 'undefined') {
     console.error('CanvasJS belum dimuat.');
     return;
   }
 
-  const dataPoints = day_list.value.map((day) => ({
+  const weekdayColors = {
+    "Senin": "#4F81BD",
+    "Selasa": "#C0504D",
+    "Rabu": "#9BBB59",
+    "Kamis": "#8064A2",
+    "Jumat": "#00B050"
+  };
+
+  // === 🔷 1. Data untuk Bar Chart (semua hari) ===
+  const barDataPoints = day_list.value.map((day) => ({
     y: day.energy_consumed_count,
-    label: day.month_name,
+    label: `${day.day_date_num}`, // bisa juga pakai `day.month_name`
     indexLabelFontColor: "#444",
     indexLabelPlacement: "outside"
   }));
 
-  // Bar Chart - Energi per bulan
   const barChart = new CanvasJS.Chart("energyChart", {
     animationEnabled: true,
     theme: "light2",
@@ -622,31 +633,46 @@ function renderEnergyChart() {
     data: [{
       type: "column",
       color: "#346285",
-      dataPoints
+      dataPoints: barDataPoints
     }]
   });
 
   barChart.render();
   chartInstances.value.push(barChart);
 
-  // Donut Chart - Proporsi per bulan
+  // === 🟢 2. Data untuk Donut Chart (khusus Senin–Jumat) ===
+  const donutDataPoints = day_list.value
+    .map((day) => {
+      const dayName = GetDayNameLocal(day.day_date_num);
+      if (["Senin", "Selasa", "Rabu", "Kamis", "Jumat"].includes(dayName)) {
+        return {
+          y: day.energy_consumed_count,
+          label: `${dayName}, ${day.day_date_num}`,
+          color: weekdayColors[dayName] || "#cccccc"
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
+
   const donutChart = new CanvasJS.Chart("energyDonutChart", {
     animationEnabled: true,
     theme: "light2",
-    title: { text: `Proporsi Konsumsi Energi Bulan ${GetMonthNameLocal(curr_month.value)}` },
+    title: { text: `Proporsi Konsumsi Energi Hari Kerja Bulan ${GetMonthNameLocal(curr_month.value)}` },
     data: [{
       type: "doughnut",
       indexLabel: "{label}: {y} kWh",
       yValueFormatString: "#,##0.##\" kWh\"",
       showInLegend: true,
       legendText: "{label}",
-      dataPoints
+      dataPoints: donutDataPoints
     }]
   });
 
   donutChart.render();
   chartInstances.value.push(donutChart);
 }
+
 
 
 
