@@ -40,33 +40,32 @@ const routes = [
         component: MonitoringPage,
         meta: { requiresAuth: true },
     },
+
+
     {
         path: '/report/',
         name: 'report-year',
         component: YearlyReport,
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, parent: 'report-daily' },
     },
     {
         path: '/report/:year',
         name: 'report-month',
         component: MonthlyReport,
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, parent: 'report-daily' },
     },
     {
         path: '/report/:year/:month',
         name: 'report-daily',
         component: DailyReport,
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, parent: 'report-daily' },
     },
-
     {
         path: '/report/:year/:month/:date_day',
         name: 'report-daily-detail',
         component: DayDetailReport,
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, parent: 'report-daily' },
     },
-
-
 
     {
         path: '/users',
@@ -88,13 +87,13 @@ const routes = [
         path: '/device/add',
         name: 'device-add',
         component: AddDevice,
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, parent: 'device-management' },
     },
     {
         path: '/device/edit/:device_name',
         name: 'device-edit',
         component: EditDevice,
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, parent: 'device-management' },
     },
 
 

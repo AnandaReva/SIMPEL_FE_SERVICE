@@ -63,7 +63,7 @@
                     <div>
                         <v-infinite-scroll :key="scrollKeyDevices" id="DeviceListBox" ref="DeviceListBox" height="550"
                             side="end" @load="loadDevices" class="overflow-auto">
-                            <DeviceListInfiniteScroll :devices="devices" :total_devices="total_devices"
+                            <DeviceListInfiniteScroll :devices="devices" :total_devices="total_devices" :curr_device="curr_device"
                                 @select-device="selectDevice" />
                         </v-infinite-scroll>
                     </div>
@@ -126,7 +126,7 @@
                         <div>
                             <v-infinite-scroll :key="scrollKeyDevices" id="DeviceListBox" ref="DeviceListBox"
                                 height="550" side="end" @load="loadDevices" class="overflow-auto">
-                                <UserListInfiniteScroll :devices="devices" :total_devices="total_devices"
+                                <DeviceListInfiniteScroll :devices="devices" :total_devices="total_devices" :curr_device="curr_device"
                                     @select-device="selectDevice" />
                             </v-infinite-scroll>
                         </div>
@@ -198,7 +198,7 @@ import { Process } from '@/utils/requestHelper';
 import Detaildevice from './DetailDevice.vue';
 
 import { useRouter } from 'vue-router';
-import UserListInfiniteScroll from '../parts/UserListInfiniteScroll.vue';
+import DeviceListInfiniteScroll from '../parts/DeviceListInfiniteScroll.vue';
 
 const router = useRouter();
 
@@ -488,6 +488,8 @@ async function getDeviceDetail(deviceIdParam) {
             console.log("device_data is empty (null or undefined).");
         }
 
+        sessionStorage.setItem("device_management", JSON.stringify(curr_device.value))
+
         return true;
 
     } catch (err) {
@@ -644,16 +646,18 @@ function toAddPage() {
 
 onMounted(() => {
     // get user role
+
     const user_data = JSON.parse(localStorage.getItem('user_data'));
     user_role.value = user_data?.role;
     //console.log('user_role', user_role.value);
 
     searchDevices();
-    const rawCurrDeviceData = sessionStorage.getItem("curr_device_selected")
+    const rawCurrDeviceData = sessionStorage.getItem("device_management")
 
     try {
         curr_device.value = JSON.parse(rawCurrDeviceData)
-        console.groupCollapsed("---onMounted---")
+
+        console.groupCollapsed("---DeviceManagement.vue - onMounted---")
         console.log("onMounted - curr_device.value: ", curr_device.value)
 
         //sessionStorage.removeItem("curr_device_selected")

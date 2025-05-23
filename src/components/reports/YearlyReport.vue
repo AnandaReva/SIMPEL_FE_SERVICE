@@ -762,13 +762,13 @@ const selectDevice = async (deviceFromEmit) => {
     curr_device.value.id = deviceFromEmit.id;
     curr_device.value.name = deviceFromEmit.name;
 
-    // Simpan ke localStorage dalam format yang diinginkan
+    // Simpan ke sessionStorage dalam format yang diinginkan
     const deviceData = {
         device_id: deviceFromEmit.id,
         device_name: deviceFromEmit.name
     };
 
-    localStorage.setItem('report', JSON.stringify({ device: deviceData }));
+    sessionStorage.setItem('report_device', JSON.stringify({ device: deviceData }));
 
     console.log('Device selected:', deviceFromEmit);
 };
@@ -776,29 +776,29 @@ const selectDevice = async (deviceFromEmit) => {
 onMounted(() => {
     console.groupCollapsed("---onMounted---");
 
-    // Cek apakah ada data device yang tersimpan di localStorage
-    const savedDevice = localStorage.getItem('report');
-    let deviceIdFromLocalStorage = null;
-    let deviceNameFromLocalStorage = null;
+    // Cek apakah ada data device yang tersimpan di sessionStorage
+    const savedDevice = sessionStorage.getItem('report_device');
+    let deviceIdFromsessionStorage = null;
+    let deviceNameFromsessionStorage = null;
 
     if (savedDevice) {
         const parsedDevice = JSON.parse(savedDevice);
         if (parsedDevice && parsedDevice.device) {
-            deviceIdFromLocalStorage = parsedDevice.device.device_id;
-            deviceNameFromLocalStorage = parsedDevice.device.device_name;
+            deviceIdFromsessionStorage = parsedDevice.device.device_id;
+            deviceNameFromsessionStorage = parsedDevice.device.device_name;
         }
     }
 
-    console.log('Device ID from localStorage:', deviceIdFromLocalStorage);
-    console.log('Device Name from localStorage:', deviceNameFromLocalStorage);
+    console.log('Device ID from sessionStorage:', deviceIdFromsessionStorage);
+    console.log('Device Name from sessionStorage:', deviceNameFromsessionStorage);
 
     console.groupEnd();
 
-    // Jika ID dan Name sudah ada di localStorage, jalankan selectDevice
-    if (deviceIdFromLocalStorage && deviceNameFromLocalStorage) {
+    // Jika ID dan Name sudah ada di sessionStorage, jalankan selectDevice
+    if (deviceIdFromsessionStorage && deviceNameFromsessionStorage) {
         const deviceFromStorage = {
-            id: deviceIdFromLocalStorage,
-            name: deviceNameFromLocalStorage,
+            id: deviceIdFromsessionStorage,
+            name: deviceNameFromsessionStorage,
         };
 
         // Trigger kembali selectDevice

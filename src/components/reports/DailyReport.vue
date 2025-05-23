@@ -761,8 +761,8 @@ function renderGeneralChart(containerId, titleText, key, label, type = "line", o
 onMounted(() => {
   console.groupCollapsed("---onMounted---");
 
-  // Cek apakah ada data device yang tersimpan di localStorage
-  const savedDevice = localStorage.getItem('report');
+  // Cek apakah ada data device yang tersimpan di sessionStorage
+  const savedDevice = sessionStorage.getItem('report_device');
 
   const yearFromUrl = route.params.year;
   const monthFromUrl = route.params.month;
@@ -781,8 +781,8 @@ onMounted(() => {
   }
 
 
-  console.log('Device ID from localStorage:', curr_device.value.id);
-  console.log('Device Name from localStorage:', curr_device.value.name);
+  console.log('Device ID from sessionStorage:', curr_device.value.id);
+  console.log('Device Name from sessionStorage:', curr_device.value.name);
   console.log('Year fromURL:', yearFromUrl);
   console.log('Month fromURL:', monthFromUrl);
 

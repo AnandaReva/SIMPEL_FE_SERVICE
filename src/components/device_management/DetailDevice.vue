@@ -1,7 +1,7 @@
 <template>
     <v-row class="fill-height ma-0">
 
-        {{ curr_device }}
+        <!-- {{ curr_device }} -->
         <v-col cols="12" class="d-flex align-center">
             <v-tooltip text="Edit perangkat" location="top">
                 <template #activator="{ props }">
@@ -26,9 +26,7 @@
         <v-col cols="12" class="pa-0">
             <!-- Header Detail Perangkat -->
             <v-card flat class="px-4 py-2 mb-4">
-                <p class="text-h6 font-weight-medium text-center mb-0">
-                    Detail Perangkat
-                </p>
+                <p class="text-h6 font-weight-medium text-center mb-0">DETAIL DATA PERANGKAT</p>
             </v-card>
 
 
@@ -110,6 +108,9 @@
                     </v-card-text>
                 </v-card>
 
+
+                <!-- {{ curr_device?.data }} -->
+
                 <!-- Data Perangkat -->
                 <v-card outlined class="mb-4">
                     <v-card-title class="d-flex align-center">
@@ -117,7 +118,8 @@
                         <span class="text-subtitle-1 font-weight-medium">Data Perangkat</span>
                     </v-card-title>
 
-                    <v-card-text v-if="curr_device?.data.length > 0" style="max-height: 300px; overflow-y: auto;">
+                    <v-card-text v-if="curr_device?.data && Object.keys(curr_device.data).length > 0">
+
                         <!-- Judul -->
 
 
@@ -137,6 +139,7 @@
                         </v-row>
 
                         <!-- Data lainnya -->
+
                         <v-row v-for="(value, key, index) in curr_device?.data" :key="'data-entry-' + index"
                             class="mb-2">
                             <v-col cols="5" class="pa-0 pr-2" color="base">
@@ -169,12 +172,11 @@
                         <span class="text-subtitle-1 font-weight-medium">Aktivitas Perangkat</span>
                     </v-card-title>
 
-                    <v-card-text>
+                    <v-card-text v-if="Array.isArray(device_activities) && device_activities.length > 0">
 
                         <div class="d-flex flex-wrap mb-0">
                             <v-select v-model="selectedOrderByDeviceActivityList" :items="[
                                 { title: 'Waktu terakhir', value: 'timestamp' },
-                                { title: 'Nama perangkat', value: 'name' }
                             ]" density="compact" label="Pengurutan" variant="outlined" style="height: 50px;" />
 
                             <v-select v-model="selectedFilterDeviceActivityList" :items="[
@@ -183,7 +185,7 @@
                                 { title: 'Connect', value: 'connect' },
                                 { title: 'Disconnect', value: 'disconnect' },
                                 { title: 'Lainnya', value: 'other' },
-                            ]" density="compact" label="Status" variant="outlined" style="height: 50px;" />
+                            ]" density="compact" label="Jenis Aktivitas" variant="outlined" style="height: 50px;" />
 
                             <v-btn @click="toogleSortType" icon>
                                 <v-icon>
@@ -193,23 +195,27 @@
                             </v-btn>
                         </div>
 
-                        <div v-if="device_activities > 0">
+
+                        <div>
+
                             <v-infinite-scroll :key="scrollKeyDeviceActivities" height="550" side="end"
                                 @load="loadDeviceActivities" class="overflow-auto">
-                                <DevicesActivityListInfiniteScroll :device_acivities="device_activities"
+                                <DevicesActivityListInfiniteScroll :device_activities="device_activities"
                                     :total_device_activities="total_device_activities" />
                             </v-infinite-scroll>
                         </div>
 
-                        <div v-else class="text-center">
-
-                            <p class="text-caption text-grey">Tidak ada data</p>
-
-                        </div>
 
 
 
                     </v-card-text>
+
+                    <v-else v-card-text v-else class="text-center">
+
+                        <p class="text-caption text-grey">Tidak ada aktivitas</p>
+
+                    </v-else>
+
 
                 </v-card>
 
@@ -286,7 +292,6 @@ const isFetchingDeviceActivities = ref(false)
 const selectedOrderByDeviceActivityList = ref("timestamp"); // Default: Waktu terakhir
 const selectedFilterDeviceActivityList = ref(null); // Default: Semua perangkat aktif
 const selectedSortTypeDeviceActivityList = ref("desc") // Default: ASC
-const filterDeviceActivityList = ref('');
 
 
 const device_activities = ref([]);
@@ -390,7 +395,7 @@ async function getDeviceActivityList(pageNumberParam) {
 
         const params = {
             device_id: props.curr_device.id,
-            filter: filterDeviceActivityList.value,
+            filter: selectedFilterDeviceActivityList.value,
             order_by: selectedOrderByDeviceActivityList.value,
             sort_type: selectedSortTypeDeviceActivityList.value,
             page_number: pageNumberParam,
@@ -478,7 +483,7 @@ function toEditPage(currDeviceDetailDataParam) {
         return;
     }
 
-    sessionStorage.setItem("device_management", JSON.stringify(currDeviceDetailDataParam))
+    //  sessionStorage.setItem("device_management", JSON.stringify(currDeviceDetailDataParam))
 
 
     router.push({
@@ -491,8 +496,18 @@ function toEditPage(currDeviceDetailDataParam) {
 
 onMounted(() => {
 
-    console.log("detail perangkat - curr_device", props.curr_device)
+    console.log("detail perangkat - curr_device", props.curr_device);
+    if (props.curr_device?.id) {
+        searchDeviceActivities();
+        console.log("detail perangkat - curr_device.id", props.curr_device.id);
+    } else {
+        console.log("detail perangkat - curr_device.id not valid");
+    }
 
-});
+
+
+}
+
+);
 
 </script>

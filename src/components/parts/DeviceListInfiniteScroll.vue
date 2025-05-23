@@ -4,7 +4,9 @@
             Menampilkan: {{ devices?.length }}/{{ total_devices }}
         </p>
 
-<!--         {{devices  }} -->
+        <!--         {{devices  }} -->
+
+
 
         <v-list bg-color="white" dense class="rounded-lg elevation-2">
             <template v-if="devices?.length > 0">
@@ -13,7 +15,9 @@
                 <template v-for="(device, index) in devices" :key="device.device_id">
 
 
-                    <v-list-item @click="emitSelect(device)" class="device-item">
+                    <v-list-item @click="emitSelect(device)" class="device-item"
+                        :class="{ 'bg-grey-lighten-1': device.device_id === curr_device?.id }">
+
                         <v-row align="center" no-gutters class="w-100">
                             <!-- Icon -->
                             <v-col cols="1" class="d-flex justify-center">
@@ -25,6 +29,23 @@
                                 <v-list-item-title class="text-body-2 font-weight-medium">
                                     {{ device.device_name }}
                                 </v-list-item-title>
+                                <v-list-item-subtitle class="text-caption d-flex align-center gap-2">
+                                    <div v-if="device?.device_st === 1 || device?.device_st === 0" class="d-flex align-center">
+                                        <div class="rounded-circle me-2" :style="{
+                                            width: '10px',
+                                            height: '10px',
+                                            backgroundColor: device.device_st === 1 ? '#4CAF50' : '#9E9E9E'
+                                        }"></div>
+                                        <span class="text-caption">
+                                            {{ device.device_st === 1 ? 'Aktif' : 'Nonaktif' }}
+                                        </span>
+                                    </div>
+                                    <div v-else>-</div>
+
+                                    <template v-else>
+                                        -
+                                    </template>
+                                </v-list-item-subtitle>
                             </v-col>
 
                             <!-- Aktivitas Terakhir -->
@@ -54,9 +75,10 @@ import { FormatTimestamp } from "@/utils/utils";
 
 
 // Props
-const props = defineProps(["devices", "total_devices"]);
+const props = defineProps(["devices", "total_devices", "curr_device"]);
 // Emit
 const emit = defineEmits(["select-device"]);
+
 
 
 // // Fungsi pemilihan

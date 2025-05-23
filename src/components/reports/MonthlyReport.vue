@@ -609,6 +609,7 @@ function renderEnergyChart() {
         indexLabelPlacement: "outside"
     }));
 
+
     // Bar Chart - Energi per bulan
     const barChart = new CanvasJS.Chart("energyChart", {
         animationEnabled: true,
@@ -763,8 +764,8 @@ function selectMonth(monthSelected) {
 onMounted(() => {
     console.groupCollapsed("---onMounted---");
 
-    // Cek apakah ada data device yang tersimpan di localStorage
-    const savedDevice = localStorage.getItem('report');
+    // Cek apakah ada data device yang tersimpan di sessionStorage
+    const savedDevice = sessionStorage.getItem('report_device');
 
     const yearFromUrl = route.params.year;
 
@@ -781,8 +782,8 @@ onMounted(() => {
     }
 
 
-    console.log('Device ID from localStorage:', curr_device.value.id);
-    console.log('Device Name from localStorage:', curr_device.value.name);
+    console.log('Device ID from sessionStorage:', curr_device.value.id);
+    console.log('Device Name from sessionStorage:', curr_device.value.name);
     console.log('Year fromURL:', yearFromUrl);
 
     console.groupEnd();
