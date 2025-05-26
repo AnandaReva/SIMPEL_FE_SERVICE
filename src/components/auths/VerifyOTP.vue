@@ -1,44 +1,49 @@
 <template>
+    <v-container fluid class="pa-2 elevation-0 fill-height" :class="{ 'disable-interactions': isLoading }">
+        <v-card color="base" class="mx-auto my-auto pa-4" max-width="600">
+            <v-row justify="center">
+                <v-overlay :model-value="isLoading" class="d-flex justify-center align-center">
+                    <v-progress-circular indeterminate color="primary" size="64" />
+                </v-overlay>
+                <v-col cols="12">
+                    <v-card-title class="text-center text-h5 font-weight-bold mb-2">
+                        VERIFIKASI KODE OTP
+                    </v-card-title>
 
+                    <v-card-subtitle class="text-center text-body-1 mb-2">
+                        Masukkan kode OTP yang telah dikirim ke email:
+                        <strong>{{ otpData.email || "N/A" }}</strong>
+                    </v-card-subtitle>
 
-    <v-row class="fill-height">
-        <v-progress-circular v-if="isLoading" color="primary" indeterminate
-            class="loading-spinner"></v-progress-circular>
+                    <v-card-subtitle class="text-center text-body-1 mb-4">
+                        Sisa waktu <strong>{{ remainingTime }}</strong> detik
+                    </v-card-subtitle>
 
-        <v-card class="form-card pa-8" elevation="0" max-width="600">
-            <v-card-title class="text-center text-h5 font-weight-bold mb-2">
-                VERIFIKASI KODE OTP
-            </v-card-title>
+                    <v-alert v-if="isExpired" type="error" class="mb-4">
+                        Kode OTP telah kedaluwarsa. Silakan minta kode baru.
+                    </v-alert>
 
-            <v-card-subtitle class="text-center text-body-1 mb-6">
-                Masukkan kode OTP yang telah dikirimkan ke alamat email: <strong>{{ otpData.email || "N/A" }}</strong>
-            </v-card-subtitle>
+                    <v-form ref="otpForm" @submit.prevent="submitOtp">
+                        <!-- ⬇️ Gantikan input OTP dengan v-otp-input -->
+                        <v-otp-input v-model="otp" length="6" type="number" variant="outlined" autofocus
+                            class="mb-4 justify-center" :disabled="isLoading || isExpired"
+                            :rules="otpRules"></v-otp-input>
 
-            <v-card-subtitle class="text-center text-body-1 mb-6">
-                Sisa waktu <strong>{{ remainingTime }}</strong> detik
-            </v-card-subtitle>
+                        <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="0"
+                            :disabled="isDisabledOtp || isExpired">
+                            Konfirmasi
+                        </v-btn>
+                    </v-form>
 
-            <v-alert v-if="isExpired" type="error" class="mb-4">
-                Kode OTP telah kedaluwarsa. Silakan minta kode baru.
-            </v-alert>
-
-            <v-form ref="otpForm" @submit.prevent="submitOtp">
-                <v-text-field maxlength="6" v-model="otp" label="OTP" outlined dense prepend-inner-icon="mdi-lock"
-                    class="mb-4" :rules="otpRules" required type="number"></v-text-field>
-
-                <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="0"
-                    :disabled="isDisabledOtp || isExpired">
-                    Konfirmasi
-                </v-btn>
-            </v-form>
+                    <PopUpInfoBox v-if="popUpInfoVisible" class="popup-container" :status="popUpInfoProps.status"
+                        :errorMessage="popUpInfoProps.errorMessage" :errorCode="popUpInfoProps.errorCode"
+                        :visible="popUpInfoVisible" @close="closePopUpInfo" />
+                </v-col>
+            </v-row>
         </v-card>
-
-        <PopUpBox v-if="popupVisible" :status="popUpProps.status" :errorMessage="popUpProps.errorMessage"
-            :errorCode="popUpProps.errorCode" :visible="popupVisible" @close="closePopup" />
-
-    </v-row>
-
+    </v-container>
 </template>
+
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
@@ -52,21 +57,22 @@ const otp = ref("");
 const otpSignature = ref("");
 const otpData = ref({}); // ✅ Data dinamis dari sessionStorage
 const isLoading = ref(false);
-const popupVisible = ref(false);
 
 const expireTstamp = ref(0);
 const remainingTime = ref(0);
 let countdownInterval = null;
 
-const popUpProps = ref({
+const popUpInfoVisible = ref(false);
+
+const closePopUpInfo = () => {
+    popUpInfoVisible.value = false;
+};
+const popUpInfoProps = ref({
     status: "",
     errorMessage: "",
     errorCode: "",
 });
 
-const closePopup = () => {
-    popupVisible.value = false;
-};
 
 // ✅ Hitung apakah OTP sudah kedaluwarsa
 const isExpired = computed(() => {
@@ -145,17 +151,11 @@ const submitOtp = async () => {
 
 // 🚀 Verifikasi OTP ke backend
 const verifyOTP = async (otpSignatureParam) => {
-    console.log("🔄 otpSignature Sebelum Dikirim:", otpSignature.value);
-
-
+    console.log("🔄 otpSignature Sebelum Terkirim:", otpSignature.value);
 
     const baseUrl = BASE_AUTH_URL;
     const operation = "register/verify-otp";
-
     const params = { otp_signature: otpSignatureParam };
-
-    console.log("📡 Request ke:", `${baseUrl}/${operation}`);
-    console.log("🔄 Parameters:", params);
 
     try {
         const response_be = await Auth_Process(baseUrl, operation, params);
@@ -163,27 +163,36 @@ const verifyOTP = async (otpSignatureParam) => {
         if (!response_be || response_be.status !== "success") {
             console.error("❌ VERIFIKASI OTP GAGAL:", response_be?.error_message || "Unknown error");
 
-            let  popUpMessage = "";
+            let popUpMessage = response_be?.status === "401"
+                ? "Kode OTP tidak valid"
+                : response_be?.error_message || "Verifikasi OTP gagal";
 
-            if (response_be?.status === "401") {
-                popUpMessage = "Kode OTP tidak valid";
-            } else {
-                popUpMessage = response_be?.error_message || "Verifikasi OTP gagal";
-            }
-            popUpProps.value = {
-                status: response_be?.status || "Gagal",
+            popUpInfoProps.value = {
+                status: "error",
                 errorMessage: popUpMessage,
-                errorCode: "", // jangan tampilan error code
+                errorCode: "",
             };
 
-            popupVisible.value = true;
+            popUpInfoVisible.value = true;
             return;
         }
 
+        // ✅ VERIFIKASI BERHASIL: tampilkan popup terlebih dahulu
         console.log("✅ VERIFIKASI OTP BERHASIL!");
-        sessionStorage.removeItem("otp_data");
-        sessionStorage.removeItem("otp_expiration_time");
-        router.push({ name: "login" });
+        popUpInfoProps.value = {
+            status: "success",
+            errorMessage: "Verifikasi OTP berhasil. Mengarahkan ke halaman login...",
+            errorCode: "",
+        };
+        popUpInfoVisible.value = true;
+
+        // Tunggu 2 detik, lalu redirect ke halaman login
+        setTimeout(() => {
+            sessionStorage.removeItem("otp_data");
+            sessionStorage.removeItem("otp_expiration_time");
+            router.push({ name: "login" });
+        }, 2000); // Ganti 2000 menjadi waktu yang kamu inginkan (dalam milidetik)
+
     } catch (error) {
         console.error("❌ Error saat memverifikasi OTP:", error);
     }
@@ -224,17 +233,4 @@ onUnmounted(() => {
 </script>
 
 
-<style>
-/* Untuk WebKit (Chrome, Safari, Edge) */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-/* Untuk Firefox */
-input[type="number"] {
-    appearance: textfield;
-    -moz-appearance: textfield;
-}
-</style>
+<style></style>

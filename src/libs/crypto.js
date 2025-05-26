@@ -1,5 +1,5 @@
 import CryptoJS from "crypto-js";
-import { ca } from "vuetify/locale";
+
 
 /**
  * Generate HMAC-SHA256
@@ -64,7 +64,68 @@ export function XorDecode(input, key) {
     } catch (err) {
         return ["", err.message];
     }
+}
 
 
+/**
+ * Encrypt AES-256-CBC (to hex)
+ * @param {string} plainText - Text to encrypt
+ * @param {string} keyHex - 32-byte (64 char) hex key
+ * @returns {[string, string, string]} - [cipherTextHex, ivHex, errorMessage]
+ */
+export function EncryptAES256(plainText, keyHex) {
+    if (!plainText) return ["", "", "Missing plainText input"];
+    if (!keyHex) return ["", "", "Missing keyHex input"];
 
+    try {
+        const key = CryptoJS.enc.Hex.parse(keyHex);
+        const iv = CryptoJS.lib.WordArray.random(16); // 16-byte IV for AES-CBC
+
+        // PKCS7 padding & AES encryption
+        const encrypted = CryptoJS.AES.encrypt(plainText, key, {
+            iv: iv,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7,
+        });
+
+        const cipherTextHex = encrypted.ciphertext.toString(CryptoJS.enc.Hex);
+        const ivHex = iv.toString(CryptoJS.enc.Hex);
+
+        return [cipherTextHex, ivHex, ""];
+    } catch (err) {
+        return ["", "", err.message];
+    }
+}
+
+/**
+ * Decrypt AES-256-CBC (from hex)
+ * @param {string} cipherTextHex - Encrypted data in hex
+ * @param {string} ivHex - Initialization vector in hex
+ * @param {string} keyHex - 32-byte (64 char) hex key
+ * @returns {[string, string]} - [plainText, errorMessage]
+ */
+export function DecryptAES256(cipherTextHex, ivHex, keyHex) {
+    if (!cipherTextHex) return ["", "Missing cipherTextHex input"];
+    if (!ivHex) return ["", "Missing ivHex input"];
+    if (!keyHex) return ["", "Missing keyHex input"];
+
+    try {
+        const key = CryptoJS.enc.Hex.parse(keyHex);
+        const iv = CryptoJS.enc.Hex.parse(ivHex);
+        const cipherParams = CryptoJS.lib.CipherParams.create({
+            ciphertext: CryptoJS.enc.Hex.parse(cipherTextHex),
+        });
+
+        const decrypted = CryptoJS.AES.decrypt(cipherParams, key, {
+            iv: iv,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7,
+        });
+
+        const plainText = decrypted.toString(CryptoJS.enc.Utf8);
+        if (!plainText) return ["", "Decryption failed or returned empty string"];
+        return [plainText, ""];
+    } catch (err) {
+        return ["", err.message];
+    }
 }

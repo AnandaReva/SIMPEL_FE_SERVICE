@@ -1,43 +1,58 @@
 <template>
-    <v-container>
-        <v-row>
+    <v-container fluid class="pa-2 fill-height d-flex align-center justify-center"
+        :class="{ 'disable-interactions': isLoading }">
+        <!-- Overlay Loading -->
+        <v-overlay :model-value="isLoading" class="d-flex justify-center align-center">
+            <v-progress-circular indeterminate color="primary" size="64" />
+        </v-overlay>
 
-            <v-progress-circular v-if="isLoading" color="primary" indeterminate
-                class="loading-spinner"></v-progress-circular>
-
-            <v-col cols="12" md="6" offset-md="3">
-                <v-card class="form-card">
-                    <v-card-title class="text-h5">Reset Password</v-card-title>
-                    <v-card-subtitle class="text-caption">
+        <!-- Form Reset Password -->
+        <v-row class="justify-center" style="width: 100%;">
+            <v-col cols="12" md="6" lg="4">
+                <v-card color="base" class="pa-6" elevation="2">
+                    <v-card-title class="text-center text-h5 font-weight-bold mb-2">
+                        Reset Password
+                    </v-card-title>
+                    <v-card-subtitle class="text-center text-caption mb-4">
                         Sisa waktu {{ formattedRemainingTime }}
                     </v-card-subtitle>
+
                     <v-card-text>
                         <v-form @submit.prevent="submitResetPassword">
                             <v-text-field v-model="new_password" label="New Password" type="password" outlined dense
-                                :error-messages="passwordError"></v-text-field>
+                                :error-messages="passwordError" class="mb-4" />
+
                             <v-text-field v-model="confirm_password" label="Confirm Password" type="password" outlined
-                                dense :error-messages="confirmPasswordError"
-                                :disabled="isDisableConfirmPassword"></v-text-field>
+                                dense :error-messages="confirmPasswordError" :disabled="isDisableConfirmPassword"
+                                class="mb-4" />
 
+                            <v-row justify="center">
+                                <v-btn color="primary" type="submit" :loading="loading"
+                                    :disabled="isDisableSubmitResetPassword" class="mt-2"
+                                    style="min-width: 150px; max-width: 200px;">
+                                    Reset Password
+                                </v-btn>
+                            </v-row>
 
-                            <br>
-                            <v-btn color="primary" type="submit" :loading="loading"
-                                :disabled="isDisableSubmitResetPassword">Reset Password</v-btn>
-                            <p v-if="serverError" class="error-text">{{ serverError }}</p>
+                            <p v-if="serverError" class="error-text mt-2 text-center">{{ serverError }}</p>
                         </v-form>
                     </v-card-text>
                 </v-card>
             </v-col>
-
-            <PopUpBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
-                :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
-                @close="closePopup" />
         </v-row>
+
+        <!-- PopUp Info -->
+        <PopUpInfoBox v-if="popUpInfoVisible" class="popup-container" :status="popUpInfoProps.status"
+            :errorMessage="popUpInfoProps.errorMessage" :errorCode="popUpInfoProps.errorCode"
+            :visible="popUpInfoVisible" @close="closePopUpInfo" />
     </v-container>
 </template>
 
+
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { DecryptAES256 } from '@/libs/crypto';
+import { GetEnv } from '@/utils/utils';
 import { useRoute, useRouter } from 'vue-router';
 import { Auth_Process } from '@/utils/requestHelper';
 import { BASE_AUTH_URL } from '@/configs/config';
@@ -50,6 +65,8 @@ const expiry_tstamp = ref(0); // Timestamp expire dari URL
 const remainingTime = ref(0); // Waktu tersisa dalam detik
 let countdownInterval = null;
 
+const isLoading = ref(false);
+
 // Form fields
 const new_password = ref('');
 const confirm_password = ref('');
@@ -58,27 +75,29 @@ const serverError = ref('');
 const passwordError = ref('');
 const confirmPasswordError = ref('');
 
-// Popup handling
-const popupVisible = ref(false);
-const popUpProps = ref({
+const popUpInfoProps = ref({
     status: "",
     errorMessage: "",
     errorCode: "",
 });
+const popUpInfoVisible = ref(false);
 
-const closePopup = () => {
-    popupVisible.value = false;
+const closePopUpInfo = () => {
+    popUpInfoVisible.value = false;
+    if (popUpInfoProps.value.status === "Sukses") {
+        router.push('/login');
+    }
 };
 
 // Computed properties
 const isDisableSubmitResetPassword = computed(() => {
     const passwordValid = new_password.value.length >= 8 && new_password.value.length <= 30;
-    const confirmPasswordValid = confirm_password.value.length >= 8 && confirm_password.value.length <= 30;
+    const confirmPasswordValid = confirm_password.value.length >= 8 && confirm_password.value.length <= 255;
     const passwordsMatch = new_password.value === confirm_password.value;
 
-    passwordError.value = passwordValid ? '' : 'Password harus 8-30 karakter';
-    confirmPasswordError.value = confirmPasswordValid ? '' : 'Password harus 8-30 karakter';
-    if (!passwordsMatch) confirmPasswordError.value = 'Passwords do not match';
+    passwordError.value = passwordValid ? '' : 'Password harus 8-255 karakter';
+    confirmPasswordError.value = confirmPasswordValid ? '' : 'Password harus 8-255 karakter';
+    if (!passwordsMatch && confirm_password.value) confirmPasswordError.value = 'Password tidak cocok';
 
     return !(passwordValid && confirmPasswordValid && passwordsMatch);
 });
@@ -96,22 +115,29 @@ const formattedRemainingTime = computed(() => {
 
 // Countdown timer
 const startCountdown = () => {
+    if (countdownInterval) clearInterval(countdownInterval);
+
     countdownInterval = setInterval(() => {
         const currentTime = Math.floor(Date.now() / 1000);
         remainingTime.value = Math.max(expiry_tstamp.value - currentTime, 0);
 
         if (remainingTime.value === 0) {
             clearInterval(countdownInterval);
-            popUpProps.value = {
-                status: "Gagal",
+            popUpInfoProps.value = {
+                status: "error",
                 errorMessage: "Waktu reset password telah habis. Silakan coba lagi.",
                 errorCode: "410001"
             };
-            popupVisible.value = true;
+
+            popUpInfoVisible.value = true;
             setTimeout(() => router.push('/login'), 3000);
         }
     }, 1000);
 };
+
+onUnmounted(() => {
+    if (countdownInterval) clearInterval(countdownInterval);
+});
 
 // Submit handler
 const submitResetPassword = async () => {
@@ -127,19 +153,20 @@ const submitResetPassword = async () => {
         const response = await verifyResetPassword(new_password.value, url_signature.value);
 
         if (response.error_code !== "000000") {
-            throw new Error(response.error_message || "Gagal mereset password");
+            throw new Error(response.error_message || "error mereset password");
         }
 
-        popUpProps.value = {
+        popUpInfoProps.value = {
             status: "Sukses",
-            errorMessage: "Password berhasil direset!",
-            errorCode: ""
+            errorMessage: "Reset password berhasil. Silakan login dengan password baru.",
+            errorCode: "000000"
         };
-        popupVisible.value = true;
+
+        popUpInfoVisible.value = true;
         setTimeout(() => router.push('/login'), 2000);
     } catch (error) {
         console.error("[ResetPassword] ERROR:", error);
-        serverError.value = error.message || "Gagal mereset password. Coba lagi.";
+        serverError.value = error.message || "error mereset password. Coba lagi.";
     } finally {
         loading.value = false;
     }
@@ -162,103 +189,112 @@ const verifyResetPassword = async (newPassword, signature) => {
     return response;
 };
 
-// Initialize component
-onMounted(() => {
-    // Dapatkan signature dari route params
-    const fullSignature = route.params.signature;
+function parseFinalSignature(finalSignature) {
+    const nonceLength = 8;
+    if (!finalSignature || finalSignature.length <= nonceLength) {
+        throw new Error("Signature terlalu pendek");
+    }
 
+    // Pisahkan nonce (8 karakter terakhir)
+    const nonce = finalSignature.slice(-nonceLength);
+    const cipherAndIv = finalSignature.slice(0, -nonceLength);
+
+    // Pisahkan cipher text dan IV (dipisahkan oleh titik)
+    const parts = cipherAndIv.split(".");
+    if (parts.length !== 2) {
+        throw new Error("Format signature tidak valid, harus ada satu titik pemisah");
+    }
+    const cipherTextHex = parts[0];
+    const ivHex = parts[1];
+
+    return { cipherTextHex, ivHex, nonce };
+}
+
+onMounted(() => {
+    const fullSignature = route.params.signature;
     if (!fullSignature) {
-        console.error("[ResetPassword] ERROR: Signature tidak ditemukan");
-        popUpProps.value = {
-            status: "Gagal",
+        popUpInfoVisible.value = true;
+        popUpInfoProps.value = {
+            status: "error",
             errorMessage: "Link reset password tidak valid",
             errorCode: "400002"
         };
-        popupVisible.value = true;
         setTimeout(() => router.push('/login'), 3000);
         return;
     }
 
-    // Simpan signature
     url_signature.value = fullSignature;
 
-    // Untuk demo, kita set expiry time 15 menit dari sekarang
-    // Di production, ini harus diambil dari decrypt signature
-    expiry_tstamp.value = Math.floor(Date.now() / 1000) + (15 * 60);
-    remainingTime.value = expiry_tstamp.value - Math.floor(Date.now() / 1000);
+    let cipherTextHex, ivHex, nonce;
+    try {
+        ({ cipherTextHex, ivHex, nonce } = parseFinalSignature(fullSignature));
+    } catch (err) {
+        popUpInfoVisible.value = true;
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: err.message,
+            errorCode: "400003"
+        };
+        setTimeout(() => router.push('/login'), 3000);
+        return;
+    }
+
+    // Key harus sama dengan yang digunakan di backend (APPKEY)
+    const keyHex = GetEnv('VITE_KEY', '', true);  // harus ada, throw error kalau kosong
+
+
+    const [decrypted, decryptError] = DecryptAES256(cipherTextHex, ivHex, keyHex);
+    if (decryptError) {
+        popUpInfoVisible.value = true;
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: "error mendekripsi link: " + decryptError,
+            errorCode: "400004"
+        };
+        setTimeout(() => router.push('/login'), 3000);
+        return;
+    }
+
+    // Format pesan hasil dekripsi: "expiry_timestamp|email"
+    const parts = decrypted.split('|');
+    if (parts.length !== 2) {
+        popUpInfoVisible.value = true;
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: "Format data link tidak valid",
+            errorCode: "400005"
+        };
+        setTimeout(() => router.push('/login'), 3000);
+        return;
+    }
+
+    expiry_tstamp.value = parseInt(parts[0], 10);
+    if (isNaN(expiry_tstamp.value)) {
+        popUpInfoVisible.value = true;
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: "Expiry timestamp tidak valid",
+            errorCode: "400006"
+        };
+        setTimeout(() => router.push('/login'), 3000);
+        return;
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    remainingTime.value = Math.max(expiry_tstamp.value - now, 0);
+    console.log("🔹 Remaining time:", remainingTime.value, "seconds");
+
+    if (remainingTime.value <= 0) {
+        popUpInfoVisible.value = true;
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: "Link reset password telah kadaluarsa",
+            errorCode: "410001"
+        };
+        setTimeout(() => router.push('/login'), 3000);
+        return;
+    }
 
     startCountdown();
 });
-
-onUnmounted(() => {
-    if (countdownInterval) {
-        clearInterval(countdownInterval);
-    }
-});
 </script>
-<style scoped>
-.error-text {
-    color: red;
-    font-size: 14px;
-    margin-top: 8px;
-}
-
-
-.form-card {
-    background: linear-gradient(45deg, #1867c0 0%, #5cbbf6 100%);
-    /* Ungu tua dengan transparansi */
-    border-radius: 12px;
-    /* Membuat sudut lebih halus */
-    color: white;
-    /* Warna teks putih */
-}
-
-/* Styling for the loading spinner */
-.loading-spinner {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
-    /* Pastikan di atas elemen lain */
-}
-
-
-/* Disable interactions when isLoading is true */
-.disable-interactions * {
-    pointer-events: none;
-}
-
-
-/* Optional: Add an overlay to make it clear that the screen is in loading state */
-.disable-interactions {
-    position: relative;
-}
-
-.disable-interactions::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    /* Semi-transparent overlay */
-    z-index: 5;
-    /* Ensure it overlays on top of the content */
-}
-
-
-/* Pastikan PopUpBox tetap bisa diinteraksi */
-.popup-container {
-    position: fixed;
-    /* Tetap di atas layar */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1100;
-    /* Lebih tinggi dari overlay */
-    pointer-events: auto;
-    /* Aktifkan interaksi */
-}
-</style>

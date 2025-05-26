@@ -45,7 +45,7 @@
                         </div>
 
 
-                        <div >
+                        <div>
 
 
                             <v-infinite-scroll :key="scrollKeyActiveDevices" id="DeviceListBox" ref="DeviceListBox"
@@ -66,142 +66,213 @@
 
 
 
-        <v-col v-if="monitored_devices.length > 0" class="d-flex flex-column fit-content" style=" overflow-y: auto;">
 
-            <v-row style="flex: 1">
-                <v-container class="d-flex align-center justify-center">
-                    <v-card class="text-center pa-4 rounded-lg elevation-2" color="base" style="width: auto;">
-                        <strong>
-                            <span class="text-body-1 font-weight-medium" style="color: var(--v-theme-primary);">
-                                Zona Waktu: {{ userTimeZone }}
-                            </span>
-                        </strong>
+
+        <v-container>
+
+
+            <v-row class="align-center" style="flex: 1">
+                <!-- Kolom 1: Jumlah perangkat -->
+                <v-col cols="4" class="d-flex align-center justify-center">
+                    <span class="text-body-1 font-weight-medium" style="color: var(--v-theme-primary);">
+                        <strong>Jumlah Perangkat Dimonitor: {{ monitored_devices.length }}</strong>
+                    </span>
+                </v-col>
+
+                <!-- Kolom 2: Zona waktu -->
+                <v-col cols="4" class="d-flex align-center justify-center">
+                    <v-card class="pa-3 rounded-lg elevation-2 text-center" color="base" style="width: auto;">
+                        <span class="text-body-1 font-weight-medium" style="color: var(--v-theme-primary);">
+                            <strong>Zona Waktu: {{ userTimeZone }}</strong>
+                        </span>
                     </v-card>
-                </v-container>
+                </v-col>
+
+                <!-- Kolom 3: Tombol ganti mode tampilan -->
+                <v-col cols="4" class="d-flex align-center justify-end">
+                    <v-btn @click="changeViewMode()" variant="outlined" color="primary" class="d-flex align-center">
+                        <v-icon start>{{ is_view_mode_compact ? 'mdi-view-grid' : 'mdi-view-agenda' }}</v-icon>
+                        <span class="text-caption font-weight-medium">
+                            {{ is_view_mode_compact ? 'Tampilan kompak' : 'Tampilan detail' }}
+                        </span>
+                    </v-btn>
+                </v-col>
             </v-row>
+        </v-container>
 
 
 
 
-            <v-row style="flex: 11;">
-                <div v-if="monitored_devices.length != 1" class="device-grid pa-1" style="
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(700px, 1fr));
-            gap: 16px;
-            width: 100%;
-            min-height: 400px;
-            overflow-y: auto;
-            padding-right: 8px;
-            max-width: 100vw;">
 
 
-                    <v-card v-for="device in allExceptLast" :key="device.device_id" elevation="2" rounded="lg"
-                        color="base" class="d-flex flex-column fill-height border" :class="{
-                            'mx-auto': isOddDeviceCount && index === monitored_devices.length - 1
-                        }" style="max-width: 1000px; min-height: 450px; border: 1px solid #64B5F6;">
+        <v-row v-if="monitored_devices.length > 0" class="d-flex flex-column fit-content" style=" overflow-y: auto;">
 
-                        <!-- Title -->
-                        <v-card-title class="d-flex justify-space-between align-center">
-                            <span class="text-h6 font-weight-bold">{{ device.device_name }}</span>
-                            <v-btn icon @click="removeMonitoredDevice(index)">
-                                <v-icon>mdi-close</v-icon>
-                            </v-btn>
-                        </v-card-title>
 
-                        <!-- Card Content -->
-                        <v-card-text class="pa-2" style="flex: 1; overflow: auto;">
-                            <v-row no-gutters class="fill-height">
-                                <!-- Chart Area -->
-                                <v-col cols="10" class="pa-1 border" style="border: 5px solid #90CAF9;">
-                                    <div :id="`chartContainer-${device.device_id}`" style="width: 100%; height: 95%;">
 
-                                        ini
-                                    </div>
 
-                                </v-col>
 
-                                <!-- Sensor Values -->
-                                <v-col cols="2" class="pa-1 border" style="border: 1px solid #90CAF9;">
-                                    <v-row dense>
-                                        <v-col v-for="item in [
-                                            { label: 'Energy (kWh)', value: device.sensorData.energy },
-                                            { label: 'Voltage (V)', value: device.sensorData.voltage },
-                                            { label: 'Current (A)', value: device.sensorData.current },
-                                            { label: 'Frequency (Hz)', value: device.sensorData.frequency },
-                                            { label: 'Power Factor', value: device.sensorData.power_factor }
-                                        ]" :key="item.label" cols="12" class="mb-1 text-center">
-                                            <v-sheet
-                                                class="border border-primary font-weight-bold d-flex align-center justify-center mx-auto"
-                                                style="width: 5vw; height: 3vw;" rounded>
-                                                {{ formatValue(item.value) }}
-                                            </v-sheet>
-                                            <div class="text-caption mt-1">{{ item.label }}</div>
-                                        </v-col>
-                                    </v-row>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
+
+
+            <v-container v-show="is_view_mode_compact" fluid class="pa-4">
+                <!-- Grid Device -->
+                <div v-if="monitored_devices.length" class="device-grid" style="
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      justify-items: center;
+      width: 100%;
+    ">
+                    <v-card v-for="(device, index) in monitored_devices" :key="device.device_id" elevation="2"
+                        rounded="xl" color="base"
+                        class="d-flex flex-column align-center justify-center position-relative"
+                        style="width: 160px; height: 140px; border: 1px solid #90CAF9;">
+                        <!-- Button Close -->
+                        <v-btn icon size="x-small" class="position-absolute" style="top: 4px; right: 4px;"
+                            @click="removeMonitoredDevice(index)">
+                            <v-icon size="16">mdi-close</v-icon>
+                        </v-btn>
+
+                        <!-- Device Name -->
+                        <div class="text-subtitle-2 font-weight-bold text-center mt-4 mb-2"
+                            style="color: var(--v-theme-primary);">
+                            {{ device.device_name }}
+                        </div>
+
+                        <!-- Energy Display -->
+                        <v-sheet color="primary" class="d-flex align-center justify-center text-white font-weight-bold"
+                            rounded style="width: 80px; height: 40px;">
+                            {{ formatValue(device.sensorData.energy) }} kWh
+                        </v-sheet>
                     </v-card>
-
                 </div>
 
 
-                <!-- Tampilkan hanya jika ada perangkat terakhir -->
-                <v-container v-if="lastDevice" class="pa-4" fluid>
-                    <v-row justify="center">
-                        <v-col cols="12" md="10" lg="8">
-                            <v-card :key="lastDevice.device_id" elevation="2" rounded="lg" color="base"
-                                class="d-flex flex-column fill-height border"
-                                style="min-height: 450px; border: 1px solid #64B5F6;">
+            </v-container>
 
-                                <!-- Title -->
-                                <v-card-title class="d-flex justify-space-between align-center">
-                                    <span class="text-h6 font-weight-bold">{{ lastDevice.device_name }}</span>
-                                    <v-btn icon @click="removeMonitoredDevice(monitored_devices.length - 1)">
-                                        <v-icon>mdi-close</v-icon>
-                                    </v-btn>
-                                </v-card-title>
-
-                                <!-- Card Content -->
-                                <v-card-text class="pa-2" style="flex: 1; overflow: auto;">
-                                    <v-row no-gutters class="fill-height">
-                                        <!-- Chart Area -->
-                                        <v-col cols="10" class="pa-1 border" style="border: 1px solid #90CAF9;">
-                                            <div :id="`chartContainer-${lastDevice.device_id}`"
-                                                style="width: 100%; height: 95%;">
-                                                ini div
-                                            </div>
-                                            ini cols
-                                        </v-col>
-
-                                        <!-- Sensor Values -->
-                                        <v-col cols="2" class="pa-1 border" style="border: 1px solid #90CAF9;">
-                                            <v-row dense>
-                                                <v-col v-for="item in [
-                                                    { label: 'Energy (kWh)', value: lastDevice.sensorData.energy },
-                                                    { label: 'Voltage (V)', value: lastDevice.sensorData.voltage },
-                                                    { label: 'Current (A)', value: lastDevice.sensorData.current },
-                                                    { label: 'Frequency (Hz)', value: lastDevice.sensorData.frequency },
-                                                    { label: 'Power Factor', value: lastDevice.sensorData.power_factor }
-                                                ]" :key="item.label" cols="12" class="mb-1 text-center">
-                                                    <v-sheet
-                                                        class="border border-primary font-weight-bold d-flex align-center justify-center mx-auto"
-                                                        style="width: 5vw; height: 3vw;" rounded>
-                                                        {{ formatValue(item.value) }}
-                                                    </v-sheet>
-                                                    <div class="text-caption mt-1">{{ item.label }}</div>
-                                                </v-col>
-                                            </v-row>
-                                        </v-col>
-                                    </v-row>
-                                </v-card-text>
-                            </v-card>
-                        </v-col>
-                    </v-row>
-                </v-container>
+            <v-container v-show="!is_view_mode_compact">
 
 
-            </v-row>
+
+                <v-row style="flex: 11;">
+                    <div v-if="monitored_devices.length != 0" class="device-grid pa-1" style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(700px, 1fr));
+                gap: 16px;
+                width: 100%;
+                min-height: 400px;
+                overflow-y: auto;
+                padding-right: 8px;
+                max-width: 100vw;">
+
+
+                        <v-card v-for="(device, index) in monitored_devices" :key="device.device_id" elevation="2"
+                            rounded="lg" color="base" class="d-flex flex-column fill-height border"
+                            style="max-width: 1000px; min-height: 450px; border: 1px solid #64B5F6;">
+
+                            <!-- Title -->
+                            <v-card-title class="d-flex justify-space-between align-center">
+                                <span class="text-h6 font-weight-bold">{{ device.device_name }}</span>
+                                <v-btn icon @click="removeMonitoredDevice(index)">
+                                    <v-icon>mdi-close</v-icon>
+                                </v-btn>
+                            </v-card-title>
+
+                            <!-- Card Content -->
+                            <v-card-text class="pa-2" style="flex: 1; overflow: auto;">
+                                <v-row no-gutters class="fill-height">
+                                    <!-- Chart Area -->
+                                    <v-col cols="10" class="pa-1 border" style="border: 5px solid #90CAF9;">
+                                        <div :id="`chartContainer-${device.device_id}`"
+                                            style="width: 100%; height: 95%;">
+
+                                        </div>
+
+                                    </v-col>
+
+                                    <!-- Sensor Values -->
+                                    <v-col cols="2" class="pa-1 border" style="border: 1px solid #90CAF9;">
+                                        <v-row dense>
+                                            <v-col v-for="item in [
+                                                { label: 'Energy (kWh)', value: device.sensorData.energy },
+                                                { label: 'Voltage (V)', value: device.sensorData.voltage },
+                                                { label: 'Current (A)', value: device.sensorData.current },
+                                                { label: 'Frequency (Hz)', value: device.sensorData.frequency },
+                                                { label: 'Power Factor', value: device.sensorData.power_factor }
+                                            ]" :key="item.label" cols="12" class="mb-1 text-center">
+                                                <v-sheet
+                                                    class="border border-primary font-weight-bold d-flex align-center justify-center mx-auto"
+                                                    style="width: 5vw; height: 3vw;" rounded>
+                                                    {{ formatValue(item.value) }}
+                                                </v-sheet>
+                                                <div class="text-caption mt-1">{{ item.label }}</div>
+                                            </v-col>
+                                        </v-row>
+                                    </v-col>
+                                </v-row>
+                            </v-card-text>
+                        </v-card>
+
+                    </div>
+
+
+                    <!-- Tampilkan hanya jika ada perangkat terakhir -->
+                    <!-- <v-container v-if="lastDevice" class="pa-4" fluid>
+                        <v-row justify="center">
+                            <v-col cols="12" md="10" lg="8">
+                                <v-card :key="lastDevice.device_id" elevation="2" rounded="lg" color="base"
+                                    class="d-flex flex-column fill-height border"
+                                    style="min-height: 450px; border: 1px solid #64B5F6;">
+    
+                                
+                                    <v-card-title class="d-flex justify-space-between align-center">
+                                        <span class="text-h6 font-weight-bold">{{ lastDevice.device_name }}</span>
+                                        <v-btn icon @click="removeMonitoredDevice(monitored_devices.length - 1)">
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                    </v-card-title>
+    
+                                    <v-card-text class="pa-2" style="flex: 1; overflow: auto;">
+                                        <v-row no-gutters class="fill-height">
+                                          
+                                            <v-col cols="10" class="pa-1 border" style="border: 1px solid #90CAF9;">
+                                                <div :id="`chartContainer-${lastDevice.device_id}`"
+                                                    style="width: 100%; height: 95%;">
+                                                    ini div
+                                                </div>
+                                                ini cols
+                                            </v-col>
+    
+                                          
+                                            <v-col cols="2" class="pa-1 border" style="border: 1px solid #90CAF9;">
+                                                <v-row dense>
+                                                    <v-col v-for="item in [
+                                                        { label: 'Energy (kWh)', value: lastDevice.sensorData.energy },
+                                                        { label: 'Voltage (V)', value: lastDevice.sensorData.voltage },
+                                                        { label: 'Current (A)', value: lastDevice.sensorData.current },
+                                                        { label: 'Frequency (Hz)', value: lastDevice.sensorData.frequency },
+                                                        { label: 'Power Factor', value: lastDevice.sensorData.power_factor }
+                                                    ]" :key="item.label" cols="12" class="mb-1 text-center">
+                                                        <v-sheet
+                                                            class="border border-primary font-weight-bold d-flex align-center justify-center mx-auto"
+                                                            style="width: 5vw; height: 3vw;" rounded>
+                                                            {{ formatValue(item.value) }}
+                                                        </v-sheet>
+                                                        <div class="text-caption mt-1">{{ item.label }}</div>
+                                                    </v-col>
+                                                </v-row>
+                                            </v-col>
+                                        </v-row>
+                                    </v-card-text>
+                                </v-card>
+                            </v-col>
+                        </v-row>
+                    </v-container> -->
+
+
+                </v-row>
+
+            </v-container>
+
 
 
             <v-row class="d-flex align-center justify-center py-5">
@@ -212,7 +283,7 @@
                 </v-btn>
 
             </v-row>
-        </v-col>
+        </v-row>
 
 
         <v-col v-else class="d-flex align-center justify-center">
@@ -259,21 +330,6 @@ import { CreateSocketConnection } from "@/utils/wsHelper"
 
 import CanvasJS from "@canvasjs/charts";
 
-
-// grid
-const isOddDeviceCount = computed(() => monitored_devices.value.length % 2 === 1);
-
-const allExceptLast = computed(() =>
-    isOddDeviceCount.value ? monitored_devices.value.slice(0, -1) : monitored_devices.value
-);
-
-const lastDevice = computed(() =>
-    isOddDeviceCount.value ? monitored_devices.value[monitored_devices.value.length - 1] : null
-);
-
-
-
-
 // State management
 const popUpProps = ref({
     status: "",
@@ -296,6 +352,13 @@ watch(isLoading, (newValue) => {
 
 
 
+const is_view_mode_compact = ref(false);
+
+const changeViewMode = async () => {
+    await nextTick();
+    is_view_mode_compact.value = !is_view_mode_compact.value;
+    console.log("Change view mode to compact:", is_view_mode_compact.value);
+};
 
 
 
@@ -692,6 +755,8 @@ const selectDevice = async (deviceFromEmit) => {
         };
 
         monitored_devices.value = [...monitored_devices.value, tempDevice];
+        await nextTick(); // ⬅️ Ini penting
+
         nextTick(() => initChart(deviceId));
     } catch (error) {
         console.warn("❌ Gagal tambah perangkat:", error.message);
@@ -710,8 +775,9 @@ const selectDevice = async (deviceFromEmit) => {
 
 
 const removeMonitoredDevice = (index, isServerAction) => {
-    console.group("---removeMonitoredDevice---");
+    console.log("---removeMonitoredDevice---");
     const device = monitored_devices.value[index];
+    console.log("removeMonitoredDevice - device:", device);
     if (!device) return;
 
     if (!isServerAction) {
@@ -750,6 +816,9 @@ const removeMonitoredDevice = (index, isServerAction) => {
     if (container) container.innerHTML = "";
 
     monitored_devices.value.splice(index, 1);
+
+
+
 
 };
 

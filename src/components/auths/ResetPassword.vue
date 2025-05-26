@@ -1,70 +1,53 @@
 <template>
-    <v-row class="fill-height" :class="{ 'disable-interactions': isLoading }">
-        <v-progress-circular v-if="isLoading" color="primary" indeterminate
-            class="loading-spinner"></v-progress-circular>
+    <v-container fluid class="pa-2 fill-height" :class="{ 'disable-interactions': isLoading }">
+        <v-row class="fill-height" align="center" justify="center">
+            <v-col cols="12" md="6">
+                <v-card color="base" class="pa-6" elevation="2">
+                    <!-- Form Reset Password -->
+                    <template v-if="!isEmailResetPasswordSend">
+                        <v-card-title class="text-center text-h5 font-weight-bold mb-2">
+                            Reset Password
+                        </v-card-title>
+                        <v-card-subtitle class="text-center text-body-1 mb-6">
+                            Masukkan Email Akun Anda
+                        </v-card-subtitle>
 
+                        <v-form ref="loginForm" @submit.prevent="submitResetPassword">
+                            <v-text-field v-model="email" label="Email" outlined dense prepend-inner-icon="mdi-email"
+                                class="mb-4" :rules="emailRules" required />
+                            <v-row justify="center">
+                                <v-btn type="submit" color="primary" class="mt-2" size="large" elevation="0"
+                                    :disabled="isDisableConfirm" style="min-width: 150px; max-width: 200px;">
+                                    Konfirmasi
+                                </v-btn>
+                            </v-row>
+                        </v-form>
+                    </template>
 
+                    <!-- Konfirmasi Email -->
+                    <template v-else>
+                        <v-card-title class="text-center text-h5 font-weight-bold mb-2">
+                            Email Reset Password Telah Dikirim ke
+                        </v-card-title>
+                        <v-card-subtitle class="text-center text-body-1 mb-4">
+                            {{ email }}
+                        </v-card-subtitle>
+                        <v-card-text class="text-center text-body-2">
+                            Periksa kotak masuk atau folder spam Anda.
+                        </v-card-text>
+                    </template>
+                </v-card>
+            </v-col>
+        </v-row>
 
-        <v-col v-if="!isEmailResetPasswordSend" class=" d-flex align-center justify-center">
-            <v-card class="form-card pa-8" elevation="0" width="400">
-                <v-card-title class="text-center text-h5 font-weight-bold mb-2">
-                    Reset Password
-                </v-card-title>
-
-
-                <v-card-subtitle class="text-center text-body-1 mb-6">
-                    Masukkan Email Akun Anda
-                </v-card-subtitle>
-
-                <v-form ref="loginForm" @submit.prevent="submitResetPassword">
-                    <v-text-field v-model="email" label="Email" outlined dense prepend-inner-icon="mdi-email"
-                        class="mb-4" :rules="emailRules" required></v-text-field>
-
-                    <v-btn type="submit" color="#F3E5F5" block class="mt-2" size="large" elevation="0"
-                        :disabled="isDisableConfirm">konfrimasi</v-btn>
-                </v-form>
-                <br />
-
-
-
-            </v-card>
-
-
-
-        </v-col>
-
-
-
-        <v-col v-if="isEmailResetPasswordSend" class=" d-flex align-center justify-center">
-            <v-card class="form-card pa-8" elevation="0" width="400">
-                <v-card-title class="text-center text-h5 font-weight-bold mb-2">
-                    Email Reset Password Telah Dikirim ke {{ email }}
-                </v-card-title>
-
-
-                <v-card-subtitle class="text-center text-body-1 mb-6">
-                    Periksa Inbox atau Spam Email Anda
-                </v-card-subtitle>
-
-
-                <br />
-
-
-
-            </v-card>
-
-
-
-        </v-col>
-
-
-
-
-        <PopUpBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
-            :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
-            @close="closePopup" />
-
-    </v-row>
+        <!-- PopUp Info -->
+        <PopUpInfoBox v-if="popUpInfoVisible" class="popup-container" :status="popUpInfoProps.status"
+            :errorMessage="popUpInfoProps.errorMessage" :errorCode="popUpInfoProps.errorCode"
+            :visible="popUpInfoVisible" @close="closePopUpInfo" />
+        <v-overlay :model-value="isLoading" class="d-flex justify-center align-center">
+            <v-progress-circular indeterminate color="primary" size="64" />
+        </v-overlay>
+    </v-container>
 </template>
 
 
@@ -99,81 +82,76 @@ const isDisableConfirm = computed(() => {
 });
 
 
-const popUpProps = ref({
+const popUpInfoVisible = ref(false);
+
+const closePopUpInfo = () => {
+    popUpInfoVisible.value = false;
+};
+const popUpInfoProps = ref({
     status: "",
     errorMessage: "",
     errorCode: "",
 });
-const popupVisible = ref(false);
-const closePopup = () => {
-    popupVisible.value = false;
-};
 
 
 const submitResetPassword = async () => {
-
     console.log("🔹 Reset password with:", email.value);
-
+    isLoading.value = true;
     try {
-        isLoading.value = true;
-
-        const response = await ResetPasswordRequest(email.value);
-        isLoading.value = false;
-
+        const success = await ResetPasswordRequest(email.value);
+        if (success) {
+            isEmailResetPasswordSend.value = true;
+        }
     } catch (error) {
-
         console.error("Error on submitResetPassword:", error);
-    }// Pastikan semua proses selesai dulu, baru setTimeout berjalan
-    setTimeout(() => {
+    } finally {
         isLoading.value = false;
-    }, 500);
-
-
-
-}
-
-
+    }
+};
 
 async function ResetPasswordRequest(emailParam) {
-
     const baseUrl = BASE_AUTH_URL;
     const operation = "reset-password";
-    const params = {
-        email: emailParam
-    };
+    const params = { email: emailParam };
 
-    console.log("reset password params:", params);
-    const response_be = await Auth_Process(baseUrl, operation, params);
+    try {
+        const response_be = await Auth_Process(baseUrl, operation, params);
 
-    //  console.log("login response_be:", response_be);
+        console.log("🔄 Response from backend:", response_be);
 
-    if (response_be.status != "success") {
-        console.error("RESET PASSWORD REQUEST FAILED!!:", response_be.error_message); //////////
+        if (response_be.status !== "success") {
+            let popUpMessage = "";
+            if (response_be.error_code === "429") {
+                const remainingTime = response_be.payload.remaining_time;
+                popUpMessage = `Terlalu banyak percobaan, coba lagi dalam ${remainingTime} detik`;
+            } else if (response_be.error_code === "401") {
+                popUpMessage = "Email tidak terdaftar";
+            } else if (response_be.error_code === "500") {
+                popUpMessage = "Terjadi kesalahan pada server";
+            } else {
+                popUpMessage = response_be.error_message || "Permintaan reset password gagal";
+            }
 
-
-        let popUpMessage = "";
-        let remainingTime = 0;
-        if (response_be.error_code === "429") {
-
-            remainingTime = response_be.payload.remainingTime;
-            popUpMessage = "Terlalu banyak percobaan, coba lagi nanti dalam " + remainingTime + " detik";
+            popUpInfoProps.value = {
+                status: response_be.status,
+                errorMessage: popUpMessage || response_be.error_message,
+                errorCode: response_be.error_code,
+            };
+            popUpInfoVisible.value = true;
+            return false;
         }
 
-        popUpProps.value = {
-            status: response_be.status,
-            errorMessage: response_be.error_message,
-            errorCode: response_be.error_code,
+        console.log("RESET PASSWORD REQUEST SUCCESS!!");
+        return true;
+    } catch (err) {
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: "Terjadi kesalahan saat menghubungi server.",
+            errorCode: "500",
         };
-        popupVisible.value = true;
+        popUpInfoVisible.value = true;
         return false;
     }
-
-    console.log("RESET PASSWORD REQUEST SUCCESS!!, waiting for email confirmation...");
-    isEmailResetPasswordSend.value = true;
-
-    return true;
-
-
 }
 
 
@@ -189,39 +167,4 @@ onMounted(() => {
 
 
 
-<style scoped>
-.loading-spinner {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
-    /* Pastikan di atas elemen lain */
-}
-
-
-/* Disable interactions when isLoading is true */
-.disable-interactions * {
-    pointer-events: none;
-}
-
-
-/* Optional: Add an overlay to make it clear that the screen is in loading state */
-.disable-interactions {
-    position: relative;
-}
-
-.disable-interactions::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    /* Semi-transparent overlay */
-    z-index: 5;
-    /* Ensure it overlays on top of the content */
-}
-
-</style>
+<style scoped></style>

@@ -1,5 +1,32 @@
 import JSZip from "jszip";
 
+/**
+ * Ambil environment variable dari import.meta.env dengan logging dan error handling
+ * @param {string} name - Nama environment variable (harus pakai prefix VITE_ sesuai Vite)
+ * @param {any} [defaultValue] - Nilai default jika env tidak ditemukan
+ * @param {boolean} [required=false] - Jika true, akan throw error kalau env tidak ditemukan
+ * @returns {any} - Nilai dari env atau defaultValue
+ */
+export function GetEnv(name, defaultValue = undefined, required = false) {
+  try {
+    // Ambil nilai dari import.meta.env
+    const value = import.meta.env[name];
+
+    // Log tipe data dan nilai singkat (jangan log value sensitif di production)
+    console.log(`[getEnv] ${name} = (${typeof value})`, value);
+
+    // Cek kalau required tapi value undefined/null/empty string
+    if (required && (value === undefined || value === null || value === '')) {
+      throw new Error(`Environment variable ${name} is required but not set or empty`);
+    }
+
+    return value !== undefined ? value : defaultValue;
+  } catch (err) {
+    console.error(`[getEnv] Error getting env ${name}:`, err.message);
+    if (required) throw err;
+    return defaultValue;
+  }
+}
 
 export function RandomStringGenerator(len) {
   let result = '';
