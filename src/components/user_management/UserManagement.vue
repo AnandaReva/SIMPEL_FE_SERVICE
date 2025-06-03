@@ -11,16 +11,9 @@
                     </v-btn>
                 </v-card-title>
 
-
-
-
                 <v-card-text>
-
-
                     <!-- Konten daftar Pengguna -->
                     <div class="d-flex flex-wrap mb-0 ">
-
-
                         <v-select v-model="selectedOrderByUserList" :items="[
                             { title: 'Waktu terakhir', value: 'last_tstamp' },
                             { title: 'Waktu Pengguna didaftarkan', value: 'create_tstamp' },
@@ -50,10 +43,13 @@
                         </v-btn>
                     </div>
 
+
+                    {{ curr_user }}
+
                     <div>
                         <v-infinite-scroll :key="scrollKeyUsers" id="UserLostBox" ref="UserLostBox" height="550"
                             side="end" @load="loadUsers" class="overflow-auto">
-                            <UserListInfiniteScroll :users="users" :total_users="total_users"
+                            <UserListInfiniteScroll :users="users" :total_users="total_users" :curr_user="curr_user"
                                 @select-user="selectUser" />
                         </v-infinite-scroll>
                     </div>
@@ -99,9 +95,9 @@
                         </div>
 
                         <div>
-                            <v-infinite-scroll :key="scrollKeyUsers" id="DeviceListBox" ref="DeviceListBox" height="550"
+                            <v-infinite-scroll :key="scrollKeyUsers" id="UserListBox" ref="UserListBox" height="550"
                                 side="end" @load="loadUsers" class="overflow-auto">
-                                <UserListInfiniteScroll :users="users" :total_users="total_users"
+                                <UserListInfiniteScroll :users="users" :total_users="total_users"  :curr_user="curr_user"
                                     @select-user="selectUser" />
                             </v-infinite-scroll>
                         </div>
@@ -126,21 +122,11 @@
 
                     <!-- Konten utama -->
                     <v-container v-if="curr_user?.id" class="flex-grow-1">
-                        <!-- Konten saat Pengguna dipilih -->
-
-
-                        <!-- Parent -->
                         <div>
-
                             <DetailUser :curr_user="curr_user" @select-user="selectUser" @delete-user="deleteUser"
                                 @write-popUp-info-box="writePopUpInfoBox" />
-
                         </div>
-
-
-
                     </v-container>
-
                     <v-container v-else class="d-flex align-center justify-center flex-grow-1">
                         <v-col class="text-center" cols="auto">
                             <v-icon size="64" color="grey">mdi-account-plus</v-icon>
@@ -222,7 +208,6 @@ watch(
     curr_user,
     (newVal, oldVal) => {
         console.log('curr_user changed:', { oldVal, newVal })
-        // Tambahkan logika lain di sini, misalnya fetch data detail
     },
     { deep: true }
 )
@@ -279,29 +264,6 @@ function resetScrollUsers() {
 }
 
 ///////// INFINITE SCROLL USERS //////////
-/* async function loadUsers({ done }) {
-console.group("--- loadUsers() ---")
-if (total_pages_user_list.value === 0) {
-    done("empty");
-    return;
-}
-
-const fetchedPageNumber = lastFetchedPageUsers.value + 1;
-console.log("last page:", lastFetchedPageUsers.value);
-console.log("Fetched page number:", fetchedPageNumber);
-
-setTimeout(async () => {
-    const success = await getUserList(fetchedPageNumber);
-
-    if (!success || fetchedPageNumber >= total_pages_user_list.value) {
-        done("empty");
-    } else {
-        done("done");
-    }
-}, 1000);
-console.groupEnd();
-} */
-
 async function loadUsers({ done }) {
     console.group("--- loadUsers() ---")
 
@@ -384,13 +346,7 @@ async function getUserList(pageNumberParam) {
 
         if (response_be.status !== "success") {
             console.error("getUserList FAILED!!:", response_be.error_message);
-            popUpInfoProps.value = {
-                status: "error",
-                errorMessage: "Gagal Mendapatkan Data Pengguna Aktif",
-                errorCode: response_be.error_code,
-            };
-            popUpInfoVisible.value = true;
-            return false;
+            throw new Error("Gagal Mendapatkan Data Pengguna Aktif: " + response_be.error_message);
         }
 
         const responseBE = response_be.payload;
@@ -454,13 +410,7 @@ async function getUserDetail(userIdParam) {
 
         if (response_be.status !== "success") {
             console.error("getUserDetail FAILED!!:", response_be.error_message);
-            popUpInfoProps.value = {
-                status: "error",
-                errorMessage: "Gagal Mendapatkan Data Pengguna Aktif",
-                errorCode: response_be.error_code,
-            };
-            popUpInfoVisible.value = true;
-            return false;
+            throw new Error("Gagal mendapatkan detail perangkat: " + response_be.error_message);
         }
 
         const responseBE = response_be.payload;

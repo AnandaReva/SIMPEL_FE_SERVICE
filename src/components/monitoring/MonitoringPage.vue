@@ -69,8 +69,6 @@
 
 
         <v-container>
-
-
             <v-row class="align-center" style="flex: 1">
                 <!-- Kolom 1: Jumlah perangkat -->
                 <v-col cols="4" class="d-flex align-center justify-center">
@@ -106,22 +104,10 @@
 
 
         <v-row v-if="monitored_devices.length > 0" class="d-flex flex-column fit-content" style=" overflow-y: auto;">
-
-
-
-
-
-
-
             <v-container v-show="is_view_mode_compact" fluid class="pa-4">
                 <!-- Grid Device -->
-                <div v-if="monitored_devices.length" class="device-grid" style="
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 16px;
-      justify-items: center;
-      width: 100%;
-    ">
+                <div v-if="monitored_devices.length" class="device-grid"
+                    style=" display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px;justify-items: center;width: 100%;">
                     <v-card v-for="(device, index) in monitored_devices" :key="device.device_id" elevation="2"
                         rounded="xl" color="base"
                         class="d-flex flex-column align-center justify-center position-relative"
@@ -213,62 +199,7 @@
                         </v-card>
 
                     </div>
-
-
-                    <!-- Tampilkan hanya jika ada perangkat terakhir -->
-                    <!-- <v-container v-if="lastDevice" class="pa-4" fluid>
-                        <v-row justify="center">
-                            <v-col cols="12" md="10" lg="8">
-                                <v-card :key="lastDevice.device_id" elevation="2" rounded="lg" color="base"
-                                    class="d-flex flex-column fill-height border"
-                                    style="min-height: 450px; border: 1px solid #64B5F6;">
-    
-                                
-                                    <v-card-title class="d-flex justify-space-between align-center">
-                                        <span class="text-h6 font-weight-bold">{{ lastDevice.device_name }}</span>
-                                        <v-btn icon @click="removeMonitoredDevice(monitored_devices.length - 1)">
-                                            <v-icon>mdi-close</v-icon>
-                                        </v-btn>
-                                    </v-card-title>
-    
-                                    <v-card-text class="pa-2" style="flex: 1; overflow: auto;">
-                                        <v-row no-gutters class="fill-height">
-                                          
-                                            <v-col cols="10" class="pa-1 border" style="border: 1px solid #90CAF9;">
-                                                <div :id="`chartContainer-${lastDevice.device_id}`"
-                                                    style="width: 100%; height: 95%;">
-                                                    ini div
-                                                </div>
-                                                ini cols
-                                            </v-col>
-    
-                                          
-                                            <v-col cols="2" class="pa-1 border" style="border: 1px solid #90CAF9;">
-                                                <v-row dense>
-                                                    <v-col v-for="item in [
-                                                        { label: 'Energy (kWh)', value: lastDevice.sensorData.energy },
-                                                        { label: 'Voltage (V)', value: lastDevice.sensorData.voltage },
-                                                        { label: 'Current (A)', value: lastDevice.sensorData.current },
-                                                        { label: 'Frequency (Hz)', value: lastDevice.sensorData.frequency },
-                                                        { label: 'Power Factor', value: lastDevice.sensorData.power_factor }
-                                                    ]" :key="item.label" cols="12" class="mb-1 text-center">
-                                                        <v-sheet
-                                                            class="border border-primary font-weight-bold d-flex align-center justify-center mx-auto"
-                                                            style="width: 5vw; height: 3vw;" rounded>
-                                                            {{ formatValue(item.value) }}
-                                                        </v-sheet>
-                                                        <div class="text-caption mt-1">{{ item.label }}</div>
-                                                    </v-col>
-                                                </v-row>
-                                            </v-col>
-                                        </v-row>
-                                    </v-card-text>
-                                </v-card>
-                            </v-col>
-                        </v-row>
-                    </v-container> -->
-
-
+                    
                 </v-row>
 
             </v-container>
@@ -314,8 +245,8 @@
 
     </v-container>
 
-    <PopUpInfoBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
-        :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
+    <PopUpInfoBox v-if="popUpInfoVisible" class="popup-container" :status="popUpInfoProps.status"
+        :errorMessage="popUpInfoProps.errorMessage" :errorCode="popUpInfoProps.errorCode" :visible="popUpInfoVisible"
         @close="closePopup" />
 </template>
 
@@ -323,26 +254,24 @@
 <script setup>
 import DeviceListInfiniteScroll from '@/components/parts/DeviceListInfiniteScroll.vue';
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-
 import { Process } from "@/utils/requestHelper";
 import { BASE_API_URL, WS_API_URL } from "@/configs/config";
 import { CreateSocketConnection } from "@/utils/wsHelper"
-
+import PopUpInfoBox from "@/components/parts/PopUpInfoBox.vue";
 import CanvasJS from "@canvasjs/charts";
 
 // State management
-const popUpProps = ref({
+const popUpInfoVisible = ref(false);
+
+const popUpInfoProps = ref({
     status: "",
     errorMessage: "",
     errorCode: "",
 });
-
-const popupVisible = ref(false);
-const closePopup = () => {
-    popupVisible.value = false;
-};
-
 const isLoading = ref(false);
+
+
+
 
 watch(isLoading, (newValue) => {
     console.log("isLoading changed to:", newValue);
@@ -373,10 +302,10 @@ const active_devices = ref([])
 
 // Handle showing device list modal
 const handleShowDeviceList = () => {
-    if (monitored_devices.value.length >= 50) {
-        popUpProps.value = {
+    if (monitored_devices.value.length >= 255) {
+        popUpInfoProps.value = {
             status: "error",
-            errorMessage: "Maximum 50 active_devices can be monitored simultaneously",
+            errorMessage: "Maximum 255 active_devices can be monitored simultaneously",
             errorCode: 0,
         };
         return
@@ -578,12 +507,12 @@ const initGlobalWebSocket = async () => {
 
     if (!result) {
         console.error("⚠️ WebSocket gagal terhubung:", result?.error);
-        popUpProps.value = {
+        popUpInfoProps.value = {
             status: "error",
             errorMessage: "Gagal terhubung ke Server",
             errorCode: "",
         };
-        popupVisible.value = true;
+        popUpInfoVisible.value = true;
         return;
     }
 
@@ -595,23 +524,23 @@ const initGlobalWebSocket = async () => {
 
     socket.onerror = (err) => {
         console.error("❌ WebSocket error:", err);
-        popUpProps.value = {
+        popUpInfoProps.value = {
             status: "error",
             errorMessage: "Gagal terhubung ke server",
             errorCode: "",
         };
-        popupVisible.value = true;
+        popUpInfoVisible.value = true;
     };
 
     socket.onclose = () => {
         console.warn("⚠️ Global WebSocket closed.");
         globalWs.value = null;
-        popUpProps.value = {
+        popUpInfoProps.value = {
             status: "error",
             errorMessage: "Koneksi dengan server terputus",
             errorCode: "",
         };
-        popupVisible.value = true;
+        popUpInfoVisible.value = true;
     };
 
     socket.onmessage = (event) => {
@@ -760,12 +689,12 @@ const selectDevice = async (deviceFromEmit) => {
         nextTick(() => initChart(deviceId));
     } catch (error) {
         console.warn("❌ Gagal tambah perangkat:", error.message);
-        popUpProps.value = {
+        popUpInfoProps.value = {
             status: "error",
             errorMessage: `Gagal menyambungkan ke perangkat`,
             errorCode: "",
         };
-        popupVisible.value = true;
+        popUpInfoVisible.value = true;
     }
 
 
@@ -793,12 +722,12 @@ const removeMonitoredDevice = (index, isServerAction) => {
         }
     } else {
 
-        popUpProps.value = {
+        popUpInfoProps.value = {
             status: "warning",
             errorMessage: `Koneksi perangkat ${device.device_name} diuputus oleh server`,
             errorCode: "",
         };
-        popupVisible.value = true;
+        popUpInfoVisible.value = true;
 
 
         console.log("removeMonitoredDevice - serverAction ")
@@ -934,12 +863,12 @@ async function getActiveDeviceList(pageNumberParam) {
             let popUpMessage = "Gagal Mendapatkan Data Perangkat Aktif";
 
 
-            popUpProps.value = {
+            popUpInfoProps.value = {
                 status: "error",
                 errorMessage: popUpMessage,
                 errorCode: response_be.error_code,
             };
-            popupVisible.value = true;
+            popUpInfoVisible.value = true;
             return;
         }
 
@@ -982,8 +911,6 @@ onMounted(() => {
 watch([selectedSortTypeActiveDeviceList, selectedOrderByActiveDeviceList], () => {
     searchActiveDevice(1)
 })
-
-
 
 </script>
 

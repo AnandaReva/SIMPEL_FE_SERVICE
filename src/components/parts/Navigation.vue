@@ -41,7 +41,7 @@ const routeList = [
   { title: 'Monitoring', name: 'monitoring', icon: 'mdi-chart-line' },
   {
     title: 'Laporan',
-    name: 'report-daily',
+    name: 'report',
     params: { year: currentYear, month: currentMonth },
     icon: 'mdi-chart-bar',
     roleRestricted: true,

@@ -151,21 +151,12 @@
 
                     <!-- Konten utama -->
                     <v-container v-if="curr_device?.id" class="flex-grow-1">
-                        <!-- Konten saat perangkat dipilih -->
-
-
-                        <!-- Parent -->
                         <div>
-
                             <Detaildevice :curr_device="curr_device" @select-device="selectDevice"
                                 @delete-device="deleteDevice" @write-popUp-info-box="writePopUpInfoBox" />
 
                         </div>
-
-
-
                     </v-container>
-
                     <v-container v-else class="d-flex align-center justify-center flex-grow-1">
                         <v-col class="text-center" cols="auto">
                             <v-icon size="64" color="grey">mdi-access-point-plus</v-icon>
@@ -186,6 +177,7 @@
         <PopUpConfirmationBox v-if="popUpConfirmVisible" class="popup-container" :title="popUpConfirmProps.title"
             :message="popUpConfirmProps.message" :status="popUpConfirmProps.status" :visible="popUpConfirmVisible"
             @confirm="handleConfirm" @cancel="handleConfirmCancel" />
+        
 
 
     </v-container>
@@ -450,13 +442,8 @@ async function getDeviceDetail(deviceIdParam) {
 
         if (response_be.status !== "success") {
             console.error("getDeviceDetail FAILED!!:", response_be.error_message);
-            popUpInfoProps.value = {
-                status: "error",
-                errorMessage: "Gagal Mendapatkan Data Perangkat Aktif",
-                errorCode: response_be.error_code,
-            };
-            popUpInfoVisible.value = true;
-            return false;
+            throw new Error("Gagal mendapatkan detail perangkat", response_be.error_message);   
+        
         }
 
         const responseBE = response_be.payload;

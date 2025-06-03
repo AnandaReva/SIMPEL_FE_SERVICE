@@ -4,27 +4,29 @@
             Menampilkan: {{ users?.length }}/{{ total_users }}
         </p>
 
-        {{ users }}
+<!--         {{ users }} -->
 
-        <v-list bg-color="white" dense class="rounded-lg elevation-2">
-            <template v-if="users?.length > 0">
-
-
-                <template v-for="(user, index) in users" :key="user.user_id">
-                    <v-list-item @click="emitSelect(user)" class="user-item py-2 px-3">
-                        <v-row align="center" no-gutters class="w-100">
-
-                            <!-- Icon -->
-                            <v-col cols="1" class="d-flex justify-center">
-                                <v-img :src="IoTIcon" class="user-icon" max-width="24" height="24" contain />
-                            </v-col>
-
-                            <!-- Nama + Status -->
-                            <v-col cols="6">
-                                <v-list-item-title class="text-body-2 font-weight-medium">
-                                    {{ user?.user_full_name || '-' }}
-                                </v-list-item-title>
-                                <v-list-item-subtitle class="text-caption d-flex align-center gap-2">
+<v-list bg-color="white" dense class="rounded-lg elevation-2">
+    <template v-if="users?.length > 0">
+        
+        
+        <template v-for="(user, index) in users" :key="user.user_id">
+            <v-list-item @click="emitSelect(user)" class="user-item py-2 px-3"
+            :class="{ 'bg-grey-lighten-1': user.user_id === curr_user?.id }">
+            <v-row align="center" no-gutters class="w-100">
+                
+                <!-- Icon -->
+                <v-col cols="1" class="d-flex justify-center">
+                    <v-img :src="userIcon" class="user-icon" max-width="24" height="24" contain />
+                </v-col>
+                
+                <!-- Nama + Status -->
+                <v-col cols="6">
+                    <v-list-item-title class="text-body-2 font-weight-medium">
+                        {{ user?.user_full_name || '-' }}
+                    </v-list-item-title>
+                    <v-list-item-subtitle class="text-caption d-flex align-center gap-2">
+                        
                                     <div v-if="user?.user_st === 1 || user?.user_st === 0" class="d-flex align-center">
                                         <div class="rounded-circle me-2" :style="{
                                             width: '10px',
@@ -46,11 +48,11 @@
 
                             <!-- Role + Last Seen -->
                             <v-col cols="5" class="text-right">
-                                <div class="text-caption text-grey-darken-1">
+                                <div class="text-caption">
                                     {{ user?.user_role || '-' }}
                                 </div>
                                 <div class="text-caption text-grey-darken-1">
-                                    {{ FormatTimestamp(user.user_last_tstamp) || '-' }}
+                                    {{ FormatTimestamp(user.user_last_timestamp) || '-' }}
                                 </div>
                             </v-col>
 
@@ -72,13 +74,13 @@
 </template>
 
 <script setup>
-import IoTIcon from "@/assets/images/IoTIcon.png";
+import userIcon from "@/assets/images/userIcon.png";
 import { FormatTimestamp } from "@/utils/utils";
 
 
 
 // Props
-const props = defineProps(["users", "total_users"]);
+const props = defineProps(["users", "total_users", "curr_user"]);
 // Emit
 const emit = defineEmits(["select-user"]);
 
@@ -93,9 +95,6 @@ const emitSelect = (user) => {
         console.error("Gagal emit select-user:", err)
     }
 }
-
-
-
 
 </script>
 

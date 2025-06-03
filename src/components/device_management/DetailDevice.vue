@@ -112,7 +112,7 @@
                 <!-- {{ curr_device?.data }} -->
 
                 <!-- Data Perangkat -->
-                <v-card outlined class="mb-4">
+                        <v-card outlined class="mb-4">
                     <v-card-title class="d-flex align-center">
                         <v-icon size="24" color="primary" class="mr-2">mdi-information</v-icon>
                         <span class="text-subtitle-1 font-weight-medium">Data Perangkat</span>

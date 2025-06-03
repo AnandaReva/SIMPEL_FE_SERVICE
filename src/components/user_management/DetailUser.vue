@@ -1,5 +1,6 @@
 <template>
     <v-row class="fill-height ma-0">
+        
 
         <v-col cols="12" class="d-flex align-center">
             <v-tooltip text="Edit user" location="top">
@@ -22,7 +23,7 @@
         </v-col>
 
 
-        {{ curr_user }}
+        
 
 
         <v-col cols="12" class="pa-0">
@@ -70,6 +71,24 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <p class="text-subtitle-1 font-weight-medium mb-2">Waktu Ditambahkan</p>
+                                <v-card flat class="pa-3">
+                                    {{ FormatTimestamp(curr_user?.create_timestamp) || '-' }}
+                                </v-card>
+                            </v-col>
+
+                            <v-col cols="12" md="6">
+                                <p class="text-subtitle-1 font-weight-medium mb-2">Waktu Terakhir</p>
+                                <v-card flat class="pa-3">
+                                    {{ FormatTimestamp(curr_user?.last_timestamp) || '-' }}
+                                </v-card>
+                            </v-col>
+
+
+
+
+
+                            <v-col cols="12" md="6">
                                 <p class="text-subtitle-1 font-weight-medium mb-2">Status</p>
                                 <v-card flat class="pa-3">
                                     <span v-if="curr_user?.status === 1"> Aktif</span>
@@ -80,16 +99,15 @@
                     </v-card-text>
                 </v-card>
 
-                <!-- Data Perangkat -->
                 <v-card outlined class="mb-4">
                     <v-card-title class="d-flex align-center">
                         <v-icon size="24" color="primary" class="mr-2">mdi-information</v-icon>
                         <span class="text-subtitle-1 font-weight-medium">Data Pengguna</span>
                     </v-card-title>
 
-                    <v-card-text v-if="curr_user?.data.length > 0" style="max-height: 300px; overflow-y: auto;">
-                        <!-- Judul -->
+                    <v-card-text v-if="curr_user?.data && Object.keys(curr_user.data).length > 0">
 
+                        <!-- Judul -->
 
                         <v-row class="mb-2">
 
@@ -107,8 +125,8 @@
                         </v-row>
 
                         <!-- Data lainnya -->
-                        <v-row v-for="(value, key, index) in curr_user?.data" :key="'data-entry-' + index"
-                            class="mb-2">
+
+                        <v-row v-for="(value, key, index) in curr_user?.data" :key="'data-entry-' + index" class="mb-2">
                             <v-col cols="5" class="pa-0 pr-2" color="base">
                                 <v-card outlined class="pa-2 text-truncate">
                                     {{ key }}
@@ -131,7 +149,6 @@
 
                     </v-card-text>
                 </v-card>
-
             </div>
         </v-col>
     </v-row>
@@ -163,7 +180,7 @@ function toEditPage(currUserDetailDataParam) {
     console.log("---toEditPage---")
     console.log("toEditPage - currUserDetailDataParam: ", currUserDetailDataParam)
 
-    if (!currUserDetailDataParam.user_id || currUserDetailDataParam.user_id <= 0) {
+    if (!currUserDetailDataParam.id || currUserDetailDataParam.id <= 0) {
         console.log("toEditPage - currUserDetailDataParam.user_id not valid: ", currUserDetailDataParam.user_id)
         return;
     }

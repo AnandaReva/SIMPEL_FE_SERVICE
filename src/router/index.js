@@ -4,7 +4,7 @@ import LoginPage from '@/components/Login.vue';
 import MonitoringPage from '@/components/monitoring/MonitoringPage.vue';
 
 
-
+import ReportPage from '@/components/reports/ReportPage.vue';
 import YearlyReport from '@/components/reports/YearlyReport.vue';
 import MonthlyReport from '@/components/reports/MonthlyReport.vue';
 import DailyReport from '@/components/reports/DailyReport.vue'
@@ -12,9 +12,12 @@ import DayDetailReport from '@/components/reports/DayDetailReport.vue';
 
 
 import DeviceManagement from '@/components/device_management/DeviceManagement.vue';
-import UserManagementPage from '@/components/user_management/UserManagement.vue';
 import AddDevice from '@/components/device_management/AddDevice.vue';
 import EditDevice from '@/components/device_management/EditDevice.vue';
+
+import UserManagementPage from '@/components/user_management/UserManagement.vue';
+import EditUser from '@/components/user_management/EditUser.vue';
+
 
 import SettingsPage from '@/components/Settings.vue';
 
@@ -41,37 +44,50 @@ const routes = [
         meta: { requiresAuth: true },
     },
 
-
     {
         path: '/report/',
+        name: 'report',
+        component: ReportPage,
+        meta: { requiresAuth: true, parent: 'report' },
+    },
+
+    {
+        path: '/report/years',
         name: 'report-year',
         component: YearlyReport,
-        meta: { requiresAuth: true, parent: 'report-daily' },
+        meta: { requiresAuth: true, parent: 'report' },
     },
+
     {
         path: '/report/:year',
         name: 'report-month',
         component: MonthlyReport,
-        meta: { requiresAuth: true, parent: 'report-daily' },
+        meta: { requiresAuth: true, parent: 'report' },
     },
     {
         path: '/report/:year/:month',
         name: 'report-daily',
         component: DailyReport,
-        meta: { requiresAuth: true, parent: 'report-daily' },
+        meta: { requiresAuth: true, parent: 'report' },
     },
     {
         path: '/report/:year/:month/:date_day',
         name: 'report-daily-detail',
         component: DayDetailReport,
-        meta: { requiresAuth: true, parent: 'report-daily' },
+        meta: { requiresAuth: true, parent: 'report' },
     },
 
     {
         path: '/users',
-        name: 'users',
+        name: 'user-management',
         component: UserManagementPage,
         meta: { requiresAuth: true },
+    },
+    {
+        path: '/user/edit/:username',
+        name: 'user-edit',
+        component: EditUser,
+        meta: { requiresAuth: true, parent: 'EditUser,-management' },
     },
 
 
