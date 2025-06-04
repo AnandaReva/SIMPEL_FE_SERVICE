@@ -47,7 +47,7 @@ const routeList = [
     roleRestricted: true,
   },
   { title: 'Perangkat', name: 'device-management', icon: 'mdi-access-point', roleRestricted: true },
-  { title: 'Pengguna', name: 'users', icon: 'mdi-account-group', roleRestricted: true },
+  { title: 'Pengguna', name: 'user-management', icon: 'mdi-account-group', roleRestricted: true },
   { title: 'Pengaturan', name: 'settings', icon: 'mdi-cog' },
 ];
 

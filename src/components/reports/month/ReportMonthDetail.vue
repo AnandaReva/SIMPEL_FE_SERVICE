@@ -1,88 +1,256 @@
 <template>
-    <v-card elevation="2" rounded="xl" class="pa-6 text-white">
-   
-        <v-card flat color="base" class="pa-4 text-center  mb-4">
-            <h3 class="text-center text-h6 font-weight-bold ">Laporan {{props.month_selected_detail?.month  }} Tahun {{ props.month_selected_detail?.year }}
-            </h3>
-        </v-card>
+
+    <v-container>
 
 
-        <v-row class="mb-1" dense>
-            <v-col cols="6">
-                <v-card flat color="base" class="pa-4 text-center">
-                    <div class="text-caption">Total Kosumsi Energi</div>
-                    <div class="text-h5 font-weight-bold">{{ props.month_selected_detail?.total_energy }} <span
-                            class="text-caption">kWh</span></div>
-                </v-card>
-            </v-col>
-            <v-col cols="6">
-                <v-card flat color="base" class="pa-4 text-center">
-                    <div class="text-caption">Total Emisi Karbon</div>
-                    <div class="text-h5 font-weight-bold">±{{ props.month_selected_detail?.total_emission }} <span
-                            class="text-caption">Kg</span></div>
+        <v-row>
+            <v-col cols="12">
+                <v-card elevation="2" rounded="xl" class="pa-6 text-white">
+                    <v-card flat color="base" class="pa-4 text-center mb-4">
+                        <h3 class="text-center text-h6 font-weight-bold">
+                            Laporan {{ getMonthName(props.month_selected_detail?.month) }} Tahun {{
+                                props.month_selected_detail?.year }}
+                        </h3>
+                    </v-card>
+
+                    <v-row class="mb-1" dense>
+                        <v-col cols="6">
+                            <v-card flat color="base" class="pa-4 text-center">
+                                <div class="text-caption">Total Konsumsi Energi</div>
+                                <div class="text-h5 font-weight-bold">
+                                    {{ Number(props.month_selected_detail?.total_energy).toFixed(2) }} <span
+                                        class="text-caption">kWh</span>
+                                </div>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="6">
+                            <v-card flat color="base" class="pa-4 text-center">
+                                <div class="text-caption">Total Emisi Karbon</div>
+                                <div class="text-h5 font-weight-bold">
+                                    ±{{ props.month_selected_detail?.total_emission }} <span
+                                        class="text-caption">Kg</span>
+                                </div>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <v-divider class="mb-1" />
+
+                    <v-card color="base" class="pa-4 mb-1" elevation="2" rounded="xl">
+                        <v-row dense>
+                            <v-col cols="12" md="6">
+                                <div class="text-caption mb-1">Waktu Data Pertama</div>
+                                <div class="text-body-2 mb-3">{{ props.month_selected_detail?.first_timestamp }}</div>
+
+                                <div class="text-caption mb-1">Waktu Data Terakhir</div>
+                                <div class="text-body-2 mb-3">{{ props.month_selected_detail?.last_timestamp }}</div>
+
+                                <div class="text-caption mb-1">Interval Rata-rata</div>
+                                <div class="text-body-2 mb-3">
+                                    {{ Number(props.month_selected_detail?.avg_data_interval).toFixed(2) }} detik
+                                </div>
+
+                                <div class="text-caption mb-1">Jumlah Data</div>
+                                <div class="text-body-2">{{ props.month_selected_detail?.total_data }} data</div>
+                            </v-col>
+
+                            <v-col cols="12" md="6">
+                                <div class="text-caption mb-1">Daya (W)</div>
+                                <div class="text-body-2 mb-1">
+                                    Rata-rata: {{ Number(props.month_selected_detail?.power.avg).toFixed(2) }}
+                                </div>
+                                <div class="text-body-2 mb-3">
+                                    Min: {{ Number(props.month_selected_detail?.power.min).toFixed(2) }} |
+                                    Maks: {{ Number(props.month_selected_detail?.power.max).toFixed(2) }}
+                                </div>
+
+                                <div class="text-caption mb-1">Arus (A)</div>
+                                <div class="text-body-2 mb-1">
+                                    Rata-rata: {{ Number(props.month_selected_detail?.current.avg).toFixed(2) }}
+                                </div>
+                                <div class="text-body-2 mb-3">
+                                    Min: {{ Number(props.month_selected_detail?.current.min).toFixed(2) }} |
+                                    Maks: {{ Number(props.month_selected_detail?.current.max).toFixed(2) }}
+                                </div>
+
+                                <div class="text-caption mb-1">Tegangan (V)</div>
+                                <div class="text-body-2 mb-1">
+                                    Rata-rata: {{ Number(props.month_selected_detail?.voltage.avg).toFixed(2) }}
+                                </div>
+                                <div class="text-body-2">
+                                    Min: {{ Number(props.month_selected_detail?.voltage.min).toFixed(2) }} |
+                                    Maks: {{ Number(props.month_selected_detail?.voltage.max).toFixed(2) }}
+                                </div>
+                            </v-col>
+                        </v-row>
+                    </v-card>
                 </v-card>
             </v-col>
         </v-row>
 
-        <v-divider class="mb-1" />
+        <!-- BARIS BARU -->
+        <v-row>
+            <v-col cols="12">
+                <v-card elevation="2" rounded="xl" class="pa-6 text-white">
+                    <v-card rounded="none" flat color="base" class="pa-4 text-center mb-4">
+                        <h3 class="text-center text-h6 font-weight-bold">
+                            Trend Konsumsi Harian
+                        </h3>
+                    </v-card>
 
-        <v-card color="base" class="pa-4 mb-1" elevation="2" rounded="xl">
-            <v-row dense>
-                <!-- Kolom Kiri: Info Timestamp -->
-                <v-col cols="12" md="6">
-                    <div class="text-caption mb-1">Waktu Data Pertama</div>
-                    <div class="text-body-2 mb-3">{{ props.month_selected_detail?.first_timestamp }}</div>
+                    <v-card color="base" class="pa-4 mb-1" elevation="2" rounded="xl">
+                        <div id="dailyEnergyChart" style="height: 370px; width: 100%;"></div>
 
-                    <div class="text-caption mb-1">Waktu Data Terakhir</div>
-                    <div class="text-body-2 mb-3">{{ props.month_selected_detail?.last_timestamp }}</div>
+                    </v-card>
+                </v-card>
 
-                    <div class="text-caption mb-1">Interval Rata-rata</div>
-                    <div class="text-body-2 mb-3">{{ props.month_selected_detail?.avg_data_interval }} detik</div>
 
-                    <div class="text-caption mb-1">Jumlah Data</div>
-                    <div class="text-body-2">{{ props.month_selected_detail?.total_data }} data</div>
-                </v-col>
-
-                <!-- Kolom Kanan: Info Daya, Arus, Tegangan -->
-                <v-col cols="12" md="6">
-                    <div class="text-caption mb-1">Daya (W)</div>
-                    <div class="text-body-2 mb-1">Rata-rata: {{ props.month_selected_detail?.power.avg }}</div>
-                    <div class="text-body-2 mb-3">
-                        Min: {{ props.month_selected_detail?.power.min }} |
-                        Maks: {{ props.month_selected_detail?.power.max }}
-                    </div>
-
-                    <div class="text-caption mb-1">Arus (A)</div>
-                    <div class="text-body-2 mb-1">Rata-rata: {{ props.month_selected_detail?.current.avg }}</div>
-                    <div class="text-body-2 mb-3">
-                        Min: {{ props.month_selected_detail?.current.min }} |
-                        Maks: {{ props.month_selected_detail?.current.max }}
-                    </div>
-
-                    <div class="text-caption mb-1">Tegangan (V)</div>
-                    <div class="text-body-2 mb-1">Rata-rata: {{ props.month_selected_detail?.voltage.avg }}</div>
-                    <div class="text-body-2">
-                        Min: {{ props.month_selected_detail?.voltage.min }} |
-                        Maks: {{ props.month_selected_detail?.voltage.max }}
-                    </div>
-                </v-col>
-            </v-row>
-        </v-card>
-
-    </v-card>
+            </v-col>
+        </v-row>
+    </v-container>
 </template>
 
 
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { BASE_API_URL } from '@/configs/config';
 import { Process } from '@/utils/requestHelper';
+import CanvasJS from '@canvasjs/charts';
 
-const props = defineProps(['month_selected_detail']);
+const props = defineProps(['month_selected_detail', 'curr_device']);
+const day_list = ref([]);
+const isLoading = ref(false);
+
+const getMonthName = (monthNumber) => {
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    return monthNames[monthNumber - 1] || `Bulan ${monthNumber}`;
+};
+
+const getDayName = (dayNumber) => {
+    const dayNames = {
+        1: "Senin",
+        2: "Selasa",
+        3: "Rabu",
+        4: "Kamis",
+        5: "Jumat",
+        6: "Sabtu",
+        7: "Minggu"
+    };
+    return dayNames[dayNumber] || `Hari ${dayNumber}`;
+};
 
 
 
 
+const fillMissingDays = (list, year, month) => {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const result = [];
 
+    for (let i = 1; i <= daysInMonth; i++) {
+        const found = list.find(item => item.day_date_number === i);
+        if (found) {
+            result.push(found);
+        } else {
+            const dateObj = new Date(year, month - 1, i);
+            const dayName = getDayName(dateObj.getDay() === 0 ? 7 : dateObj.getDay());
+
+            result.push({
+                day_date_number: i,
+                total_energy: null,
+                day_name: dayName
+            });
+        }
+    }
+
+    return result;
+};
+
+
+const renderChart = () => {
+    const chart = new CanvasJS.Chart("dailyEnergyChart", {
+        animationEnabled: true,
+        theme: "light2",
+        axisX: {
+            title: "Tanggal",
+            interval: 1,
+            labelAngle: -45,
+            labelFontSize: 10,
+            labelWrap: true,
+            labelMaxWidth: 50
+        },
+        axisY: {
+            title: "Energi (kWh)"
+        },
+        data: [{
+            type: "column",
+            indexLabelFontColor: "#000",
+            indexLabelPlacement: "outside",
+            indexLabelFontSize: 12,
+            nullDataLineDashType: "dot",
+            dataPoints: day_list.value.map(item => ({
+                label: `${item.day_date_number} (${item.day_name})`,
+                y: item.total_energy !== null ? Number(item.total_energy) : null,
+                indexLabel: item.total_energy !== null ? `${item.total_energy} kWh` : ""
+            }))
+        }]
+    });
+
+    chart.render();
+};
+
+
+const getReportDayList = async () => {
+    isLoading.value = true;
+
+    const params = {
+        device_id: props.curr_device.id,
+        order_by: 'day',
+        sort_type: 'asc',
+        year: props.month_selected_detail.year,
+        month: props.month_selected_detail.month
+    };
+
+    try {
+        const operation = "get_report_available_day_dates_by_month";
+        const response_be = await Process(BASE_API_URL, operation, params);
+
+        if (response_be.error_code !== "000000") {
+            console.error("getReportDayList FAILED:", response_be.error_message);
+            return;
+        }
+
+        const rawList = response_be.payload.day_list || [];
+        const formattedList = rawList.map(item => ({
+            ...item,
+            total_energy: Number(item.total_energy).toFixed(2),
+            day_name: getDayName(item.day_number)
+        }));
+
+        day_list.value = fillMissingDays(formattedList, props.month_selected_detail.year, props.month_selected_detail.month);
+    } catch (error) {
+        console.error("Error fetching days:", error);
+    } finally {
+        isLoading.value = false;
+        renderChart();
+    }
+};
+
+watch(() => props.month_selected_detail, async (newVal, oldVal) => {
+    if (newVal && newVal.month !== oldVal?.month) {
+        await getReportDayList();
+        renderChart();
+    }
+});
+onMounted(async () => {
+    if (props.month_selected_detail) {
+        window.addEventListener('resize', renderChart);
+        await getReportDayList();
+    }
+});
+
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', renderChart);
+});
 </script>

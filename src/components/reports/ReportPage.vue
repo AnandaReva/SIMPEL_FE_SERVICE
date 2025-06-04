@@ -99,30 +99,54 @@
                     </template>
                 </v-dialog>
 
+                <!-- Dialog: Pilih Bulan -->
+                <v-dialog v-model="isShowMonthSelector" max-width="500">
+                    <template #default>
+                        <v-card color="base">
+                            <v-card-title class="d-flex justify-space-between align-center">
+                                <span class="text-h6">Pilih Bulan</span>
+                                <v-btn icon @click="isShowMonthSelector = false">
+                                    <v-icon>mdi-close</v-icon>
+                                </v-btn>
+                            </v-card-title>
+                            <v-card-text>
+                                <ReportAvailableMonthList :curr_device="curr_device" :year_selected="year_selected"
+                                    @select-month="selectMonth">
+                                </ReportAvailableMonthList>
+
+
+                            </v-card-text>
+                        </v-card>
+                    </template>
+                </v-dialog>
+
+
 
                 <v-row justify="center" class="pa-4">
                     <!-- Pilih / Ganti Perangkat -->
                     <v-col cols="3">
-                        <v-btn block color="primary" @click="handleShowDeviceList">
+                        <v-btn block :color="curr_device?.id ? 'info' : 'secondary'" @click="handleShowDeviceList">
                             {{ curr_device?.id ? 'Ganti Perangkat' : 'Pilih Perangkat' }}
                         </v-btn>
                     </v-col>
 
                     <!-- Pilih / Ganti Tahun -->
                     <v-col cols="3">
-                        <v-btn block :disabled="!curr_device?.id" color="primary" @click="handleShowYearSelector">
+                        <v-btn block :disabled="!curr_device?.id" :color="year_selected ? 'info' : 'secondary'"
+                            @click="handleShowYearSelector">
                             {{ year_selected ? 'Ganti Tahun' : 'Pilih Tahun' }}
                         </v-btn>
                     </v-col>
 
                     <!-- Pilih / Ganti Bulan -->
                     <v-col cols="3">
-                        <v-btn block :disabled="!curr_device?.id || !year_selected" color="primary"
-                            @click="handleShowMonthSelector">
+                        <v-btn block :disabled="!curr_device?.id || !year_selected"
+                            :color="month_selected ? 'info' : 'secondary'" @click="handleShowMonthSelector">
                             {{ month_selected ? 'Ganti Bulan' : 'Pilih Bulan' }}
                         </v-btn>
                     </v-col>
                 </v-row>
+
 
 
 
@@ -146,15 +170,24 @@
                                     <ReportYearlyChart :curr_device="curr_device" style="width: 100%;" />
                                 </v-col>
                             </div>
-
-                            <!-- Jika year_selected_detail ADA -->
-                            <div v-if="year_selected && year_selected_detail && Object.keys(year_selected_detail).length"
-                                style="overflow-x: auto; width: 100%;">
+                            <!-- Jika year_selected_detail ADA dan month_selected tidak ada -->
+                            <div
+                                v-if="year_selected && year_selected_detail && Object.keys(year_selected_detail).length && !month_selected">
                                 <v-col class="d-flex align-center justify-center" style="width: 100%;">
                                     <ReportYearDetail :curr_device="curr_device"
-                                        :year_selected_detail="year_selected_detail" style="width: 100%;" />
+                                        :year_selected_detail="year_selected_detail"/>
                                 </v-col>
                             </div>
+
+                            <!-- Jika month_selected_detail ADA -->
+                            <div
+                                v-if="month_selected && month_selected_detail && Object.keys(month_selected_detail).length">
+                                <v-col class="d-flex align-center justify-center" style="width: 100%;">
+                                    <ReportMonthDetail :curr_device="curr_device"
+                                        :month_selected_detail="month_selected_detail" />
+                                </v-col>
+                            </div>
+
                         </div>
 
                         <!-- Jika tidak ada perangkat -->
@@ -241,6 +274,17 @@ const selectDevice = async (deviceFromEmit) => {
         isLoading.value = false;
         return;
     }
+    // hapus data lama
+    curr_device.value = { id: null, name: null };
+    year_selected.value = null;
+
+    year_selected_detail.value = Object.assign({}, {});;
+    month_selected.value = null;
+
+    month_selected_detail.value = Object.assign({}, {});;
+
+
+
 
     // ✅ Ganti seluruh objek agar reaktif
     curr_device.value = {
@@ -434,18 +478,19 @@ const isFetchingYearDetail = ref(false);
 const year_selected = ref(null)
 const year_selected_detail = ref({}) // Data tahun yang dipilih
 
-const handleShowYearsTable = (year) => {
-    year_selected.value = year
-    isShowYearSelector.value = false
-}
-
-
 const selectYear = (yearSelected) => {
     console.log("selectYear - yearSelected: ", yearSelected);
     if (!yearSelected) {
         console.error("Invalid year selected");
         return;
     }
+    // Reset data bulan yang dipilih
+    year_selected_detail.value = Object.assign({}, {});;
+
+    month_selected.value = null;
+    month_selected_detail.value = Object.assign({}, {});
+
+
     year_selected.value = yearSelected;
     isShowYearSelector.value = false;
     getReportYearDetail();
@@ -512,8 +557,8 @@ const selectMonth = (monthSelected) => {
         console.error("Invalid month selected");
         return;
     }
-    year_selected.value = monthSelected;
-    isShowMonth.value = false;
+    month_selected.value = monthSelected;
+    isShowMonthSelector.value = false;
     getReportMonthDetail();
 }
 

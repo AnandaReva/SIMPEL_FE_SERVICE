@@ -13,85 +13,75 @@
     <h1 class="text-h5 font-weight-medium text-[2.5vh] ml-3">SIMPLE</h1>
 
     <v-spacer />
-
     <!-- User Info and Menu -->
     <div class="d-flex align-center">
-      <!-- Avatar + User Info -->
-      <div class="d-flex align-center mr-4">
-        <v-avatar size="40" color="primary" class="mr-2" style="height:4vh; width:4vh; font-size:2vh;">
-          <template v-if="user?.avatar">
-            <img :src="user.avatar" alt="Avatar" />
-          </template>
-          <template v-else>
-            {{ user?.full_name?.charAt(0) || "?" }}
-          </template>
-        </v-avatar>
-
-        <div>
-          <p class="text-subtitle-1 font-weight-bold text-[1.8vh] m-0">
-            {{ user?.full_name || "Guest" }}
-          </p>
-          <p class="text-subtitle-2 text-grey-darken-1 text-[1.5vh] m-0">
-            {{ user?.role || "Guest" }}
-          </p>
-        </div>
-      </div>
-
       <!-- Menu -->
       <v-menu offset-y>
         <template #activator="{ props }">
-          <v-btn icon v-bind="props" variant="text" class="ma-0 pa-0 ">
-            <v-icon size="28" class="text-grey-darken-2">mdi-menu</v-icon>
-          </v-btn>
+          <!-- Gunakan seluruh blok avatar + user info sebagai pemicu menu -->
+          <div v-bind="props" class="d-flex align-center mr-4 cursor-pointer hover:bg-grey-lighten-4 px-2 py-1 rounded"
+            style="transition: background-color 0.2s;">
+            <v-avatar size="40" color="primary" class="mr-2" style="height: 4vh; width: 4vh; font-size: 2vh;">
+              <template v-if="user?.avatar">
+                <img :src="user.avatar" alt="Avatar" />
+              </template>
+              <template v-else>
+                {{ user?.full_name?.charAt(0) || "?" }}
+              </template>
+            </v-avatar>
+
+            <div>
+              <p class="text-subtitle-1 font-weight-bold text-[1.8vh] m-0">
+                {{ user?.full_name || "Guest" }}
+              </p>
+              <p class="text-subtitle-2 text-grey-darken-1 text-[1.5vh] m-0">
+                {{ user?.role || "Guest" }}
+              </p>
+            </div>
+          </div>
         </template>
 
+        <!-- Isi Menu -->
         <v-list class="pa-2"
           style="min-width: 250px; background-color: #f7f7f7; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
-          <!-- Header:   Username -->
 
+          <!-- Header: Username -->
           <v-list-item class="py-2">
-
             <v-container class="d-flex align-center pa-0 ma-0">
               <v-icon class="mr-2" color="primary">mdi-account-circle</v-icon>
-              <p class="text-caption text-grey-darken-1 mb-1">{{ user?.full_name || 'Guest User' }}</p>
-
+              <p class="text-caption text-grey-darken-1 mb-1">
+                {{ user?.full_name || 'Guest User' }}
+              </p>
             </v-container>
-            <span class="text-caption text-grey-darken-2 mt-1 pl-8">{{ user?.username || 'system guest' }}</span>
+            <span class="text-caption text-grey-darken-2 mt-1 pl-8">
+              {{ user?.username || 'system guest' }}
+            </span>
             <v-divider class="my-2" />
           </v-list-item>
-
 
           <!-- Email -->
           <v-list-item class="py-2">
-
             <v-container class="d-flex align-center pa-0 ma-0">
               <v-icon class="mr-2" color="primary">mdi-email</v-icon>
               <p class="text-caption text-grey-darken-1 mb-1">Email</p>
-
             </v-container>
-            <span class="text-caption text-grey-darken-2 mt-1 pl-8">{{ user?.email || 'Guest' }}</span>
+            <span class="text-caption text-grey-darken-2 mt-1 pl-8">
+              {{ user?.email || 'Guest' }}
+            </span>
             <v-divider class="my-2" />
           </v-list-item>
 
-
-
-
-
           <!-- Role -->
-
           <v-list-item class="py-2">
-
             <v-container class="d-flex align-center pa-0 ma-0">
               <v-icon class="mr-2" color="primary">mdi-shield-account</v-icon>
               <p class="text-caption text-grey-darken-1 mb-1">Peran</p>
-
             </v-container>
-            <span class="text-caption text-grey-darken-2 mt-1 pl-8">{{ user?.role || 'system guest' }}</span>
+            <span class="text-caption text-grey-darken-2 mt-1 pl-8">
+              {{ user?.role || 'system guest' }}
+            </span>
             <v-divider class="my-2" />
           </v-list-item>
-
-
-
 
           <!-- Logout Button -->
           <v-list-item class="py-2">
@@ -105,6 +95,7 @@
         </v-list>
       </v-menu>
     </div>
+
   </v-container>
 </template>
 

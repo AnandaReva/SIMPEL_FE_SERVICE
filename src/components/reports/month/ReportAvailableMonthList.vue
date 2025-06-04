@@ -25,11 +25,11 @@
         <!-- Daftar Bulan -->
         <v-list dense class="w-100">
             <template v-for="(item, index) in month_list" :key="index">
-                <v-list-item @click="selectMonth(item.month)" class="pa-2 ms-0"
-                    style="background-color: #333; color: white; border-radius: 8px;">
+                <v-list-item @click="selectMonth(item.month_number)" class="pa-2 ms-0"
+                    style="  border-radius: 8px;">
                     <v-row align="center" justify="space-between" no-gutters>
                         <v-col cols="auto">
-                            <span style="font-weight: bold;">{{ getMonthName(item.month) }}</span>
+                            <span style="font-weight: bold;">{{ getMonthName(item.month_number) }}</span>
                         </v-col>
                         <v-col cols="auto" class="text-right">
                             <div style="font-size: 0.9rem;">Total Energi</div>
@@ -49,7 +49,7 @@ import { ref, onMounted, watch } from 'vue'
 import { BASE_API_URL } from '@/configs/config'
 import { Process } from '@/utils/requestHelper'
 
-const props = defineProps({ curr_device: {} })
+const props = defineProps(['curr_device', 'year_selected'])
 const emits = defineEmits(['select-month'])
 
 const selectedOrderByMonthsAvailable = ref('month')
@@ -67,7 +67,7 @@ const getMonthName = (monthNumber) => {
         "Januari", "Februari", "Maret", "April", "Mei", "Juni",
         "Juli", "Agustus", "September", "Oktober", "November", "Desember"
     ]
-    return monthNames[monthNumber - 1] || `Bulan ${monthNumber}`
+    return monthNames[monthNumber - 1 ] || `Bulan ${monthNumber}`
 }
 
 watch(selectedOrderByMonthsAvailable, async (newVal) => {
@@ -86,11 +86,12 @@ const getReportMonthList = async () => {
     const params = {
         device_id: props.curr_device.id,
         order_by: month_orderBy.value,
-        sort_type: month_sortType.value
+        sort_type: month_sortType.value,
+        year: props.year_selected,
     }
 
     try {
-        const operation = "get_report_available_months"
+        const operation = "get_report_available_months_by_year"
         const response_be = await Process(BASE_API_URL, operation, params)
 
         if (response_be.error_code !== "000000") {
