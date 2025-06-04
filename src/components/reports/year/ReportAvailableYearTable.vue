@@ -33,18 +33,18 @@
 
         <v-list dense class="w-100">
             <template v-for="(item, index) in year_list" :key="index">
-                <v-list-item @click="selectYear(item)" class="pa-0">
-                    <v-card class="w-100 py-2 px-4">
-                        <v-row align="center" justify="space-between" no-gutters>
-                            <v-col cols="auto">
-                                <span style="font-weight: bold;">{{ item.year }}</span>
-                            </v-col>
-                            <v-col cols="auto" class="text-right">
-                                <div style="font-size: 0.9rem;">Total Konsumsi</div>
-                                <div style="font-weight: bold;">{{ item.total_energy }} kWh</div>
-                            </v-col>
-                        </v-row>
-                    </v-card>
+                <v-list-item @click="selectYear(item.year)" class="pa-2 ms-0">
+
+                    <v-row align="center" justify="space-between" no-gutters>
+                        <v-col cols="auto">
+                            <span style="font-weight: bold;">{{ item.year }}</span>
+                        </v-col>
+                        <v-col cols="auto" class="text-right">
+                            <div style="font-size: 0.9rem;">Total Konsumsi</div>
+                            <div style="font-weight: bold;">{{ item.total_energy }} kWh</div>
+                        </v-col>
+                    </v-row>
+
                 </v-list-item>
                 <v-divider v-if="index !== year_list.length - 1" class="my-2" />
             </template>
@@ -86,7 +86,7 @@ import { Process } from '@/utils/requestHelper';
 const props = defineProps({ curr_device: {} })
 
 
-const emits = defineEmits(['handleShowYearSelector'])
+const emits = defineEmits(['select-year']);
 
 
 const selectedOrderByYearsAvailable = ref('tahun');
@@ -261,6 +261,18 @@ const getReportYearList = async () => {
         isLoading.value = false
     }
 }
+
+////////////////////////////////
+const selectYear = (yearSelected) => {
+    console.log("selectYear - yearSelected: ", yearSelected)
+    emits('select-year', yearSelected)
+}
+
+
+
+
+
+////////////////////////////////
 
 watch(() => props.curr_device.id, async (newId) => {
     if (newId) {

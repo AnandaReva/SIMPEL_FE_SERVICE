@@ -75,8 +75,14 @@ const renderChart = () => {
 
     const dataPoints = year_list.value.map((item) => ({
         label: item.year.toString(),
-        y: parseFloat(item.total_energy)
+        y: parseFloat(item.total_energy),
+        indexLabel: `${item.total_energy} KwH`, 
+        indexLabelPlacement: "outside",
+        indexLabelFontColor: "#000",
+        indexLabelFontSize: 10, // lebih kecil
     }));
+
+
 
     const options = {
         animationEnabled: true,

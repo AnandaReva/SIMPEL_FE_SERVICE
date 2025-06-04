@@ -4,8 +4,10 @@
         <v-overlay :model-value="isLoading" class="d-flex justify-center align-center">
             <v-progress-circular indeterminate color="primary" size="64" />
         </v-overlay>
+
         <!-- Laporan Bulanan -->
-        <v-card color="base" elevation="2" rounded="xl" class="pa-4" style="width: 100%; height: 100%;">
+        <v-card color="base" elevation="2" rounded="xl" class="fill-height pa-4 w-100 custom-height-card">
+
             <!-- Header & Kembali -->
             <v-container height="100%">
 
@@ -88,7 +90,10 @@
                                 </v-btn>
                             </v-card-title>
                             <v-card-text>
-                                <ReportAvailableYearTable :curr_device="curr_device" @select-year="handleSelectYear" />
+                                <ReportAvailableYearTable :curr_device="curr_device" @select-year="selectYear">
+                                </ReportAvailableYearTable>
+
+
                             </v-card-text>
                         </v-card>
                     </template>
@@ -128,38 +133,45 @@
                     </v-card-title>
 
                 </v-row>
+                <v-row class="fill-height">
+                    <v-col cols="12">
+                        <!-- Jika perangkat dipilih -->
 
 
+                        <div v-if="curr_device && curr_device.id" style="width: 100%;">
+                            <!-- JIka year_selected TIDAK ada -->
+                            <!-- Jika year_selected TIDAK ADA -->
+                            <div v-if="!year_selected" style="overflow-x: auto; width: 100%;">
+                                <v-col class="d-flex align-center justify-center" style="width: 100%;">
+                                    <ReportYearlyChart :curr_device="curr_device" style="width: 100%;" />
+                                </v-col>
+                            </div>
 
-
-                <v-row class="fill-height" align="center" justify="center">
-                    <v-col cols="12" sm="8" md="6">
-                        <div v-if="curr_device && curr_device.id">
-                            <div style="overflow-x: auto; width: 100%;">
-                                <v-card elevation="2" class="mb-6 mx-auto" style="min-width: 500px; width: 100%;">
-                                    <v-col class="d-flex align-center justify-center">
-                                        <ReportYearlyChart :curr_device="curr_device" />
-                                    </v-col>
-                                </v-card>
+                            <!-- Jika year_selected_detail ADA -->
+                            <div v-if="year_selected && year_selected_detail && Object.keys(year_selected_detail).length"
+                                style="overflow-x: auto; width: 100%;">
+                                <v-col class="d-flex align-center justify-center" style="width: 100%;">
+                                    <ReportYearDetail :curr_device="curr_device"
+                                        :year_selected_detail="year_selected_detail" style="width: 100%;" />
+                                </v-col>
                             </div>
                         </div>
 
-
-                        <div v-else>
-                            <v-card elevation="2" class="mb-6 mx-auto" max-width="400">
-                                <v-col class="d-flex align-center justify-center">
-                                    <v-icon size="64" color="grey">mdi-monitor-off</v-icon>
-                                </v-col>
-                                <v-col class="d-flex align-center justify-center">
-                                    <p class="text-h6 mt-4 mb-6">Tidak ada perangkat yang dipilih</p>
-                                </v-col>
-                            </v-card>
-                        </div>
+                        <!-- Jika tidak ada perangkat -->
+                        <v-row v-else class="fill-height" align="center" justify="center">
+                            <v-col cols="auto">
+                                <v-card elevation="2" class="mb-6 mx-auto" max-width="400">
+                                    <v-col class="d-flex align-center justify-center">
+                                        <v-icon size="64" color="grey">mdi-monitor-off</v-icon>
+                                    </v-col>
+                                    <v-col class="d-flex align-center justify-center">
+                                        <p class="text-h6 mt-4 mb-6">Tidak ada perangkat yang dipilih</p>
+                                    </v-col>
+                                </v-card>
+                            </v-col>
+                        </v-row>
                     </v-col>
                 </v-row>
-
-
-
 
 
             </v-container>
@@ -178,6 +190,10 @@
 <script setup>
 import ReportAvailableYearTable from './year/ReportAvailableYearTable.vue'
 import ReportYearlyChart from './year/ReportYearlyChart.vue'
+import ReportYearDetail from './year/ReportYearDetail.vue'
+
+import ReportAvailableMonthList from './month/ReportAvailableMonthList.vue'
+import ReportMonthDetail from './month/ReportMonthDetail.vue'
 
 import { onMounted, ref, watch, nextTick } from 'vue'
 import { BASE_API_URL } from '@/configs/config'
@@ -412,28 +428,128 @@ const isShowYearSelector = ref(false)
 const handleShowYearSelector = () => {
     isShowYearSelector.value = true
 }
+const isFetchingYearDetail = ref(false);
 
 // Ketika tahun dipilih
 const year_selected = ref(null)
+const year_selected_detail = ref({}) // Data tahun yang dipilih
 
-const handleSelectYear = (year) => {
+const handleShowYearsTable = (year) => {
     year_selected.value = year
     isShowYearSelector.value = false
 }
 
 
+const selectYear = (yearSelected) => {
+    console.log("selectYear - yearSelected: ", yearSelected);
+    if (!yearSelected) {
+        console.error("Invalid year selected");
+        return;
+    }
+    year_selected.value = yearSelected;
+    isShowYearSelector.value = false;
+    getReportYearDetail();
+}
 
+const getReportYearDetail = async () => {
+    if (isFetchingYearDetail.value) return
 
+    isFetchingYearDetail.value = true
+    isLoading.value = true
+
+    let params = {
+        device_id: curr_device.value.id,
+        year: year_selected.value,
+    }
+
+    try {
+        const operation = "get_report_year_detail"
+        const response_be = await Process(BASE_API_URL, operation, params)
+
+        if (response_be.error_code !== "000000") {
+            console.error("getReportYearDetail FAILED:", response_be.error_message)
+            return
+        }
+
+        const responseBE = response_be.payload
+
+        year_selected_detail.value = responseBE.year_detail || {};
+        console.log("getReportYearDetail SUCCESS:", year_selected_detail.value)
+
+    } catch (error) {
+        console.error("Error fetching year Detail:", error)
+    } finally {
+        isFetchingYearDetail.value = false
+        isLoading.value = false
+    }
+}
 
 
 
 
 //////////// MONTH ///////////
-const month_selected = ref(null);
-const handleShowMonthSelector = () => {
 
+
+// Dialog control
+const isShowMonthSelector = ref(false)
+
+// Function untuk membuka dialog
+const handleShowMonthSelector = () => {
+    isShowMonthSelector.value = true
 }
 
+
+const isFetchingMonthDetail = ref(false);
+
+const month_selected = ref(null);
+const month_selected_detail = ref({});
+
+
+
+const selectMonth = (monthSelected) => {
+    console.log("selectMonth - monthSelected: ", monthSelected);
+    if (!monthSelected) {
+        console.error("Invalid month selected");
+        return;
+    }
+    year_selected.value = monthSelected;
+    isShowMonth.value = false;
+    getReportMonthDetail();
+}
+
+const getReportMonthDetail = async () => {
+    if (isFetchingMonthDetail.value) return
+
+    isFetchingMonthDetail.value = true
+    isLoading.value = true
+
+    let params = {
+        device_id: curr_device.value.id,
+        year: year_selected.value,
+        month: month_selected.value,
+    }
+
+    try {
+        const operation = "get_report_month_detail"
+        const response_be = await Process(BASE_API_URL, operation, params)
+
+        if (response_be.error_code !== "000000") {
+            console.error("getReportMonthDetail FAILED:", response_be.error_message)
+            return
+        }
+
+        const responseBE = response_be.payload
+
+        month_selected_detail.value = responseBE.month_detail || {}
+        console.log("getReportMonthDetail SUCCESS:", year_selected_detail.value)
+
+    } catch (error) {
+        console.error("Error fetching month Detail:", error)
+    } finally {
+        isFetchingMonthDetail.value = false
+        isLoading.value = false
+    }
+}
 
 
 
