@@ -70,21 +70,19 @@ export function FormatTimestamp(epoch) {
 };
 
 
-export function GetLocalTimeZone() {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
-}
+export function ConvertUTCToLocal(utcString, timezoneOffsetMinutes = null) {
+  const utcDate = new Date(utcString);
 
+  if (isNaN(utcDate)) return 'Invalid date';
 
+  const offset = timezoneOffsetMinutes !== null
+    ? timezoneOffsetMinutes
+    : -utcDate.getTimezoneOffset(); // default: browser offset
 
-export function FormatToLocal(datetimeStr, timezone) {
-  if (!datetimeStr) return ''
+  const localDate = new Date(utcDate.getTime() + offset * 60000);
 
-  const safeTimezone = (typeof timezone === 'string' && timezone.trim() !== '')
-    ? timezone
-    : Intl.DateTimeFormat().resolvedOptions().timeZone
-
-  const date = new Date(datetimeStr)
-  return date.toLocaleString('id-ID', {
+  // Format 24 jam (HH:mm:ss)
+  return localDate.toLocaleString('en-GB', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -92,9 +90,8 @@ export function FormatToLocal(datetimeStr, timezone) {
     minute: '2-digit',
     second: '2-digit',
     hour12: false,
-    timeZone: safeTimezone,
-  }).replace(/\./g, ':')
-}
+  });
+};
 
 
 

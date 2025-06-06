@@ -264,7 +264,7 @@
 
   <PopUpInfoBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
     :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
-    @close="closePopup" />
+    @="closePopup" />
 </template>
 
 <style scoped>

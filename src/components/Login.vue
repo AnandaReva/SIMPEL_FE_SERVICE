@@ -164,16 +164,16 @@ const emailRegrex = ref(/^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`
 const usernameRegrex = ref(/^[A-Za-z0-9~!@#$%^&*()_+<>?/':=.,-]+$/);
 
 // Rules
+
+const userDataRules = [
+  (v) => !!v || "Username atau email harus diisi",
+];
 const usernameRules = [
   (v) => !!v || "Username harus diisi",
   (v) => v.length >= 6 || "Username minimal 6 karakter",
   (v) => v.length <= 30 || "Username maksimal 50 karakter",
   (v) => usernameRegrex.value.test(v) || "Username hanya boleh mengandung huruf, angka, dan simbol '~!@#$%^&*()_+<>?/':=.,-'"
 
-];
-
-const userDataRules = [
-  (v) => !!v || "Username atau email harus diisi",
 ];
 
 const passwordRules = [

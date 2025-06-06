@@ -223,7 +223,7 @@ watch(year_list_pageSize, async () => {
 })
 
 onMounted(async () => {
-    window.addEventListener('resize', renderChart); // Chart auto-resize
+    window.addEventListener('resize', renderChart);
     await getReportYearList();
 });
 

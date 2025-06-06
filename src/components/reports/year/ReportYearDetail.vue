@@ -1,4 +1,4 @@
-<template>
+onve<template>
     <v-container>
 
 
@@ -41,10 +41,14 @@
                         <v-row dense>
                             <v-col cols="12" md="6">
                                 <div class="text-caption mb-1">Waktu Data Pertama</div>
-                                <div class="text-body-2 mb-3">{{ props.year_selected_detail?.first_timestamp }}</div>
+                                <div class="text-body-2 mb-3">
+                                    {{ ConvertUTCToLocal(props.year_selected_detail?.first_timestamp, timezoneOffset) }}
+                                </div>
 
                                 <div class="text-caption mb-1">Waktu Data Terakhir</div>
-                                <div class="text-body-2 mb-3">{{ props.year_selected_detail?.last_timestamp }}</div>
+                                <div class="text-body-2 mb-3">
+                                    {{ ConvertUTCToLocal(props.year_selected_detail?.last_timestamp, timezoneOffset) }}
+                                </div>
 
                                 <div class="text-caption mb-1">Interval Rata-rata</div>
                                 <div class="text-body-2 mb-3">
@@ -118,6 +122,7 @@
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { BASE_API_URL } from '@/configs/config';
 import { Process } from '@/utils/requestHelper';
+import {ConvertUTCToLocal} from '@/utils/utils';
 import CanvasJS from "@canvasjs/charts";
 
 const props = defineProps(['year_selected_detail', 'curr_device']);
@@ -150,20 +155,21 @@ const renderChart = () => {
         },
         data: [{
             type: "column",
-            indexLabelFontColor: "#000", // Warna label di atas bar
+            indexLabelFontColor: "#000",
             indexLabelPlacement: "outside",
             indexLabelFontSize: 12,
-            dataPoints: month_list.value.map(item => ({
-                label: getMonthName(item.month_number),
-                y: item.total_energy !== null ? Number(item.total_energy) : null,
-                indexLabel: item.total_energy !== null ? `${item.total_energy} kWh` : ""
-            }))
+            dataPoints: month_list.value
+                .filter(item => item.month_number > 0 && item.month_number <= 12) // ✅ filter valid bulan
+                .map(item => ({
+                    label: getMonthName(item.month_number),
+                    y: item.total_energy !== null ? Number(item.total_energy) : null,
+                    indexLabel: item.total_energy !== null ? `${item.total_energy} kWh` : ""
+                }))
         }]
     });
 
     chart.render();
 };
-
 
 const getReportMonthList = async () => {
     isLoading.value = true
@@ -244,15 +250,35 @@ watch(() => props.year_selected_detail, async (newVal, oldVal) => {
 });
 
 
+const timezoneOffset = ref(null); // dalam menit
+
 onMounted(async () => {
     if (props.year_selected_detail) {
-
-        window.addEventListener('resize', renderChart); // Chart auto-resize
+        window.addEventListener('resize', renderChart);
         await getReportMonthList();
         renderChart();
-
     }
-})
+
+    // Ambil timezone dari localStorage
+    const userRaw = localStorage.getItem('user_data');
+    if (userRaw) {
+        try {
+            const user = JSON.parse(userRaw);
+            const tz = Number(user?.data?.timezone);
+            if (!isNaN(tz)) {
+                timezoneOffset.value = tz * 60; // jam → menit
+            }
+        } catch (e) {
+            console.warn('Gagal parse user_data dari localStorage:', e);
+        }
+    }
+
+    // Jika tidak ada data, pakai offset browser
+    if (timezoneOffset.value === null) {
+        timezoneOffset.value = new Date().getTimezoneOffset() * -1;
+    }
+});
+
 
 
 

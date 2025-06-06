@@ -125,14 +125,14 @@
                 <v-row justify="center" class="pa-4">
                     <!-- Pilih / Ganti Perangkat -->
                     <v-col cols="3">
-                        <v-btn block :color="curr_device?.id ? 'info' : 'secondary'" @click="handleShowDeviceList">
+                        <v-btn block :color="curr_device?.id ? 'primary' : 'info'" @click="handleShowDeviceList">
                             {{ curr_device?.id ? 'Ganti Perangkat' : 'Pilih Perangkat' }}
                         </v-btn>
                     </v-col>
 
                     <!-- Pilih / Ganti Tahun -->
                     <v-col cols="3">
-                        <v-btn block :disabled="!curr_device?.id" :color="year_selected ? 'info' : 'secondary'"
+                        <v-btn block :disabled="!curr_device?.id" :color="year_selected ? 'primary' : 'info'"
                             @click="handleShowYearSelector">
                             {{ year_selected ? 'Ganti Tahun' : 'Pilih Tahun' }}
                         </v-btn>
@@ -141,7 +141,7 @@
                     <!-- Pilih / Ganti Bulan -->
                     <v-col cols="3">
                         <v-btn block :disabled="!curr_device?.id || !year_selected"
-                            :color="month_selected ? 'info' : 'secondary'" @click="handleShowMonthSelector">
+                            :color="month_selected ? 'primary' : 'info'" @click="handleShowMonthSelector">
                             {{ month_selected ? 'Ganti Bulan' : 'Pilih Bulan' }}
                         </v-btn>
                     </v-col>

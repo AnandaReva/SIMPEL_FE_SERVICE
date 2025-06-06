@@ -109,7 +109,7 @@
                         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; justify-items: center;">
                         <v-card v-for="(device, index) in monitored_devices" :key="device.device_id" elevation="2"
                             rounded="xl" color="base"
-                            class="d-flex flex-column align-center justify-center position-relative"
+                            class="d-flex flex-column align-center justify-center position-relative pa-2"
                             style="width: 160px; height: 140px; border: 1px solid #90CAF9;">
                             <v-btn icon size="x-small" class="position-absolute" style="top: 4px; right: 4px;"
                                 @click="removeMonitoredDevice(index)">
@@ -122,10 +122,10 @@
                             </div>
 
                             <v-sheet color="primary"
-                                class="d-flex align-center justify-center text-white font-weight-bold" rounded
-                                style="width: 80px; height: 40px;">
-                                {{ formatValue(device.sensorData.energy) }} kWh
+                                class="d-flex align-center justify-center text-white font-weight-bold rounded-xl w-100 h-100">
+                                {{ formatValue(device.sensorData.energy) }} - kWh
                             </v-sheet>
+
                         </v-card>
                     </div>
                 </v-container>
@@ -134,7 +134,7 @@
                 <v-container v-show="!is_view_mode_compact">
                     <v-row>
                         <v-col cols="12">
-                            <div class="device-grid pa-1"
+                            <div class="device-grid pa-2"
                                 style="display: grid; grid-template-columns: repeat(auto-fit, minmax(700px, 1fr)); gap: 16px;">
                                 <v-card v-for="(device, index) in monitored_devices" :key="device.device_id"
                                     elevation="2" rounded="lg" color="base"
@@ -225,6 +225,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { Process } from "@/utils/requestHelper";
 import { BASE_API_URL, WS_API_URL } from "@/configs/config";
 import { CreateSocketConnection } from "@/utils/wsHelper"
+import { ConvertUTCToLocal } from '@/utils/utils';
 import PopUpInfoBox from "@/components/parts/PopUpInfoBox.vue";
 import CanvasJS from "@canvasjs/charts";
 
@@ -236,6 +237,12 @@ const popUpInfoProps = ref({
     errorMessage: "",
     errorCode: "",
 });
+
+const closePopup = () => {
+    popUpInfoVisible.value = false;
+};
+
+
 const isLoading = ref(false);
 
 
@@ -261,8 +268,12 @@ const changeViewMode = async () => {
 
 
 
+const timezoneOffset = ref(null); // dalam menit
 
 const isShowDeviceList = ref(false)
+
+
+
 const active_devices = ref([])
 
 
@@ -305,56 +316,14 @@ watch(available_devices_to_monitor, (newVal) => {
 
 
 
-
-
-const userTimeZone = ref("")
-
 // Helper functions
 const formatValue = (newValue) => {
     return newValue === undefined || newValue === null ? "-" : newValue.toFixed(2);
 };
 
 
-function getUserTimezone() {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown";
-}
-const getLocalTimezoneOffset = () => {
-    const now = new Date();
-    return now.getTimezoneOffset() * 60 * 1000; // Convert minutes to milliseconds
-};
+import { DateTime } from "luxon";
 
-function convertTimestampToLocal(timestamp) {
-    if (!timestamp) return "-";
-
-    // Format for parsing by Date (add 'T' and 'Z')
-    const formattedTimestamp = timestamp.replace(" ", "T") + "Z"; // ex: "2025-04-26T11:32:45Z"
-    const utcDate = new Date(formattedTimestamp);
-
-    if (isNaN(utcDate.getTime())) {
-        console.warn("❌ Invalid timestamp:", timestamp);
-        return "-";
-    }
-
-    // Get local offset (negative for time ahead of UTC, positive for behind UTC)
-    const localOffset = getLocalTimezoneOffset(); // in milliseconds
-
-    // Convert to local time: UTC - (-offset) => UTC + offset
-    const localDate = new Date(utcDate.getTime() - localOffset);
-
-    // Format local date
-    return localDate.toLocaleString("id-ID", {
-        hour12: false,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-    });
-}
-
-
-// Update chart with new data for a specific device
 const updateChart = (deviceId, message) => {
     const device = monitored_devices.value.find(d => d.device_id === deviceId);
     if (!device) return;
@@ -365,34 +334,20 @@ const updateChart = (deviceId, message) => {
     }
 
     try {
-        // Parse timestamp
-        let timestamp = message.timestamp;
-        if (!timestamp) {
-            console.warn("❌ Missing timestamp in message:", message);
-            return;
-        }
+        // Ambil waktu saat ini dari browser (waktu saat data masuk)
+        const localDateTime = DateTime.now().setZone("Asia/Jakarta");
 
-        // Format timestamp for Date object
-        const formattedTimestamp = timestamp.replace(" ", "T") + "Z";
-        const messageTime = new Date(formattedTimestamp);
+        console.log("🕒 LocalDate (Browser - Jakarta):", localDateTime.toISO());
 
-        if (isNaN(messageTime.getTime())) {
-            console.warn("❌ Invalid timestamp:", timestamp);
-            return;
-        }
-
-        // Add new data point
         device.dataPoints.push({
-            x: messageTime,
+            x: localDateTime.toJSDate(),
             y: parseFloat(message.power) || 0,
         });
 
-        // Limit data points to maxDataLength
         if (device.dataPoints.length > maxDataLength.value) {
             device.dataPoints.shift();
         }
 
-        // Update chart
         device.chart.options.data[0].dataPoints = device.dataPoints;
         device.chart.render();
     } catch (error) {
@@ -400,17 +355,17 @@ const updateChart = (deviceId, message) => {
     }
 };
 
-// Initialize chart for a specific device
-const initChart = (deviceId) => {
 
-    console.log("---initChart---")
+// Fungsi initChart yang menggunakan labelFormatter untuk menampilkan HH:mm:ss
+const initChart = (deviceId) => {
+    console.log("---initChart---");
     const device = monitored_devices.value.find(d => d.device_id === deviceId);
     if (!device) {
         console.warn(`⚠️ Device with ID ${deviceId} not found!`);
         return;
     }
 
-    console.log(`Initializing chart for device ${deviceId}`, device.dataPoints);
+    console.log(`📊 Initializing chart for device ${deviceId}`, device.dataPoints);
 
     const containerId = `chartContainer-${deviceId}`;
     const container = document.getElementById(containerId);
@@ -419,7 +374,7 @@ const initChart = (deviceId) => {
         return;
     }
 
-    // Clear previous chart element (if any)
+    // Clear previous chart
     container.innerHTML = "";
 
     device.chart = new CanvasJS.Chart(container, {
@@ -432,13 +387,16 @@ const initChart = (deviceId) => {
         animationEnabled: true,
         axisX: {
             title: "Waktu (jam:mnt:dtk)",
-            valueFormatString: "HH:mm:ss",
+            labelAngle: -45,
+            interval: 1,
+            valueFormatString: "HH:mm:ss", // atau pakai custom formatter di bawah
             labelFormatter: function (e) {
-                return e.value.toISOString().slice(11, 19);
+                const date = new Date(e.value);
+                return date.toTimeString().slice(0, 8); // Format HH:mm:ss
             },
         },
         axisY: {
-            title: "power (W)",
+            title: "Power (W)",
         },
         data: [
             {
@@ -455,7 +413,6 @@ const initChart = (deviceId) => {
 
     device.chart.render();
 };
-
 
 
 const initGlobalWebSocket = async () => {
@@ -871,7 +828,24 @@ async function getActiveDeviceList(pageNumberParam) {
 // Initialize component
 onMounted(() => {
     initGlobalWebSocket();
-    userTimeZone.value = getUserTimezone();
+    // Ambil timezone dari localStorage
+    const userRaw = localStorage.getItem('user_data');
+    if (userRaw) {
+        try {
+            const user = JSON.parse(userRaw);
+            const tz = Number(user?.data?.timezone);
+            if (!isNaN(tz)) {
+                timezoneOffset.value = tz * 60; // jam → menit
+            }
+        } catch (e) {
+            console.warn('Gagal parse user_data dari localStorage:', e);
+        }
+    }
+
+    // Jika tidak ada data, pakai offset browser
+    if (timezoneOffset.value === null) {
+        timezoneOffset.value = new Date().getTimezoneOffset() * -1;
+    }
 
 })
 
