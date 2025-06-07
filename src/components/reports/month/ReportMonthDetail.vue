@@ -27,8 +27,8 @@
                             <v-card flat color="base" class="pa-4 text-center">
                                 <div class="text-caption">Total Emisi Karbon</div>
                                 <div class="text-h5 font-weight-bold">
-                                    ±{{ props.month_selected_detail?.total_emission }} <span
-                                        class="text-caption">Kg</span>
+                                    ±{{ total_emission }}
+                                    <span class="text-caption">Kg CO₂</span>
                                 </div>
                             </v-card>
                         </v-col>
@@ -205,6 +205,21 @@ const renderChart = () => {
 };
 
 
+
+//////////////// CARBON EMISSION ////////////////////
+
+const total_emission = ref(0);
+const emission_factor = ref(0.813);
+
+
+
+const calculateEmission = () => {
+    const energy_kwh = parseFloat(props.month_selected_detail?.total_energy || 0);
+    total_emission.value = (energy_kwh * emission_factor.value).toFixed(2);
+};
+
+
+
 const getReportDayList = async () => {
     isLoading.value = true;
 
@@ -241,14 +256,21 @@ const getReportDayList = async () => {
     }
 };
 
+// Gabungan watch
 watch(() => props.month_selected_detail, async (newVal, oldVal) => {
-    if (newVal && newVal.month !== oldVal?.month) {
-        await getReportDayList();
-        renderChart();
-    }
-});
-const timezoneOffset = ref(null); // dalam menit
+    if (newVal) {
+        // Hitung ulang emisi
+        calculateEmission();
 
+        // Jika tahun berubah, render ulang chart
+        if (newVal.month !== oldVal?.month) {
+            await getReportDayList();
+            renderChart();
+        }
+    }
+}, { immediate: true });
+
+const timezoneOffset = ref(null);
 onMounted(async () => {
     if (props.month_selected_detail) {
         window.addEventListener('resize', renderChart);
@@ -256,7 +278,18 @@ onMounted(async () => {
         renderChart();
     }
 
-    // Ambil timezone dari localStorage
+    // Ambil emission factor dari localStorage
+    try {
+        const userData = JSON.parse(localStorage.getItem('user_data'));
+        const factor = parseFloat(userData?.data?.emission_factor);
+        if (!isNaN(factor)) {
+            emission_factor.value = factor;
+        }
+    } catch (e) {
+        emission_factor.value = 0.813; // fallback
+    }
+
+    // Ambil timezone offset
     const userRaw = localStorage.getItem('user_data');
     if (userRaw) {
         try {
@@ -270,7 +303,6 @@ onMounted(async () => {
         }
     }
 
-    // Jika tidak ada data, pakai offset browser
     if (timezoneOffset.value === null) {
         timezoneOffset.value = new Date().getTimezoneOffset() * -1;
     }
