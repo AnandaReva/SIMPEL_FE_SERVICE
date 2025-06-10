@@ -2,14 +2,18 @@
     <v-container fluid class="pa-2 fill-height d-flex align-center justify-center"
         :class="{ 'disable-interactions': isLoading }">
         <!-- Overlay Loading -->
-        <v-overlay :model-value="isLoading" class="d-flex justify-center align-center">
-            <v-progress-circular indeterminate color="primary" size="64" />
-        </v-overlay>
+
+
+        <!-- Tombol Panah Kembali di Kiri Atas -->
+        <v-btn icon class="position-absolute top-0 left-0 ma-2" @click="backToLogin()">
+            <v-icon>mdi-arrow-left</v-icon>
+        </v-btn>
+
 
         <!-- Form Reset Password -->
         <v-row class="justify-center" style="width: 100%;">
             <v-col cols="12" md="6" lg="4">
-                <v-card color="base" class="pa-6" elevation="2">
+                <v-card color="primary" class="pa-6" elevation="2">
                     <v-card-title class="text-center text-h5 font-weight-bold mb-2">
                         Reset Password
                     </v-card-title>
@@ -27,14 +31,14 @@
                                 class="mb-4" />
 
                             <v-row justify="center">
-                                <v-btn color="primary" type="submit" :loading="loading"
+                                <v-btn color="light" type="submit" :loading="loading"
                                     :disabled="isDisableSubmitResetPassword" class="mt-2"
                                     style="min-width: 150px; max-width: 200px;">
                                     Reset Password
                                 </v-btn>
                             </v-row>
 
-                            <p v-if="serverError" class="error-text mt-2 text-center">{{ serverError }}</p>
+
                         </v-form>
                     </v-card-text>
                 </v-card>
@@ -45,6 +49,12 @@
         <PopUpInfoBox v-if="popUpInfoVisible" class="popup-container" :status="popUpInfoProps.status"
             :errorMessage="popUpInfoProps.errorMessage" :errorCode="popUpInfoProps.errorCode"
             :visible="popUpInfoVisible" @close="closePopUpInfo" />
+
+
+        <v-overlay :model-value="isLoading" class="d-flex justify-center align-center">
+            <v-progress-circular indeterminate color="primary" size="64" />
+        </v-overlay>
+
     </v-container>
 </template>
 
@@ -84,7 +94,7 @@ const popUpInfoVisible = ref(false);
 
 const closePopUpInfo = () => {
     popUpInfoVisible.value = false;
-    if (popUpInfoProps.value.status === "Sukses") {
+    if (popUpInfoProps.value.status === "success") {
         router.push('/login');
     }
 };
@@ -152,34 +162,65 @@ const submitResetPassword = async () => {
     try {
         const response = await verifyResetPassword(new_password.value, url_signature.value);
 
-        if (response.error_code !== "000000") {
-            throw new Error(response.error_message || "error mereset password");
+        if (response.status !== "success") {
+            // Handle different error codes
+            let errorMessage = response.error_message;
+
+            switch (response.error_code) {
+                case '401':
+                    errorMessage = "Username atau password salah";
+                    break;
+                case '500':
+                    errorMessage = "Terjadi kesalahan pada server";
+                    break;
+                case '999999':
+                    errorMessage = "Terjadi kesalahan yang tidak diketahui";
+                    break;
+                // Add more cases as needed
+                default:
+                    errorMessage = errorMessage || "Terjadi kesalahan";
+            }
+
+            popUpInfoProps.value = {
+                status: "error",
+                errorMessage: errorMessage,
+                errorCode: response.error_code || "999999"
+            };
+            popUpInfoVisible.value = true;
+            return;
         }
 
         popUpInfoProps.value = {
-            status: "Sukses",
+            status: "success",
             errorMessage: "Reset password berhasil. Silakan login dengan password baru.",
             errorCode: "000000"
         };
-
         popUpInfoVisible.value = true;
         setTimeout(() => router.push('/login'), 2000);
     } catch (error) {
         console.error("[ResetPassword] ERROR:", error);
-        serverError.value = error.message || "error mereset password. Coba lagi.";
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: error.message || "Terjadi kesalahan saat mereset password",
+            errorCode: "999999"
+        };
+        popUpInfoVisible.value = true;
     } finally {
         loading.value = false;
     }
 };
 
 // API call
-const verifyResetPassword = async (newPassword, signature) => {
+const verifyResetPassword = async (newPassword, fullSignature) => {
     const baseUrl = BASE_AUTH_URL;
-    const operation = "reset-password-verify-url";
+    const operation = "reset-password/verify-url";
+
+    // Extract just the signature part (without nonce)
+    const signatureWithoutNonce = fullSignature.slice(0, -8); // Remove last 8 chars (nonce)
 
     const params = {
         new_password: newPassword,
-        url_signature: signature
+        url_signature: signatureWithoutNonce // Send only the signature part
     };
 
     console.log("[verifyResetPassword] Request:", params);
@@ -297,4 +338,11 @@ onMounted(() => {
 
     startCountdown();
 });
+
+
+function backToLogin() {
+    router.push(
+        { name: 'login' }
+    )
+}
 </script>

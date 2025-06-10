@@ -77,9 +77,10 @@ const renderChart = () => {
         label: item.year.toString(),
         y: parseFloat(item.total_energy),
         indexLabel: `${item.total_energy} KwH`, 
-        indexLabelPlacement: "outside",
-        indexLabelFontColor: "#000",
-        indexLabelFontSize: 10, // lebih kecil
+         indexLabelFontColor: "#fff", // Warna putih untuk kontras
+            indexLabelPlacement: "inside", // Letakkan label di dalam bar
+            indexLabelOrientation: "vertical", // Orientasi vertikal
+            indexLabelFontSize: 12,
     }));
 
 

@@ -189,23 +189,21 @@ const renderChart = () => {
         },
         data: [{
             type: "column",
-            indexLabelFontColor: "#000",
-            indexLabelPlacement: "outside",
+            indexLabelFontColor: "#fff", // Warna putih untuk kontras
+            indexLabelPlacement: "inside", // Letakkan label di dalam bar
+            indexLabelOrientation: "vertical", // Orientasi vertikal
             indexLabelFontSize: 12,
+            indexLabelFontWeight: "bold",
             nullDataLineDashType: "dot",
             dataPoints: day_list.value.map(item => ({
                 label: `${item.day_date_number} (${item.day_name})`,
                 y: item.total_energy !== null ? Number(item.total_energy) : null,
-                indexLabel: item.total_energy !== null ? `${item.total_energy} kWh` : ""
+                indexLabel: item.total_energy !== null ? `${item.total_energy}\nkWh` : "" // \n untuk line break
             }))
         }]
     });
-
     chart.render();
 };
-
-
-
 //////////////// CARBON EMISSION ////////////////////
 
 const total_emission = ref(0);

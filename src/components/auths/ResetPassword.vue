@@ -1,8 +1,21 @@
 <template>
     <v-container fluid class="pa-2 fill-height" :class="{ 'disable-interactions': isLoading }">
+
+
+
+
+        <!-- Tombol Panah Kembali di Kiri Atas -->
+        <v-btn icon class="position-absolute top-0 left-0 ma-2" @click="backToLogin()">
+            <v-icon>mdi-arrow-left</v-icon>
+        </v-btn>
+
         <v-row class="fill-height" align="center" justify="center">
+
+
+
+
             <v-col cols="12" md="6">
-                <v-card color="base" class="pa-6" elevation="2">
+                <v-card color="primary" class="pa-6" elevation="2">
                     <!-- Form Reset Password -->
                     <template v-if="!isEmailResetPasswordSend">
                         <v-card-title class="text-center text-h5 font-weight-bold mb-2">
@@ -16,7 +29,7 @@
                             <v-text-field v-model="email" label="Email" outlined dense prepend-inner-icon="mdi-email"
                                 class="mb-4" :rules="emailRules" required />
                             <v-row justify="center">
-                                <v-btn type="submit" color="primary" class="mt-2" size="large" elevation="0"
+                                <v-btn type="submit" color="light" class="mt-2" size="large" elevation="0"
                                     :disabled="isDisableConfirm" style="min-width: 150px; max-width: 200px;">
                                     Konfirmasi
                                 </v-btn>
@@ -55,6 +68,10 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { Auth_Process } from "@/utils/requestHelper";
 import { BASE_AUTH_URL } from "@/configs/config";
+import { useRoute, useRouter } from 'vue-router';
+const route = useRoute();
+const router = useRouter();
+
 
 const isEmailResetPasswordSend = ref(false);
 
@@ -162,6 +179,13 @@ onMounted(() => {
         console.log('Session storage is not clear');
     }
 });
+
+
+function backToLogin() {
+    router.push(
+        { name: 'login' }
+    )
+}
 
 </script>
 

@@ -1,21 +1,22 @@
 <template>
-  <v-row class="fill-height" :class="{ 'disable-interactions': isLoading }">
-    <v-progress-circular v-if="isLoading" color="primary" indeterminate class="loading-spinner"></v-progress-circular>
+  <v-row class="fill-height ma-0" :class="{ 'disable-interactions': isLoading }">
 
-
-    <v-col cols="12" md="6" class="primary d-flex align-center justify-center pa-10">
-      <div class="text-white">
-        <h1 class="text-h3 font-weight-bold mb-4">SIMPEL</h1>
-        <p class="text-h6">Sistem Monitoring Penggunaan Listrik</p>
-        <p class="text-body-1 mt-4">
-          Pantau dan kelola konsumsi listrik dengan mudah melalui platform
-          terintegrasi berbasis Internet of Things.
-        </p>
-      </div>
+    <v-col cols="12" md="6" class="d-flex pa-0 ma-0">
+      <v-card border color="primary" rounded="0" class="d-flex align-center justify-center fill-height fill-width  "
+        flat>
+        <div class="text-center pa-10">
+          <h1 class="text-h3 font-weight-bold mb-4">SIMPEL</h1>
+          <p class="text-h6">Sistem Monitoring Penggunaan Listrik</p>
+          <p class="text-body-1 mt-4">
+            Pantau dan kelola konsumsi listrik dengan mudah melalui platform
+            terintegrasi berbasis Internet of Things.
+          </p>
+        </div>
+      </v-card>
     </v-col>
 
-    <v-col cols="12" md="6" class="login-section d-flex align-center justify-center">
-      <v-card class="form-card pa-8" elevation="0" width="400">
+    <v-col cols="12" md="6" class="d-flex align-center justify-center pa-0 ma-0">
+      <v-card color="primary" class="pa-8 ma-0" elevation="0" width="400">
         <v-card-title class="text-center text-h5 font-weight-bold mb-2">
           Selamat Datang
         </v-card-title>
@@ -58,43 +59,32 @@
           </v-form>
         </div>
 
-        <br />
-
-        <v-card-actions class="justify-end">
-          <v-btn text @click="changeForm" class="text-caption py-1 px-1"
-            style="width: fit-content; min-width: auto; height: 50px">
+        <v-card-actions class="justify-end pa-0 mt-4">
+          <v-btn text color="light" @click="changeForm" class="text-caption py-1 px-1"
+            style="min-width: auto; height: 50px">
             <i>{{
               isLoginForm
                 ? "Belum punya akun? Daftar"
                 : "Sudah punya akun? Login"
             }}</i>
           </v-btn>
-
-          <br>
-
         </v-card-actions>
 
-        <v-card-actions class="justify-center">
-          <div class="h-auto w-50">
-            <v-btn @click="toResetPassword" type="button" block class="mt-0 text-caption" size="small" elevation="0"
-              style="background-color: #F3E5F5; color: black;">
-              Lupa Password
-            </v-btn>
-          </div>
+        <v-card-actions class="justify-center pa-0">
+          <v-btn @click="toResetPassword" type="button" block class="mt-2 text-caption" size="small" elevation="0"
+            style="background-color: #F3E5F5; color: black;">
+            Lupa Password
+          </v-btn>
         </v-card-actions>
-
-
-
       </v-card>
-
-
-
     </v-col>
 
-    <PopUpInfoBox v-if="popupVisible" class="popup-container" :status="popUpProps.status"
-      :errorMessage="popUpProps.errorMessage" :errorCode="popUpProps.errorCode" :visible="popupVisible"
-      @close="closePopup" />
+    <PopUpInfoBox v-if="popUpInfoBox" :status="popUpInfoProps.status" :errorMessage="popUpInfoProps.errorMessage"
+      :errorCode="popUpInfoProps.errorCode" :visible="popUpInfoBox" @close="closePopUpInfo" />
 
+    <v-overlay :model-value="isLoading" class="d-flex justify-center align-center">
+      <v-progress-circular indeterminate color="primary" size="64" />
+    </v-overlay>
   </v-row>
 </template>
 
@@ -140,13 +130,13 @@ const token = ref("");
 
 const showPassword = ref(false);
 
-const popupVisible = ref(false);
+const popUpInfoBox = ref(false);
 
-const closePopup = () => {
-  popupVisible.value = false;
+const closePopUpInfo = () => {
+  popUpInfoBox.value = false;
 };
 
-const popUpProps = ref({
+const popUpInfoProps = ref({
   status: "",
   errorMessage: "",
   errorCode: "",
@@ -270,13 +260,32 @@ const login = async (userDataParam, passwordParam, halfNonceParam) => {
   //  console.log("login response_be:", response_be);
 
   if (response_be.status != "success") {
-    console.error("LOGIN FAILED!!:", response_be.error_message); //////////
-    popUpProps.value = {
+    console.error("LOGIN FAILED!!:", response_be.error_message);
+
+    let errorMessage = response_be.error_message;
+
+    switch (response_be.error_code) {
+      case 401:
+        errorMessage = "Username atau password salah";
+        break;
+      case 500:
+        errorMessage = "Terjadi kesalahan pada server";
+        break;
+      case 503:
+        errorMessage = "Periksa Koneksi Internet";
+        break;
+
+      default:
+        errorMessage = "Terjadi Kesalahan"
+        break;
+    }
+
+    popUpInfoProps.value = {
       status: "error",
-      errorMessage: response_be.error_message,
+      errorMessage: errorMessage,
       errorCode: response_be.error_code,
     };
-    popupVisible.value = true;
+    popUpInfoBox.value = true;
     return false;
   }
 
@@ -340,12 +349,12 @@ const verifyToken = async () => {
 
   if (response_be.status != "success") {
     console.error("VERIFY TOKEN FAILED!! :", response_be.error_message);
-    popUpProps.value = {
+    popUpInfoProps.value = {
       status: "error",
       errorMessage: response_be.error_message,
       errorCode: response_be.error_code,
     };
-    popupVisible.value = true;
+    popUpInfoBox.value = true;
     return;
   }
 
@@ -360,7 +369,7 @@ const verifyToken = async () => {
   const userData = {
     username: response_be.payload.username,
     full_name: response_be.payload.full_name,
-    email : response_be.payload.email,
+    email: response_be.payload.email,
     role: response_be.payload.role,
     data: response_be.payload.data,
   };
@@ -455,12 +464,12 @@ const register = async (
 
   if (response_be.status != "success") {
     console.error("REGISTER FAILED!!:", response_be.error_message); //////////
-    popUpProps.value = {
+    popUpInfoProps.value = {
       status: "error",
       errorMessage: response_be.error_message,
       errorCode: response_be.error_code,
     };
-    popupVisible.value = true;
+    popUpInfoBox.value = true;
     return;
   }
 
@@ -505,72 +514,4 @@ const toResetPassword = () => {
 
 </script>
 
-<style scoped>
-.primary {
-  background: linear-gradient(45deg, #1867c0 0%, #5cbbf6 100%);
-}
-
-/* Warna untuk section kanan (form login) */
-.login-section {
-  background: white;
-  /* Warna ungu lembut */
-}
-
-.form-card {
-  background: linear-gradient(45deg, #1867c0 0%, #5cbbf6 100%);
-  /* Ungu tua dengan transparansi */
-  border-radius: 12px;
-  /* Membuat sudut lebih halus */
-  color: white;
-  /* Warna teks putih */
-}
-
-/* Styling for the loading spinner */
-.loading-spinner {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1000;
-  /* Pastikan di atas elemen lain */
-}
-
-
-/* Disable interactions when isLoading is true */
-.disable-interactions * {
-  pointer-events: none;
-}
-
-
-/* Optional: Add an overlay to make it clear that the screen is in loading state */
-.disable-interactions {
-  position: relative;
-}
-
-.disable-interactions::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  /* Semi-transparent overlay */
-  z-index: 5;
-  /* Ensure it overlays on top of the content */
-}
-
-
-/* Pastikan PopUpInfoBox tetap bisa diinteraksi */
-.popup-container {
-  position: fixed;
-  /* Tetap di atas layar */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1100;
-  /* Lebih tinggi dari overlay */
-  pointer-events: auto;
-  /* Aktifkan interaksi */
-}
-</style>
+<style scoped></style>

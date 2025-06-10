@@ -155,8 +155,9 @@ const renderChart = () => {
         },
         data: [{
             type: "column",
-            indexLabelFontColor: "#000",
-            indexLabelPlacement: "outside",
+           indexLabelFontColor: "#fff", // Warna putih untuk kontras
+            indexLabelPlacement: "inside", // Letakkan label di dalam bar
+            indexLabelOrientation: "vertical", // Orientasi vertikal
             indexLabelFontSize: 12,
             dataPoints: month_list.value
                 .filter(item => item.month_number > 0 && item.month_number <= 12) // ✅ filter valid bulan

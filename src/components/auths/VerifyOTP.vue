@@ -1,6 +1,14 @@
 <template>
     <v-container fluid class="pa-2 elevation-0 fill-height" :class="{ 'disable-interactions': isLoading }">
-        <v-card color="base" class="mx-auto my-auto pa-4" max-width="600">
+
+
+
+        <!-- Tombol Panah Kembali di Kiri Atas -->
+        <v-btn icon class="position-absolute top-0 left-0 ma-2" @click="backToLogin()">
+            <v-icon>mdi-arrow-left</v-icon>
+        </v-btn>
+
+        <v-card color="primary" class="mx-auto my-auto pa-4" max-width="600">
             <v-row justify="center">
                 <v-overlay :model-value="isLoading" class="d-flex justify-center align-center">
                     <v-progress-circular indeterminate color="primary" size="64" />
@@ -29,7 +37,7 @@
                             class="mb-4 justify-center" :disabled="isLoading || isExpired"
                             :rules="otpRules"></v-otp-input>
 
-                        <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="0"
+                        <v-btn type="submit" color="light" block class="mt-2" size="large" elevation="0"
                             :disabled="isDisabledOtp || isExpired">
                             Konfirmasi
                         </v-btn>
@@ -47,12 +55,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { Auth_Process } from "@/utils/requestHelper";
 import { BASE_AUTH_URL } from "@/configs/config"
 import { GenerateHMAC } from "@/libs/crypto";
 
 const router = useRouter();
+const route = useRoute();
 const otp = ref("");
 const otpSignature = ref("");
 const otpData = ref({}); // ✅ Data dinamis dari sessionStorage
@@ -230,7 +239,14 @@ onUnmounted(() => {
         clearInterval(countdownInterval);
     }
 });
+function backToLogin() {
+    router.push(
+        { name: 'login' }
+    )
+}
 </script>
+
+
 
 
 <style></style>
