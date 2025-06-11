@@ -264,7 +264,7 @@ const login = async (userDataParam, passwordParam, halfNonceParam) => {
 
     let errorMessage = response_be.error_message;
 
-    switch (response_be.error_code) {
+    switch (parseInt(response_be.error_code)) {
       case 401:
         errorMessage = "Username atau password salah";
         break;
@@ -348,14 +348,33 @@ const verifyToken = async () => {
   console.log("verify_token response_be:", response_be);
 
   if (response_be.status != "success") {
-    console.error("VERIFY TOKEN FAILED!! :", response_be.error_message);
+    console.error("LOGIN FAILED!!:", response_be.error_message);
+
+    let errorMessage = response_be.error_message;
+
+    switch (parseInt(response_be.error_code)) {
+      case 401:
+        errorMessage = "Username atau password salah";
+        break;
+      case 500:
+        errorMessage = "Terjadi kesalahan pada server";
+        break;
+      case 503:
+        errorMessage = "Periksa Koneksi Internet";
+        break;
+
+      default:
+        errorMessage = "Terjadi Kesalahan ini"
+        break;
+    }
+
     popUpInfoProps.value = {
       status: "error",
-      errorMessage: response_be.error_message,
+      errorMessage: errorMessage,
       errorCode: response_be.error_code,
     };
     popUpInfoBox.value = true;
-    return;
+    return false;
   }
 
   console.log("VERIFY TOKEN SUCCESSFUL!");
@@ -461,17 +480,43 @@ const register = async (
   const response_be = await Auth_Process(baseUrl, operation, params);
 
   // console.log("register response_be:", response_be);
-
   if (response_be.status != "success") {
-    console.error("REGISTER FAILED!!:", response_be.error_message); //////////
+    console.error("REGISTER FAILED!!:", response_be.error_message);
+
+    let errorMessage = response_be.error_message;
+
+    switch (response_be.error_code) {
+      case "409":
+        const coflictedField = response_be.payload?.field || "unknown";
+        errorMessage = `${coflictedField} telah terdaftar.`;
+        break;
+      case "429":
+        const retry = response_be.payload?.retry_after || 60;
+        errorMessage = `Terlalu banyak permintaan. Coba lagi dalam ${retry} detik.`;
+        break;
+
+      case "500":
+        errorMessage = "Terjadi kesalahan pada server";
+        break;
+
+      case "503":
+        errorMessage = "Periksa koneksi internet";
+        break;
+
+      default:
+        errorMessage = "Terjadi kesalahan";
+        break;
+    }
+
     popUpInfoProps.value = {
       status: "error",
-      errorMessage: response_be.error_message,
+      errorMessage: errorMessage,
       errorCode: response_be.error_code,
     };
     popUpInfoBox.value = true;
     return;
   }
+
 
   console.log("REGISTER SUCCESS!!:");
   console.log("status response:" + response_be.payload.status);

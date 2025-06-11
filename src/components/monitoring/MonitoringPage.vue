@@ -573,7 +573,7 @@ const selectDevice = async (deviceFromEmit) => {
                         resolve(); // sukses
                     } else if (message.status === "error") {
 
-                        reject(new Error("Gagal subscribe ke perangkat"));
+                        reject(new Error("Gagal terhubung ke perangkat"));
                     }
                     else {
                         reject(new Error("Status pesan tidak dikenali"));

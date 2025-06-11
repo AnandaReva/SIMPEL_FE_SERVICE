@@ -329,7 +329,7 @@ onMounted(() => {
         popUpInfoVisible.value = true;
         popUpInfoProps.value = {
             status: "error",
-            errorMessage: "Link reset password telah kadaluarsa",
+            errorMessage: "URL reset password telah kadaluarsa",
             errorCode: "410001"
         };
         setTimeout(() => router.push('/login'), 3000);

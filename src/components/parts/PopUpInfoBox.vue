@@ -4,9 +4,8 @@
     <div v-if="visible" class="popup-overlay">
         <v-card class="popup-card">
             <v-card-title class="text-h5 font-weight-bold text-center">
-                {{ props.status ? props.status.charAt(0).toUpperCase() + props.status.slice(1) : "-" }}
+                {{ props.status ? props.status.toUpperCase() : "-" }}
             </v-card-title>
-
 
 
 
@@ -20,8 +19,8 @@
 
 
 
-            <p class="text-subtitle"> <strong>{{ props.errorCode }}</strong> </p>
-            <p class="text-body">{{ props.errorMessage }}</p>
+            <p class="text-subtitle"> <strong>{{ props.errorMessage }}</strong> </p>
+
 
             <v-btn @click="close" color="primary" class="mt-4">Close</v-btn>
         </v-card>

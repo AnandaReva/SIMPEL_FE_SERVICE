@@ -140,7 +140,7 @@ async function ResetPasswordRequest(emailParam) {
             let popUpMessage = "";
             if (response_be.error_code === "429") {
                 const remainingTime = response_be.payload.remaining_time;
-                popUpMessage = `Terlalu banyak percobaan, coba lagi dalam ${remainingTime} detik`;
+                popUpMessage = `T`;
             } else if (response_be.error_code === "401") {
                 popUpMessage = "Email tidak terdaftar";
             } else if (response_be.error_code === "500") {
