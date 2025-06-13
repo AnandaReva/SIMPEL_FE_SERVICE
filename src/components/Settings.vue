@@ -158,6 +158,8 @@ import PopUpInfoBox from './parts/PopUpInfoBox.vue'
 import PopUpConfirmationBox from './parts/PopUpConfirmationBox.vue'
 import VerifyResetPassword from './auths/VerifyResetPassword.vue'
 import VerifyOTP from './auths/VerifyOTP.vue'
+import { BASE_API_URL } from '@/configs/config'
+import { Process } from '@/utils/requestHelper'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -272,13 +274,6 @@ const fullNameRules = [
 ];
 
 
-
-const hasAccountChanges = computed(() =>
-    curr_data.account.full_name !== original_data.account.full_name ||
-    curr_data.account.username !== original_data.account.username
-)
-
-
 const isAccountValid = computed(() => {
     return fullNameRules.every(rule => rule(curr_data.account.full_name) === true) &&
         usernameRules.every(rule => rule(curr_data.account.username) === true);
@@ -313,26 +308,51 @@ const showEmailSaveButton = computed(() =>
 
 
 function saveField(field) {
+    isLoading.value = true;
 
-    isLoading.value = true
     setTimeout(() => {
-        if (field === 'email') {
-            router.push({ name: 'VerifyOTP', query: { email: curr_data.email.new } })
+        switch (field) {
+            case 'email':
+                if (curr_data.email.new && curr_data.email.new !== original_data.email) {
+                    // Arahkan ke verifikasi OTP
+                    router.push({ name: 'VerifyOTP', query: { email: curr_data.email.new } });
+                }
+                break;
+
+            case 'account':
+                if (showAccountSaveButton.value) {
+                    original_data.account.full_name = curr_data.account.full_name;
+                    original_data.account.username = curr_data.account.username;
+                }
+                break;
+
+            case 'general':
+                if (hasGeneralChanges.value) {
+                    original_data.general.emissionFactor = curr_data.general.emissionFactor;
+                    original_data.general.reportDate = curr_data.general.reportDate;
+                }
+                break;
+
+            case 'system':
+                if (hasSystemChanges.value) {
+                    original_data.system.theme = curr_data.system.theme;
+                    original_data.system.language = curr_data.system.language;
+                    original_data.system.notification = curr_data.system.notification;
+                }
+                break;
+
+            default:
+                console.warn('Unknown field:', field);
         }
-        else if (field === 'general') {
-            original_data.general.emissionFactor = curr_data.general.emissionFactor
-            original_data.general.reportDate = curr_data.general.reportDate
-        } else if (field === 'system') {
-            original_data.system.theme = curr_data.system.theme
-            original_data.system.language = curr_data.system.language
-            original_data.system.notification = curr_data.system.notification
-        } else if (field === 'account') {
-            original_data.account.full_name = curr_data.account.full_name
-            original_data.account.username = curr_data.account.username
-            original_data.email = { newEmail: curr_data.email }
-        }
-        isLoading.value = false
-    }, 1000)
+
+        isLoading.value = false;
+        popUpProps.value = {
+            status: 'success',
+            errorMessage: '',
+            errorCode: ''
+        };
+        popUpInfoVisible.value = true;
+    }, 1000);
 }
 
 function changePassword() {
@@ -432,5 +452,19 @@ onMounted(() => {
     original_data.system.time_zone = generalData.time_zone ?? default_settings_value.value.time_zone;
     curr_data.system = { ...original_data.system };
 });
+
+
+
+
+
+/* exp : {
+            change_fields:{
+                general {},
+                account: {},
+                system :{}
+
+        }
+
+}*/
 
 </script>

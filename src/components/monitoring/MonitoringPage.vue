@@ -824,30 +824,41 @@ async function getActiveDeviceList(pageNumberParam) {
 
 
 
+const minutesToTimezoneString = (offsetMinutes) => {
+    const hours = Math.floor(Math.abs(offsetMinutes) / 60);
+    const minutes = Math.abs(offsetMinutes) % 60;
+    const sign = offsetMinutes >= 0 ? '+' : '-';
+    return `UTC${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+};
 
-// Initialize component
+const userTimeZone = ref(null);
 onMounted(() => {
     initGlobalWebSocket();
-    // Ambil timezone dari localStorage
+
     const userRaw = localStorage.getItem('user_data');
+    let offsetMinutes = null;
+    
     if (userRaw) {
         try {
             const user = JSON.parse(userRaw);
             const tz = Number(user?.data?.timezone);
             if (!isNaN(tz)) {
-                timezoneOffset.value = tz * 60; // jam → menit
+                offsetMinutes = tz * 60; // dari jam ke menit
             }
         } catch (e) {
             console.warn('Gagal parse user_data dari localStorage:', e);
         }
     }
 
-    // Jika tidak ada data, pakai offset browser
-    if (timezoneOffset.value === null) {
-        timezoneOffset.value = new Date().getTimezoneOffset() * -1;
+    // Fallback: jika offsetMinutes belum di-set, pakai timezone dari browser
+    if (offsetMinutes === null || offsetMinutes === undefined) {
+        offsetMinutes = new Date().getTimezoneOffset() * -1;
+        console.info('Menggunakan timezone dari browser:', offsetMinutes);
     }
 
-})
+    timezoneOffset.value = offsetMinutes;
+    userTimeZone.value = minutesToTimezoneString(offsetMinutes);
+});
 
 // Watch for filter/sort changes
 watch([selectedSortTypeActiveDeviceList, selectedOrderByActiveDeviceList], () => {

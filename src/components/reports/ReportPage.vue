@@ -79,6 +79,8 @@
                 </v-dialog>
 
 
+              
+
                 <!-- Dialog: Pilih Tahun -->
                 <v-dialog v-model="isShowYearSelector" max-width="500">
                     <template #default>
@@ -422,6 +424,7 @@ async function getDeviceList(pageNumberParam) {
             page_size: page_size.value,
             st: selectedStatusDeviceList.value,
         };
+
 
         console.log("getDeviceList params:", params);
         const response_be = await Process(baseUrl, operation, params);

@@ -172,9 +172,7 @@ const verifyOTP = async (otpSignatureParam) => {
         if (!response_be || response_be.status !== "success") {
             console.error("❌ VERIFIKASI OTP GAGAL:", response_be?.error_message || "Unknown error");
 
-            let popUpMessage = response_be?.status === "401"
-                ? "Kode OTP tidak valid"
-                : response_be?.error_message || "Verifikasi OTP gagal";
+            let popUpMessage =  "Kode OTP tidak valid";
 
             popUpInfoProps.value = {
                 status: "error",

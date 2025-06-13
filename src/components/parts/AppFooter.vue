@@ -7,7 +7,7 @@
 
     <v-row align="center" justify="center">
       <v-col class="text-center">
-        <span class="text-body-2">VERSION : 0.2.15</span>
+        <span class="text-body-2">VERSION : 0.2.16</span>
       </v-col>
     </v-row>
 

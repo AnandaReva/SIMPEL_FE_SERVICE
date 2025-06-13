@@ -428,8 +428,6 @@ const handleCancel = () => {
 
 
 //////////////////////////////
-
-
 const addNewDevice = async (
     deviceNameParam,
     passwordParam,
@@ -478,10 +476,19 @@ const addNewDevice = async (
     } catch (error) {
         console.error("Error registering device:", error);
 
+        let errorMessage = error.message || "Terjadi kesalahan saat registrasi perangkat";
+        let errorCode = error.code || "REGISTER_DEVICE_ERROR";
+
+        // Tangani kasus konflik device name (error code 409)
+        if (errorCode === 409 || errorCode === "409") {
+            errorMessage = `Perangkat dengan nama "${deviceNameParam}" sudah terdaftar`;
+            errorCode = "DEVICE_NAME_CONFLICT";
+        }
+
         popUpInfoProps.value = {
             status: "error",
-            errorMessage: error.message || "Terjadi kesalahan saat registrasi perangkat",
-            errorCode: error.code || "REGISTER_DEVICE_ERROR",
+            errorMessage,
+            errorCode,
         };
 
         return null;
@@ -492,6 +499,7 @@ const addNewDevice = async (
         console.groupEnd();
     }
 };
+
 
 
 

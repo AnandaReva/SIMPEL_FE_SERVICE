@@ -21,7 +21,7 @@ export default createVuetify({
         colors: {
           primary: '#346285',   // Biru agak tua
           secondary: '#fbcfe8', // Pink pastel
-          base: '#badefa',      // Biru muda pastel (dasar)
+          base: '#F5F5F5',      // Biru muda pastel (dasar)
           accent: '#fcd34d',    // Kuning pastel (aksen)
           error: '#dc143b',     // Merah lembut
           info: '#60a5fa',      // Biru terang

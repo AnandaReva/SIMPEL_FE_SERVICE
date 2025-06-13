@@ -7,19 +7,36 @@
         </v-overlay>
 
 
+        
         <!-- Grafik LineChart Scrollable -->
+    
         <v-row>
             <v-col>
-                <div style="max-height: 400px; overflow-x: auto; width: 100%;">
-                    <!-- Min-width bisa lebih besar agar memicu scroll horizontal -->
+                <div v-if="year_list.length" style="max-height: 400px; overflow-x: auto; width: 100%;">
+                    <!-- Chart hanya muncul jika ada data -->
                     <div ref="chartContainer" style="height: 360px; min-width: 600px; width: 100%;"></div>
+                </div>
+                <div v-else class="text-center py-8">
+                   <!-- Jika tidak ada perangkat -->
+                        <v-row class="fill-height" align="center" justify="center">
+                            <v-col cols="auto">
+                                <v-card elevation="2" class="mb-6 mx-auto" max-width="400">
+                                    <v-col class="d-flex align-center justify-center">
+                                        <v-icon size="64" color="grey">mdi-chart-bar</v-icon>
+                                    </v-col>
+                                    <v-col class="d-flex align-center justify-center">
+                                        <p class="text-h6 mt-4 mb-6">Tidak ada data pada perangkat</p>
+                                    </v-col>
+                                </v-card>
+                            </v-col>
+                        </v-row>
                 </div>
             </v-col>
         </v-row>
 
 
         <!-- Pagination -->
-        <v-row class="w-100 mt-4" align="center" justify="space-between">
+        <v-row v-if="year_list.length" class="w-100 mt-4" align="center" justify="space-between">
             <v-col cols="4" class="d-flex justify-start">
                 <v-btn icon :disabled="isDisablePrevButton()" @click="prevPage">
                     <v-icon>mdi-chevron-left</v-icon>
@@ -76,11 +93,11 @@ const renderChart = () => {
     const dataPoints = year_list.value.map((item) => ({
         label: item.year.toString(),
         y: parseFloat(item.total_energy),
-        indexLabel: `${item.total_energy} KwH`, 
-         indexLabelFontColor: "#fff", // Warna putih untuk kontras
-            indexLabelPlacement: "inside", // Letakkan label di dalam bar
-            indexLabelOrientation: "vertical", // Orientasi vertikal
-            indexLabelFontSize: 12,
+        indexLabel: `${item.total_energy} KwH`,
+        indexLabelFontColor: "#fff", // Warna putih untuk kontras
+        indexLabelPlacement: "inside", // Letakkan label di dalam bar
+        indexLabelOrientation: "vertical", // Orientasi vertikal
+        indexLabelFontSize: 12,
     }));
 
 
