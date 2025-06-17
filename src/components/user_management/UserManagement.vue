@@ -14,6 +14,19 @@
                 <v-card-text>
                     <!-- Konten daftar Pengguna -->
                     <div class="d-flex flex-wrap mb-0 ">
+
+                        <v-col v-if="user_role == 'system master' || user_role == 'system admin'" cols="12"
+                            class="d-flex justify-end align-center px-0">
+                            <span class="mr-3 text-subtitle-1 font-weight-medium" style="color: #555;">
+                                Tambah Pengguna
+                            </span>
+
+                            <v-btn @click="toAddPage()" color="primary" icon rounded="circle" elevation="2" class="ma-0"
+                                style="width: 48px; height: 48px;">
+                                <v-icon size="24">mdi-plus</v-icon>
+                            </v-btn>
+                        </v-col>
+
                         <v-select v-model="selectedOrderByUserList" :items="[
                             { title: 'Waktu terakhir', value: 'last_tstamp' },
                             { title: 'Waktu Pengguna didaftarkan', value: 'create_tstamp' },
@@ -65,6 +78,18 @@
                     <v-card-text>
                         <!-- Konten yang sama seperti di drawer -->
                         <div class="d-flex flex-wrap mb-0">
+                            <v-col v-if="user_role == 'system master' || user_role == 'system admin'" cols="12"
+                                class="d-flex justify-end align-center px-0">
+                                <span class="mr-3 text-subtitle-1 font-weight-medium" style="color: #555;">
+                                    Tambah Pengguna
+                                </span>
+
+                                <v-btn @click="toAddPage()" color="primary" icon rounded="circle" elevation="2"
+                                    class="ma-0" style="width: 48px; height: 48px;">
+                                    <v-icon size="24">mdi-plus</v-icon>
+                                </v-btn>
+                            </v-col>
+
                             <v-select v-model="selectedOrderByUserList" :items="[
                                 { title: 'Waktu terakhir', value: 'last_tstamp' },
                                 { title: 'Waktu Pengguna didaftarkan', value: 'create_tstamp' },
@@ -97,7 +122,7 @@
                         <div>
                             <v-infinite-scroll :key="scrollKeyUsers" id="UserListBox" ref="UserListBox" height="550"
                                 side="end" @load="loadUsers" class="overflow-auto">
-                                <UserListInfiniteScroll :users="users" :total_users="total_users"  :curr_user="curr_user"
+                                <UserListInfiniteScroll :users="users" :total_users="total_users" :curr_user="curr_user"
                                     @select-user="selectUser" />
                             </v-infinite-scroll>
                         </div>
@@ -479,6 +504,8 @@ function deleteUser(userIdParam) {
             };
             curr_user_delete.value = null;
             curr_user.value = { id: null, name: null };
+
+            searchUsers();
         }
     };
 
@@ -590,6 +617,9 @@ const handleConfirmCancel = () => {
     confirmAction.value = null;
     popUpConfirmVisible.value = false;
 };
+function toAddPage() {
+    router.push({ name: "user-add" })
+}
 
 onMounted(() => {
     // get user role

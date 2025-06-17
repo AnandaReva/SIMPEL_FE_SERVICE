@@ -16,6 +16,8 @@ import AddDevice from '@/components/device_management/AddDevice.vue';
 import EditDevice from '@/components/device_management/EditDevice.vue';
 
 import UserManagementPage from '@/components/user_management/UserManagement.vue';
+import AddUser from '@/components/user_management/Adduser.vue';
+
 import EditUser from '@/components/user_management/EditUser.vue';
 
 
@@ -51,43 +53,23 @@ const routes = [
         meta: { requiresAuth: true, parent: 'report' },
     },
 
-    /* {
-        path: '/report/years',
-        name: 'report-year',
-        component: YearlyReport,
-        meta: { requiresAuth: true, parent: 'report' },
-    },
-
-    {
-        path: '/report/:year',
-        name: 'report-month',
-        component: MonthlyReport,
-        meta: { requiresAuth: true, parent: 'report' },
-    },
-    {
-        path: '/report/:year/:month',
-        name: 'report-daily',
-        component: DailyReport,
-        meta: { requiresAuth: true, parent: 'report' },
-    },
-    {
-        path: '/report/:year/:month/:date_day',
-        name: 'report-daily-detail',
-        component: DayDetailReport,
-        meta: { requiresAuth: true, parent: 'report' },
-    }, */
-
     {
         path: '/users',
         name: 'user-management',
         component: UserManagementPage,
         meta: { requiresAuth: true },
     },
+        {
+        path: '/user/add',
+        name: 'user-add',
+        component: AddUser,
+        meta: { requiresAuth: true, parent: 'user-management' },
+    },
     {
         path: '/user/edit/:username',
         name: 'user-edit',
         component: EditUser,
-        meta: { requiresAuth: true, parent: 'EditUser,-management' },
+        meta: { requiresAuth: true, parent: 'user-management' },
     },
 
 
@@ -132,12 +114,12 @@ const routes = [
         component: LoginPage,
         meta: { requiresAuth: false },
     },
-    {
-        path: '/verify-otp',
-        name: 'verify-otp',
-        component: VerifyOTP,
-        meta: { requiresAuth: false },
-    },
+    // {
+    //     path: '/verify-otp',
+    //     name: 'verify-otp',
+    //     component: VerifyOTP,
+    //     meta: { requiresAuth: false },
+    // },
     {
         path: '/reset-password',
         name: 'reset-password',

@@ -29,7 +29,7 @@
                     style="  border-radius: 8px;">
                     <v-row align="center" justify="space-between" no-gutters>
                         <v-col cols="auto">
-                            <span style="font-weight: bold;">{{ getMonthName(item.month_number) }}</span>
+                            <span style="font-weight: bold;">{{ GetMonthNameLocal(item.month_number) }}</span>
                         </v-col>
                         <v-col cols="auto" class="text-right">
                             <div style="font-size: 0.9rem;">Total Energi</div>
@@ -47,6 +47,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { BASE_API_URL } from '@/configs/config'
+import { GetMonthNameLocal } from '@/utils/utils'
 import { Process } from '@/utils/requestHelper'
 
 const props = defineProps(['curr_device', 'year_selected'])
@@ -61,14 +62,14 @@ const month_list = ref([])
 const month_orderBy = ref("month")
 const month_sortType = ref("desc") // default sort descending
 
-// Untuk konversi nama bulan
-const getMonthName = (monthNumber) => {
-    const monthNames = [
-        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-    ]
-    return monthNames[monthNumber - 1 ] || `Bulan ${monthNumber}`
-}
+// // Untuk konversi nama bulan
+// const getMonthName = (monthNumber) => {
+//     const monthNames = [
+//         "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+//         "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+//     ]
+//     return monthNames[monthNumber - 1 ] || `Bulan ${monthNumber}`
+// }
 
 watch(selectedOrderByMonthsAvailable, async (newVal) => {
     month_orderBy.value = newVal === 'energy' ? 'energy' : 'month'

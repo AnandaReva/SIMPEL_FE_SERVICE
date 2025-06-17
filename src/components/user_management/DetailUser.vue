@@ -1,6 +1,6 @@
 <template>
     <v-row class="fill-height ma-0">
-        
+
 
         <v-col cols="12" class="d-flex align-center">
             <v-tooltip text="Edit user" location="top">
@@ -14,7 +14,7 @@
 
             <v-tooltip text="Hapus user" location="top">
                 <template #activator="{ props }">
-                    <v-btn v-bind="props" @click="handleDeleteUser(curr_user.user_id)" color="error" icon
+                    <v-btn v-bind="props" @click="handleDeleteUser(curr_user.id)" color="error" icon
                         rounded="circle" elevation="2" style="width: 48px; height: 48px;">
                         <v-icon size="24">mdi-trash-can</v-icon>
                     </v-btn>
@@ -23,14 +23,14 @@
         </v-col>
 
 
-        
+
 
 
         <v-col cols="12" class="pa-0">
             <!-- Header Detail User -->
             <v-card flat class="px-4 py-2 mb-4">
                 <p class="text-h6 font-weight-medium text-center mb-0">
-                    Detail User
+                    DETAIL USER
                 </p>
             </v-card>
 
@@ -56,46 +56,49 @@
                                 </v-card>
                             </v-col>
 
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="6" class="mb-4">
                                 <p class="text-subtitle-1 font-weight-medium mb-2">Nama Lengkap</p>
-                                <v-card flat class="pa-3">
-                                    {{ curr_user?.full_name || '-' }}
+                                <v-card flat class="pa-3 d-flex align-center">
+                                    <v-icon size="24" color="primary" class="mr-2">mdi-file-account</v-icon>
+                                    <span>{{ curr_user?.full_name || '-' }}</span>
                                 </v-card>
                             </v-col>
 
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="6" class="mb-4">
                                 <p class="text-subtitle-1 font-weight-medium mb-2">Role</p>
-                                <v-card flat class="pa-3">
-                                    {{ curr_user?.role || '-' }}
+                                <v-card flat class="pa-3 d-flex align-center">
+                                    <v-icon size="24" color="primary" class="mr-2">mdi-shield-account</v-icon>
+                                    <span>{{ curr_user?.role || '-' }}</span>
                                 </v-card>
                             </v-col>
 
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="6" class="mb-4">
                                 <p class="text-subtitle-1 font-weight-medium mb-2">Waktu Ditambahkan</p>
-                                <v-card flat class="pa-3">
-                                    {{ FormatTimestamp(curr_user?.create_timestamp) || '-' }}
+                                <v-card flat class="pa-3 d-flex align-center">
+                                    <v-icon size="24" color="primary" class="mr-2">mdi-calendar-plus</v-icon>
+                                    <span>{{ FormatTimestamp(curr_user?.create_timestamp) || '-' }}</span>
                                 </v-card>
                             </v-col>
 
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="6" class="mb-4">
                                 <p class="text-subtitle-1 font-weight-medium mb-2">Waktu Terakhir</p>
-                                <v-card flat class="pa-3">
-                                    {{ FormatTimestamp(curr_user?.last_timestamp) || '-' }}
+                                <v-card flat class="pa-3 d-flex align-center">
+                                    <v-icon size="24" color="primary" class="mr-2">mdi-calendar-clock</v-icon>
+                                    <span>{{ FormatTimestamp(curr_user?.last_timestamp) || '-' }}</span>
                                 </v-card>
                             </v-col>
 
-
-
-
-
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="6" class="mb-4">
                                 <p class="text-subtitle-1 font-weight-medium mb-2">Status</p>
-                                <v-card flat class="pa-3">
-                                    <span v-if="curr_user?.status === 1"> Aktif</span>
-                                    <span v-else>Tidak Aktif</span>
+                                <v-card flat class="pa-3 d-flex align-center">
+                                    <v-icon size="24" color="primary" class="mr-2">
+                                        {{ curr_user?.status === 1 ? 'mdi-check-circle' : 'mdi-close-circle' }}
+                                    </v-icon>
+                                    <span>{{ curr_user?.status === 1 ? 'Aktif' : 'Tidak Aktif' }}</span>
                                 </v-card>
                             </v-col>
                         </v-row>
+
                     </v-card-text>
                 </v-card>
 

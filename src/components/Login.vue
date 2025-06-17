@@ -59,7 +59,7 @@
           </v-form>
         </div>
 
-        <v-card-actions class="justify-end pa-0 mt-4">
+        <!-- <v-card-actions class="justify-end pa-0 mt-4">
           <v-btn text color="light" @click="changeForm" class="text-caption py-1 px-1"
             style="min-width: auto; height: 50px">
             <i>{{
@@ -68,7 +68,7 @@
                 : "Sudah punya akun? Login"
             }}</i>
           </v-btn>
-        </v-card-actions>
+        </v-card-actions> -->
 
         <v-card-actions class="justify-center pa-0">
           <v-btn @click="toResetPassword" type="button" block class="mt-2 text-caption" size="small" elevation="0"
@@ -160,8 +160,8 @@ const userDataRules = [
 ];
 const usernameRules = [
   (v) => !!v || "Username harus diisi",
-  (v) => v.length >= 6 || "Username minimal 6 karakter",
-  (v) => v.length <= 30 || "Username maksimal 50 karakter",
+  (v) => v.length >= 2 || "Username minimal 2 karakter",
+  (v) => v.length <= 255 || "Username maksimal 255 karakter",
   (v) => usernameRegrex.value.test(v) || "Username hanya boleh mengandung huruf, angka, dan simbol '~!@#$%^&*()_+<>?/':=.,-'"
 
 ];
@@ -180,7 +180,7 @@ const emailRules = [
 const fullNameRules = [
   (v) => !!v || "Nama lengkap harus diisi",
   (v) => v.length >= 3 || "Nama lengkap minimal 3 karakter",
-  (v) => v.length <= 50 || "Nama lengkap maksimal 50 karakter",
+  (v) => v.length <= 5255 || "Nama lengkap maksimal 255 karakter",
 
 ];
 

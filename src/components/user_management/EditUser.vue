@@ -17,22 +17,25 @@
                         <v-card-text>
                             <v-row>
                                 <v-col cols="12" md="6">
-                                    <p class="text-subtitle-1 font-weight-medium mb-2">Role Pengguna</p>
+                                    <p class="text-subtitle-1 font-weight-medium mb-2">Peran </p>
                                     <v-card flat class="pa-3">
                                         <v-select v-model="curr_user_data.role" :items="availableRoles"
-                                            label="Role Pengguna" outlined dense :rules="role_rules"
+                                            label="Peran Pengguna" outlined dense :rules="role_rules"
                                             required></v-select>
                                     </v-card>
                                 </v-col>
 
+
+        
                                 <v-col cols="12" md="6">
                                     <p class="text-subtitle-1 font-weight-medium mb-2">Status</p>
                                     <v-card flat class="pa-3">
                                         <v-switch v-model="curr_user_data.status"
-                                            :label="curr_user_data.status ? 'Aktif' : 'Tidak Aktif'" color="primary"
-                                            hide-details></v-switch>
+                                            :label="curr_user_data.status === 1 ? 'Aktif' : 'Tidak Aktif'" :value="1"
+                                            :false-value="0" color="primary" hide-details />
                                     </v-card>
                                 </v-col>
+
                             </v-row>
                         </v-card-text>
                     </v-card>
@@ -138,6 +141,13 @@ const availableRoles = ref([
 
 ]);
 
+const roleHierarchy = {
+    "system master": ["system admin", "system user"],
+    "system admin": ["system user"],
+    "system user": []
+};
+
+
 
 const role_rules = [
     (v) => !!v || "Role harus dipilih",
@@ -159,6 +169,9 @@ const popUpInfoProps = ref({
     errorCode: "",
 });
 const isLoading = ref(false);
+const closePopUpInfo = () => {
+    popUpInfoVisible.value = false;
+};
 
 // User Data
 const curr_user_data = ref({
@@ -436,11 +449,6 @@ async function updateUserData(userIdparam, userChangeFieldsParam) {
     }
 };
 
-const roleHierarchy = {
-    "system master": ["system admin", "system user"],
-    "system admin": ["system user"],
-    "system user": []
-};
 
 
 onMounted(() => {

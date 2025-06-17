@@ -79,7 +79,7 @@
                 </v-dialog>
 
 
-              
+
 
                 <!-- Dialog: Pilih Tahun -->
                 <v-dialog v-model="isShowYearSelector" max-width="500">
@@ -177,7 +177,7 @@
                                 v-if="year_selected && year_selected_detail && Object.keys(year_selected_detail).length && !month_selected">
                                 <v-col class="d-flex align-center justify-center" style="width: 100%;">
                                     <ReportYearDetail :curr_device="curr_device"
-                                        :year_selected_detail="year_selected_detail"/>
+                                        :year_selected_detail="year_selected_detail" />
                                 </v-col>
                             </div>
 
@@ -216,8 +216,9 @@
         </v-card>
 
         <!-- Pop-up Error -->
-        <PopUpInfoBox v-if="popupVisible" :status="popUpProps.status" :errorMessage="popUpProps.errorMessage"
-            :errorCode="popUpProps.errorCode" :visible="popupVisible" @close="closePopup" />
+        <PopUpInfoBox v-if="popUpInfoVisible" :status="popUpInfoProps.status"
+            :errorMessage="popUpInfoProps.errorMessage" :errorCode="popUpInfoProps.errorCode"
+            :visible="popUpInfoVisible" @close="closePopup" />
     </v-container>
 </template>
 
@@ -241,9 +242,9 @@ const route = useRoute()
 const router = useRouter()
 
 const isLoading = ref(false)
-const popUpProps = ref({ status: '', errorMessage: '', errorCode: '' })
-const popupVisible = ref(false)
-const closePopup = () => (popupVisible.value = false)
+const popUpInfoProps = ref({ status: '', errorMessage: '', errorCode: '' })
+const popUpInfoVisible = ref(false)
+const closePopup = () => (popUpInfoVisible.value = false)
 
 //////
 const isShowDeviceList = ref(false)
@@ -514,8 +515,14 @@ const getReportYearDetail = async () => {
         const operation = "get_report_year_detail"
         const response_be = await Process(BASE_API_URL, operation, params)
 
-        if (response_be.error_code !== "000000") {
+        if (response_be.status !== "success") {
             console.error("getReportYearDetail FAILED:", response_be.error_message)
+            popUpInfoProps.value = {
+                status: "error",
+                errorMessage: `Gagal Mendapatkan Data Tahun ${year_selected.value} Perangkat ${curr_device.value.name}`,
+                errorCode: response_be.error_code,
+            };
+            popUpInfoVisible.value = true;
             return
         }
 
@@ -581,11 +588,16 @@ const getReportMonthDetail = async () => {
         const operation = "get_report_month_detail"
         const response_be = await Process(BASE_API_URL, operation, params)
 
-        if (response_be.error_code !== "000000") {
-            console.error("getReportMonthDetail FAILED:", response_be.error_message)
+        if (response_be.status !== "success") {
+            console.error("getReportYearDetail FAILED:", response_be.error_message)
+            popUpInfoProps.value = {
+                status: "error",
+                errorMessage: `Gagal Mendapatkan Data Bulan ${month_selected.value} Perangkat ${curr_device.value.name}`,
+                errorCode: response_be.error_code,
+            };
+            popUpInfoVisible.value = true;
             return
         }
-
         const responseBE = response_be.payload
 
         month_selected_detail.value = responseBE.month_detail || {}

@@ -20,7 +20,7 @@
             <v-col cols="12" class="pa-0">
 
                 <!-- Konten Scrollable -->
-                <div >
+                <div>
                     <!-- Informasi Dasar Perangkat -->
                     <v-card outlined class=" px-4 py-2 my-4">
                         <v-card-text>
@@ -30,7 +30,6 @@
                                     <v-card flat class="pa-3 d-flex align-center">
                                         <v-icon size="24" color="primary" class="mr-2">mdi-access-point-network</v-icon>
                                         <v-text-field maxlength="255" v-model="device_name" label="Nama Perangkat"
-                                            outlined dense prepend-inner-icon="mdi-access-point-network"
                                             :rules="device_name_rules" required></v-text-field>
                                     </v-card>
                                 </v-col>
@@ -40,7 +39,6 @@
                                     <v-card flat class="pa-3 d-flex align-center">
                                         <v-icon size="24" color="primary" class="mr-2">mdi-lock</v-icon>
                                         <v-text-field v-model="device_password" label="Password" outlined dense
-                                            prepend-inner-icon="mdi-lock"
                                             :type="showPassword ? 'text' : 'device_password'"
                                             :append-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
                                             @click:append="showPassword = !showPassword" :rules="device_password_rules"
@@ -51,9 +49,9 @@
                                 <v-col cols="12" md="6">
                                     <p class="text-subtitle-1 font-weight-medium mb-2">Interval Pembacaan (Detik)</p>
                                     <v-card flat class="pa-3">
+                                        <v-icon size="24" color="primary" class="mr-2">mdi-timer</v-icon>
                                         <v-text-field v-model.number="device_read_interval" type="number" outlined dense
-                                            prepend-inner-icon="mdi-timer" :rules="read_interval_rules"
-                                            required></v-text-field>
+                                            :rules="read_interval_rules" required></v-text-field>
                                     </v-card>
                                 </v-col>
                             </v-row>

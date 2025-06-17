@@ -12,8 +12,7 @@
                 </v-card-title>
 
 
-
-
+                
                 <v-card-text>
 
 

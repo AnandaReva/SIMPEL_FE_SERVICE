@@ -3,8 +3,10 @@ onve<template>
 
 
         <v-row>
-            <v-col cols="12">
+            <v-col cols="12" v-if="props.year_selected_detail?.total_data > 0">
+
                 <v-card elevation="2" rounded="xl" class="pa-6 text-white">
+
                     <!-- Konten Card Pertama -->
                     <v-card rounded="none" flat color="base" class="pa-4 text-center mb-4">
                         <h3 class="text-center text-h6 font-weight-bold">
@@ -91,12 +93,33 @@ onve<template>
                     </v-card>
                 </v-card>
             </v-col>
+            <v-col cols="12" v-else>
+                <div class="text-center py-8">
+                    <v-row class="fill-height" align="center" justify="center">
+                        <v-col cols="auto">
+                            <v-card elevation="2" class="mb-6 mx-auto" max-width="400">
+                                <v-col class="d-flex align-center justify-center">
+                                    <v-icon size="64" color="grey">mdi-chart-bar</v-icon>
+                                </v-col>
+                                <v-col class="d-flex align-center justify-center">
+                                    <p class="text-h6 mt-4 mb-6">Tidak ada data tahun
+                                        {{ props.year_selected_detail?.year }} </p>
+                                </v-col>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </div>
+            </v-col>
+
         </v-row>
 
         <!-- BARIS BARU -->
         <v-row>
-            <v-col cols="12">
+            <v-col cols="12" v-if="month_list.length">
                 <v-card elevation="2" rounded="xl" class="pa-6 text-white">
+
+
+
                     <v-card rounded="none" flat color="base" class="pa-4 text-center mb-4">
                         <h3 class="text-center text-h6 font-weight-bold">
                             Trend Konsumsi Bulanan
@@ -110,6 +133,22 @@ onve<template>
                 </v-card>
 
 
+            </v-col>
+            <v-col cols="12" v-else>
+                <div class="text-center py-8">
+                    <v-row class="fill-height" align="center" justify="center">
+                        <v-col cols="auto">
+                            <v-card elevation="2" class="mb-6 mx-auto" max-width="400">
+                                <v-col class="d-flex align-center justify-center">
+                                    <v-icon size="64" color="grey">mdi-chart-bar</v-icon>
+                                </v-col>
+                                <v-col class="d-flex align-center justify-center">
+                                    <p class="text-h6 mt-4 mb-6">Tidak ada data bulanan pada tahun {{ }}</p>
+                                </v-col>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </div>
             </v-col>
         </v-row>
     </v-container>
@@ -155,7 +194,7 @@ const renderChart = () => {
         },
         data: [{
             type: "column",
-           indexLabelFontColor: "#fff", // Warna putih untuk kontras
+            indexLabelFontColor: "#fff", // Warna putih untuk kontras
             indexLabelPlacement: "inside", // Letakkan label di dalam bar
             indexLabelOrientation: "vertical", // Orientasi vertikal
             indexLabelFontSize: 12,

@@ -7,31 +7,50 @@
 
             <v-col cols="12">
 
-                <v-btn @click="backToDeviceManagPage()" color="primary" elevation="2" class="ma-0">
+                <v-btn @click="backToUserManagementPage()" color="primary" elevation="2" class="ma-0">
                     <v-icon>mdi-arrow-left</v-icon>
                 </v-btn>
 
                 <v-card flat class="px-4 py-2 my-4">
 
-                    <p class="text-h6 font-weight-medium text-center mb-0">TAMBAH PERANGKAT</p>
+                    <p class="text-h6 font-weight-medium text-center mb-0">TAMBAH PENGGUNA</p>
                 </v-card>
             </v-col>
 
             <v-col cols="12" class="pa-0">
 
                 <!-- Konten Scrollable -->
-                <div >
-                    <!-- Informasi Dasar Perangkat -->
+                <div>
+                    <!-- Informasi Dasar Pengguna -->
                     <v-card outlined class=" px-4 py-2 my-4">
                         <v-card-text>
                             <v-row>
                                 <v-col cols="12" md="6" class="mb-4">
-                                    <p class="text-subtitle-1 font-weight-medium mb-2">Nama Perangkat</p>
+                                    <p class="text-subtitle-1 font-weight-medium mb-2">Nama Lengkap</p>
                                     <v-card flat class="pa-3 d-flex align-center">
-                                        <v-icon size="24" color="primary" class="mr-2">mdi-access-point-network</v-icon>
-                                        <v-text-field maxlength="255" v-model="device_name" label="Nama Perangkat"
-                                            outlined dense prepend-inner-icon="mdi-access-point-network"
-                                            :rules="device_name_rules" required></v-text-field>
+                                        <v-icon size="24" color="primary" class="mr-2">mdi-file-account</v-icon>
+                                        <v-text-field maxlength="255" v-model="full_name" label="Nama Lengkap" outlined
+                                            dense :rules="full_name_rules" required></v-text-field>
+                                    </v-card>
+                                </v-col>
+
+
+                                <v-col cols="12" md="6" class="mb-4">
+                                    <p class="text-subtitle-1 font-weight-medium mb-2">Username</p>
+                                    <v-card flat class="pa-3 d-flex align-center">
+                                        <v-icon size="24" color="primary" class="mr-2">mdi-account</v-icon>
+                                        <v-text-field maxlength="255" v-model="username" label="Nama Pengguna" outlined
+                                            dense :rules="username_rules" required></v-text-field>
+                                    </v-card>
+                                </v-col>
+
+
+                                <v-col cols="12" md="6" class="mb-4">
+                                    <p class="text-subtitle-1 font-weight-medium mb-2">Email</p>
+                                    <v-card flat class="pa-3 d-flex align-center">
+                                        <v-icon size="24" color="primary" class="mr-2">mdi-email</v-icon>
+                                        <v-text-field maxlength="255" v-model="email" label="Email Pengguna" outlined
+                                            dense :rules="emailRules" required></v-text-field>
                                     </v-card>
                                 </v-col>
 
@@ -39,49 +58,38 @@
                                     <p class="text-subtitle-1 font-weight-medium mb-2">Password</p>
                                     <v-card flat class="pa-3 d-flex align-center">
                                         <v-icon size="24" color="primary" class="mr-2">mdi-lock</v-icon>
-                                        <v-text-field v-model="device_password" label="Password" outlined dense
-                                            prepend-inner-icon="mdi-lock"
-                                            :type="showPassword ? 'text' : 'device_password'"
+                                        <v-text-field v-model="password" label="Password" outlined dense
+                                            :type="showPassword ? 'text' : 'password'"
                                             :append-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                                            @click:append="showPassword = !showPassword" :rules="device_password_rules"
+                                            @click:append="showPassword = !showPassword" :rules="password_rules"
                                             required></v-text-field>
                                     </v-card>
                                 </v-col>
 
-                                <v-col cols="12" md="6">
-                                    <p class="text-subtitle-1 font-weight-medium mb-2">Interval Pembacaan (Detik)</p>
-                                    <v-card flat class="pa-3">
-                                        <v-text-field v-model.number="device_read_interval" type="number" outlined dense
-                                            prepend-inner-icon="mdi-timer" :rules="read_interval_rules"
-                                            required></v-text-field>
+
+                                <v-col cols="12" md="6" class="mb-4">
+                                    <p class="text-subtitle-1 font-weight-medium mb-2">Peran</p>
+                                    <v-card flat class="pa-3 d-flex align-center">
+                                        <v-icon size="24" color="primary" class="mr-2">mdi-shield-account</v-icon>
+                                        <v-select v-model="role" :items="availableRoles" label="Peran Pengguna" outlined
+                                            dense :rules="role_rules" required></v-select>
                                     </v-card>
                                 </v-col>
+
+
+
+
+
+
                             </v-row>
                         </v-card-text>
                     </v-card>
 
-
-
-                    <!-- Gambar Perangkat -->
-                    <v-card outlined class="mb-4">
-                        <v-card-title class="d-flex align-center">
-                            <v-icon size="24" color="primary" class="mr-2">mdi-image</v-icon>
-                            <span class="text-subtitle-1 font-weight-medium">Gambar Perangkat</span>
-                        </v-card-title>
-                        <v-card-text class="text-center">
-                            <v-img v-if="device_image_src" :src="device_image_src" max-height="200" contain
-                                class="mx-auto" />
-                            <p v-else class="text-caption text-grey">Tidak ada gambar</p>
-                            <v-file-input v-model="device_image" accept="image/*" label="Upload Gambar"
-                                prepend-icon="mdi-camera" @change="handleFileUpload" class="mt-4"></v-file-input>
-                        </v-card-text>
-                    </v-card>
-
-                    <!-- Data Perangkat -->
+                    <!-- Data Pengguna -->
                     <v-card outlined class="mb-4">
                         <v-card-title class="d-flex align-center">
                             <v-icon size="24" color="primary" class="mr-2">mdi-information</v-icon>
-                            <span class="text-subtitle-1 font-weight-medium">Data Perangkat</span>
+                            <span class="text-subtitle-1 font-weight-medium">Data Pengguna</span>
                         </v-card-title>
 
                         <v-card-text style="max-height: 300px; overflow-y: auto;">
@@ -129,8 +137,8 @@
             <v-col>
                 <div class="d-flex justify-center" style="max-width: 300px; width: 100%; margin: 0 auto;">
                     <v-btn type="submit" color="primary" block class="mt-2" size="large" elevation="2"
-                        :disabled="isDisableSubmitBtn" @click="submitRegisterDevice">
-                        Daftarkan Perangkat
+                        :disabled="isDisableSubmitBtn" @click="submitRegisterUser">
+                        Daftarkan Pengguna
                     </v-btn>
                 </div>
             </v-col>
@@ -157,7 +165,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router';
 import { BASE_API_URL } from '@/configs/config';
 import { Process } from '@/utils/requestHelper';
@@ -166,7 +174,9 @@ import PopUpInfoBox from '../parts/PopUpInfoBox.vue';
 import PopUpConfirmationBox from '../parts/PopUpConfirmationBox.vue';
 
 
+
 const router = useRouter();
+
 
 
 const popUpConfirmVisible = ref(false);
@@ -193,82 +203,70 @@ const isLoading = ref(false);
 
 
 
+const editor_user_role = ref("");
+const availableRoles = ref([]);
+
+const roleHierarchy = {
+    "system master": ["system admin", "system user"],
+    "system admin": ["system user"],
+    "system user": []
+};
+
+function updateAvailableRoles() {
+    const role = editor_user_role.value.trim();
+    availableRoles.value = roleHierarchy[role] || [];
+}
+
 // Form data
-const device_name = ref("");
-const device_password = ref("");
-const device_image = ref(null);
-const device_image_src = ref("");
-const device_image_base64 = ref("");
-const device_read_interval = ref(0);
+const username = ref("");
+const password = ref("");
+const full_name = ref("");
+const email = ref("");
+const role = ref("")
+
 const showPassword = ref(false);
 
 // Data containers
 const dataContainers = ref([{ title: "", data: "" }]);
 
 // Validation rules
-const device_name_rules = [
-    (v) => !!v || "Nama perangkat harus diisi",
-    (v) => v.length >= 2 || "Nama perangkat minimal 2 karakter",
-    (v) => v.length <= 255 || "Nama perangkat maksimal 255 karakter",
+const emailRegrex = ref(/^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i);
+const usernameRegrex = ref(/^[A-Za-z0-9~!@#$%^&*()_+<>?/':=.,-]+$/);
+
+// Rules
+const username_rules = [
+    (v) => !!v || "Username harus diisi",
+    (v) => v.length >= 2 || "Username minimal 2 karakter",
+    (v) => v.length <= 255 || "Username maksimal 255 karakter",
+    (v) => usernameRegrex.value.test(v) || "Username hanya boleh mengandung huruf, angka, dan simbol '~!@#$%^&*()_+<>?/':=.,-'"
+
 ];
 
-const device_password_rules = [
+const password_rules = [
     (v) => !!v || "Password harus diisi",
     (v) => v.length >= 8 || "Password minimal 8 karakter",
-    (v) => v.length <= 255 || "Password maksimal 255 karakter",
+    (v) => v.length <= 30 || "Password maksimal 30 karakter",
 ];
 
-const read_interval_rules = [
-    (v) => !!v || "Interval harus diisi",
-    (v) => (v >= 1 && v <= 120) || "Interval harus antara 1 hingga 120 detik",
+const emailRules = [
+    (v) => !!v || "Email harus diisi",
+    (v) => emailRegrex.value.test(v) || "Format email tidak valid",
+];
+// Add more comprehensive validation for full_name
+const full_name_rules = [
+    (v) => !!v || "Nama lengkap harus diisi",
+    (v) => v.length >= 3 || "Nama minimal 3 karakter",
+    (v) => v.length <= 255 || "Nama maksimal 255 karakter"
+];
+
+// Add role validation
+const role_rules = [
+    (v) => !!v || "Peran harus dipilih",
+    (v) => availableRoles.value.includes(v) || "Peran tidak valid"
 ];
 
 
-
-
-/////////// IMAGE /////////////
-
-const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-
-    if (!file) {
-        device_image_base64.value = null;
-        device_image_src.value = "";
-        return;
-    }
-
-    // Check file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-
-        popUpInfoVisible.value = true;
-        popUpInfoProps.value = {
-            status: "warning",
-            errorMessage: "Ukuran gambar maksimal 10MB",
-            errorCode: "",
-        };
-        device_image_base64.value = null;
-        return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-        const base64Full = reader.result; // contoh: "data:image/jpeg;base64,/9j/4AAQ..."
-        const base64Clean = base64Full.split(",")[1]; // hanya ambil bagian setelah koma
-
-        // ⬇️ Ini yang akan kamu kirim ke backend (langsung string base64)
-        device_image_base64.value = base64Clean;
-
-        // Untuk preview
-        device_image_src.value = base64Full;
-    };
-
-    reader.readAsDataURL(file);
-};
-
-
-
-/////////// DEVICE DATA //////////
+/////////// USER DATA //////////
 
 // Data container functions
 const addDataContainer = () => {
@@ -324,23 +322,43 @@ const removeContainer = (index) => {
 /////////// SUBMIT ///////////
 
 const isDisableSubmitBtn = computed(() => {
-    const isDeviceNameValid = device_name.value &&
-        device_name.value.length >= 2 &&
-        device_name.value.length <= 256;
+    const isUsernameValid =
+        !!username.value &&
+        usernameRegrex.value.test(username.value) &&
+        username.value.length >= 2 &&
+        username.value.length <= 255;
 
-    const isPasswordValid = device_password.value &&
-        device_password.value.length >= 8 &&
-        device_password.value.length <= 256;
+    const isPasswordValid =
+        !!password.value &&
+        password.value.length >= 8 &&
+        password.value.length <= 30;
 
-    const isReadIntervalValid = device_read_interval.value >= 1 &&
-        device_read_interval.value <= 120;
+    const isFullNameValid =
+        !!full_name.value &&
+        full_name.value.length >= 3 &&
+        full_name.value.length <= 255;
+
+    const isEmailValid =
+        !!email.value && emailRegrex.value.test(email.value);
+
+    const isRoleValid =
+        !!role.value && availableRoles.value.includes(role.value);
 
     const isDeviceDataValid = dataContainers.value.every(container => {
         return container.data.trim() && container.title.trim();
     });
 
-    return !(isDeviceNameValid && isPasswordValid && isReadIntervalValid && isDeviceDataValid);
+    // Jika semua valid maka tombol bisa diaktifkan (return false untuk isDisable)
+    return !(
+        isUsernameValid &&
+        isPasswordValid &&
+        isFullNameValid &&
+        isEmailValid &&
+        isRoleValid &&
+        isDeviceDataValid
+    );
 });
+
 
 // Format data containers to object
 const formatDataContainers = (containers) => {
@@ -360,34 +378,35 @@ const pending_submit_data = ref({});
 
 
 // Submit function - trigger confirmation popup
-const submitRegisterDevice = () => {
+const submitRegisterUser = async () => {
+    if (isDisableSubmitBtn.value) {
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: "Harap lengkapi semua field dengan benar",
+            errorCode: "VALIDATION_ERROR"
+        };
+        popUpInfoVisible.value = true;
+        return;
+    }
+
     const formattedData = formatDataContainers(dataContainers.value);
 
     pending_submit_data.value = {
-        name: device_name.value,
-        password: device_password.value,
-        read_interval: device_read_interval.value,
-        image: device_image_base64.value,
+        username: username.value,
+        full_name: full_name.value,
+        email: email.value,
+        password: password.value,
+        role: role.value,
         data: formattedData
     };
 
-
-    console.group(`---submitRegisterDevice---`)
-    console.log(`submitRegisterDevice - name: ${device_image.value}, password: ${device_password.value}, read_interval: ${device_read_interval.value}, data: ${JSON.stringify(formattedData)}, image: ${JSON.stringify(device_image_base64)}`)
-
-
-    console.log(device_image_base64.value); // cek object-nya
-
-
     popUpConfirmProps.value = {
-        title: "Konfirmasi Tambah Perangkat",
-        message: "Apakah Anda yakin ingin menambahkan perangkat ini?",
-        status: "info",
+        title: "Konfirmasi Tambah Pengguna",
+        message: "Apakah Anda yakin ingin menambahkan pengguna ini?",
+        status: "info"
     };
-
     popUpConfirmVisible.value = true;
 };
-
 
 // Confirmed by user
 const handleConfirm = async () => {
@@ -395,25 +414,25 @@ const handleConfirm = async () => {
 
     if (!pending_submit_data.value) return;
 
-    const { name, password, read_interval, image, data } = pending_submit_data.value;
+    const { username, password, full_name, email, role, data } = pending_submit_data.value;
 
 
 
 
     isLoading.value = true;
 
-    const newDeviceId = await addNewDevice(name, password, image, data, read_interval);
+    const newUserId = await addNewUser(username, password, full_name, email, role, data);
 
-    if (newDeviceId) {
+    if (newUserId) {
         popUpInfoVisible.value = true;
         popUpInfoProps.value = {
             status: "success",
-            errorMessage: "Sukses Mendaftarkan Perangkat Baru",
+            errorMessage: "Sukses Mendaftarkan Pengguna Baru",
             errorCode: "",
         };
 
         clearForm();
-        //router.push({ name: "device-management" });
+
     }
 
     pending_submit_data.value = null;
@@ -427,31 +446,31 @@ const handleCancel = () => {
 
 
 
-//////////////////////////////
-
-
-const addNewDevice = async (
-    deviceNameParam,
+const addNewUser = async (
+    usernameParam,
     passwordParam,
-    deviceImageBlobParam,
-    deviceDataParam,
-    deviceIntervalReadParam,
+    fullNameParam,
+    emailParam,
+    roleParam,
+    userDataParam,
 ) => {
-    console.group("---addDevice---");
-
+    console.group("---addUser---");
     isLoading.value = true;
 
     const baseUrl = BASE_API_URL;
-    const operation = "add_device_data";
+    const operation = "add_user_data";
 
     const params = {
-        name: deviceNameParam,
+        username: usernameParam,
+        full_name: fullNameParam,
+        email: emailParam,
+        role: roleParam,
         password: passwordParam,
-        read_interval: deviceIntervalReadParam,
     };
 
-    if (deviceImageBlobParam) params.image = deviceImageBlobParam;
-    if (deviceDataParam && Object.keys(deviceDataParam).length > 0) params.data = deviceDataParam;
+    if (userDataParam && Object.keys(userDataParam).length > 0) {
+        params.data = userDataParam;
+    }
 
     console.log("Final params to send:", params);
 
@@ -459,29 +478,44 @@ const addNewDevice = async (
         const response_be = await Process(baseUrl, operation, params);
 
         if (!response_be || response_be.status !== "success") {
-            const errMessage = response_be?.error_message || "Gagal mendaftarkan perangkat";
+            const errMessage = response_be?.error_message || "Gagal mendaftarkan pengguna";
             const errCode = response_be?.error_code || "UNKNOWN_ERROR";
 
-            throw { message: errMessage, code: errCode };
+            throw { message: errMessage, code: errCode, payload: response_be?.payload };
         }
 
-        const newDeviceId = response_be.payload?.device_id;
+        const newUserId = response_be.payload?.new_user_id;
 
         popUpInfoProps.value = {
             status: "success",
-            errorMessage: "Perangkat berhasil ditambahkan",
-            errorCode: "NEW DEVICE ADDED",
+            errorMessage: "Pengguna berhasil ditambahkan",
+            errorCode: "NEW USER ADDED",
         };
 
-        return newDeviceId;
+        return newUserId;
 
     } catch (error) {
-        console.error("Error registering device:", error);
+        console.error("Error registering user:", error);
+
+        let errorMessage = error.message || "Terjadi kesalahan saat registrasi pengguna";
+        let errorCode = error.code || "REGISTER_USER_ERROR";
+
+        if (errorCode === "409001" || errorCode === 409) {
+            const field = error.payload?.field;
+            if (field === "username") {
+                errorMessage = "Username sudah digunakan. Silakan gunakan yang lain.";
+            } else if (field === "email") {
+                errorMessage = "Email sudah terdaftar. Silakan gunakan email lain.";
+            } else {
+                errorMessage = "Data pengguna sudah terdaftar.";
+            }
+            errorCode = "409";
+        }
 
         popUpInfoProps.value = {
             status: "error",
-            errorMessage: error.message || "Terjadi kesalahan saat registrasi perangkat",
-            errorCode: error.code || "REGISTER_DEVICE_ERROR",
+            errorMessage,
+            errorCode,
         };
 
         return null;
@@ -495,23 +529,38 @@ const addNewDevice = async (
 
 
 
-
 ///////////////////////////
 
 const clearForm = () => {
-    device_name.value = "";
-    device_password.value = "";
-    device_image.value = null;
-    device_image_src.value = "";
-    device_image_base64.value = null;
-    device_read_interval.value = 0;
+    username.value = "";
+    password.value = "";
+    full_name.value = "";
+    email.value = "";
+
     dataContainers.value = [{ title: "", data: "" }];
 };
 
 
 
+onMounted(() => {
+    const curr_user_data = JSON.parse(localStorage.getItem('user_data'));
+    console.log("onMounted - user_data: ", curr_user_data);
+
+    editor_user_role.value = curr_user_data?.role?.trim();
+    console.log("onMounted - editor_user_role: ", editor_user_role.value);
+
+    if (editor_user_role.value !== "system master" && editor_user_role.value !== "system admin") {
+        router.push({ name: "user-management" });
+    }
+
+    updateAvailableRoles();
+});
+
+
+
+
 // Navigation
-const backToDeviceManagPage = () => {
-    router.push({ name: "device-management" });
+const backToUserManagementPage = () => {
+    router.push({ name: "user-management" });
 };
 </script>

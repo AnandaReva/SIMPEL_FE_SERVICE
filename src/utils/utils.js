@@ -1,3 +1,5 @@
+
+
 import JSZip from "jszip";
 
 /**
@@ -24,8 +26,7 @@ export function GetEnv(name, defaultValue = undefined, required = false) {
   } catch (err) {
     console.error(`[getEnv] Error getting env ${name}:`, err.message);
     if (required) throw err;
-    return defaultValue;
-  }
+    return }
 }
 
 export function RandomStringGenerator(len) {
@@ -194,7 +195,7 @@ export function GetMonthNameLocal(monthNumber) {
   ]
 
   const month = month_names_local.find(m => m.id === monthNumber)
-  return month ? month.name : 'Bulan Tidak Diketahui'
+  return month ? month.name : monthNumber
 }
 
 
