@@ -210,11 +210,9 @@
 
                     </v-card-text>
 
-                    <v-else v-card-text v-else class="text-center">
-
+                    <v-card-text v-else class="text-center">
                         <p class="text-caption text-grey">Tidak ada aktivitas</p>
-
-                    </v-else>
+                    </v-card-text>
 
 
                 </v-card>

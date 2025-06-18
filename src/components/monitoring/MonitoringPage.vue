@@ -104,6 +104,8 @@
         <v-row v-if="monitored_devices.length > 0" class="mt-4">
             <v-col cols="12">
                 <v-container v-show="is_view_mode_compact" fluid class="pa-4">
+
+
                     <!-- Grid Kompak -->
                     <div class="device-grid"
                         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; justify-items: center;">
@@ -111,10 +113,36 @@
                             rounded="xl" color="base"
                             class="d-flex flex-column align-center justify-center position-relative pa-2"
                             style="width: 160px; height: 140px; border: 1px solid #90CAF9;">
-                            <v-btn icon size="x-small" class="position-absolute" style="top: 4px; right: 4px;"
-                                @click="removeMonitoredDevice(index)">
-                                <v-icon size="16">mdi-close</v-icon>
-                            </v-btn>
+
+
+
+                            <v-menu v-model="activeCompactMenu[index]" :close-on-content-click="false"
+                                location="bottom start" transition="slide-y-transition"
+                                @update:modelValue="(val) => { if (!val) closeCompactMenu() }">
+                                <template #activator="{ props }">
+                                    <v-btn icon size="x-small" class="position-absolute" style="top: 4px; left: 4px;"
+                                        v-bind="props" @click.stop="showCompactDeviceMenu(index)">
+                                        <v-icon size="16">mdi-dots-vertical</v-icon>
+                                    </v-btn>
+                                    <v-btn icon size="x-small" color="red" class="position-absolute"
+                                        style="top: 4px; right: 4px;" @click="removeMonitoredDevice(index)">
+                                        <v-icon size="16">mdi-close</v-icon>
+                                    </v-btn>
+                                </template>
+
+                                <v-list dense>
+                                    <v-list-item @click="handleDeviceMenuAction('restart', device.device_id)">
+                                        <v-list-item-title>Restart</v-list-item-title>
+                                    </v-list-item>
+                                    <v-list-item @click="handleDeviceMenuAction('deep_sleep', device.device_id)">
+                                        <v-list-item-title>Deep Sleep</v-list-item-title>
+                                    </v-list-item>
+                                </v-list>
+                            </v-menu>
+
+
+
+
 
                             <div class="text-subtitle-2 font-weight-bold text-center mt-4 mb-2"
                                 style="color: var(--v-theme-primary);">
@@ -140,11 +168,47 @@
                                     elevation="2" rounded="lg" color="base"
                                     class="d-flex flex-column fill-height border"
                                     style="border: 1px solid #64B5F6; min-height: 450px;">
-                                    <v-card-title class="d-flex justify-space-between align-center">
-                                        <span class="text-h6 font-weight-bold">{{ device.device_name }}</span>
-                                        <v-btn icon @click="removeMonitoredDevice(index)">
-                                            <v-icon>mdi-close</v-icon>
-                                        </v-btn>
+                                    <v-card-title class="d-flex justify-space-between align-center"
+                                        style="position: relative; padding-right: 40px;">
+                                        <!-- Kiri atas: tombol show menu -->
+
+                                        <v-menu v-model="activeDetailMenu[index]" :close-on-content-click="false"
+                                            location="bottom start" transition="slide-y-transition"
+                                            @update:modelValue="(val) => { if (!val) closeDetailMenu() }">
+                                            <template #activator="{ props }">
+                                                <v-btn icon v-bind="props" size="x-small"
+                                                    style="top: 4px; left: 4px; position: absolute;"
+                                                    @click.stop="showDetailDeviceMenu(index)">
+                                                    <v-icon size="16">mdi-dots-vertical</v-icon>
+                                                </v-btn>
+                                                <v-btn icon size="x-small"
+                                                    style="top: 4px; right: 4px; position: absolute;" color="red"
+                                                    @click.stop="removeMonitoredDevice(index)">
+                                                    <v-icon size="16">mdi-close</v-icon>
+                                                </v-btn>
+                                            </template>
+
+                                            <v-list dense>
+                                                <v-list-item
+                                                    @click="handleDeviceMenuAction('restart', device.device_id)">
+                                                    <v-list-item-title>Restart</v-list-item-title>
+                                                </v-list-item>
+                                                <v-list-item
+                                                    @click="handleDeviceMenuAction('deep_sleep', device.device_id)">
+                                                    <v-list-item-title>Deep Sleep</v-list-item-title>
+                                                </v-list-item>
+                                            </v-list>
+                                        </v-menu>
+
+
+
+
+                                        <!-- Tengah: Nama perangkat (diberi jarak agar tidak tabrakan dengan tombol) -->
+                                        <span class="text-h6 font-weight-bold mx-auto text-center">
+                                            {{ device.device_name }}
+                                        </span>
+
+
                                     </v-card-title>
 
                                     <v-card-text class="pa-2" style="flex: 1;">
@@ -245,15 +309,9 @@ const closePopup = () => {
 
 const isLoading = ref(false);
 
-
-
-
 watch(isLoading, (newValue) => {
-    console.log("isLoading changed to:", newValue);
+    // console.log("isLoading changed to:", newValue);
 });
-
-
-
 
 
 const is_view_mode_compact = ref(false);
@@ -676,6 +734,62 @@ const removeMonitoredDevice = (index, isServerAction) => {
 
 };
 
+//////////////////////// DEVICE MENU ///////////////////////////
+// Simpan indeks menu yang aktif (jika tidak aktif = null)
+const activeCompactMenu = ref({})
+const activeDetailMenu = ref({})
+
+
+const showCompactDeviceMenu = (index) => {
+
+    activeCompactMenu.value = {}
+    activeCompactMenu.value[index] = true
+}
+
+const showDetailDeviceMenu = (index) => {
+    activeDetailMenu.value = {}
+    activeDetailMenu.value[index] = true
+}
+
+const closeCompactMenu = () => {
+    activeCompactMenu.value = {}
+}
+
+const closeDetailMenu = () => {
+    activeDetailMenu.value = {}
+}
+
+
+
+function handleDeviceMenuAction(actionParam, deviceIdParam) {
+    console.log("handleDeviceMenuAction - action:", actionParam, ", device:", deviceIdParam);
+
+    if (!globalWs.value || globalWs.value.readyState !== WebSocket.OPEN) {
+        console.warn("❌ WebSocket belum siap.");
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: "Koneksi WebSocket belum tersedia",
+            errorCode: "",
+        };
+        popUpInfoVisible.value = true;
+        return;
+    }
+
+    // Format standar pesan WebSocket untuk action ke device
+    const message = {
+        type: actionParam,   // <- misalnya:  "restart" , "deep_sleep"
+        device_id: deviceIdParam,
+    };
+
+    globalWs.value.send(JSON.stringify(message));
+    console.log("📩 Sent device action message:", message);
+}
+
+
+
+
+
+
 
 //////////////////////// ACTIVE DEVICES /////////////////////////
 const isFetchingActiveDevices = ref(false); // mencegah race condition
@@ -689,7 +803,6 @@ const filterActiveDeviceList = ref('')
 const toogleSortType = () => {
     selectedSortTypeActiveDeviceList.value = selectedSortTypeActiveDeviceList.value === "ASC" ? "DESC" : "ASC";
 }
-
 
 
 
@@ -728,7 +841,7 @@ function appendActiveDevices(active_devices, additionalDevices) {
 }
 
 function loadActiveDevices({ done }) {
-    console.group("--- loadActiveDevices() ---")
+    // console.group("--- loadActiveDevices() ---")
     if (totalActiveDevicesPage.value === 0) {
         done("empty");
         return;
@@ -746,7 +859,7 @@ function loadActiveDevices({ done }) {
             done("empty");
         }
     }, 1000);
-    console.groupEnd();
+    //  console.groupEnd();
 }
 
 
@@ -837,7 +950,7 @@ onMounted(() => {
 
     const userRaw = localStorage.getItem('user_data');
     let offsetMinutes = null;
-    
+
     if (userRaw) {
         try {
             const user = JSON.parse(userRaw);

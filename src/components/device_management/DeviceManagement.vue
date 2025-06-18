@@ -474,7 +474,7 @@ async function getDeviceDetail(deviceIdParam) {
             console.log("device_data is empty (null or undefined).");
         }
 
-        sessionStorage.setItem("device_management", JSON.stringify(curr_device.value))
+       sessionStorage.setItem("device_management", JSON.stringify(curr_device.value))
 
         return true;
 
@@ -638,21 +638,21 @@ onMounted(() => {
     //console.log('user_role', user_role.value);
 
     searchDevices();
-    const rawCurrDeviceData = sessionStorage.getItem("device_management")
+    // const rawCurrDeviceData = sessionStorage.getItem("device_management")
 
-    try {
-        curr_device.value = JSON.parse(rawCurrDeviceData)
+    // try {
+    //     curr_device.value = JSON.parse(rawCurrDeviceData)
 
-        console.groupCollapsed("---DeviceManagement.vue - onMounted---")
-        console.log("onMounted - curr_device.value: ", curr_device.value)
+    //     console.groupCollapsed("---DeviceManagement.vue - onMounted---")
+    //     console.log("onMounted - curr_device.value: ", curr_device.value)
 
-        //sessionStorage.removeItem("curr_device_selected")
+    //     //sessionStorage.removeItem("curr_device_selected")
 
 
-        console.groupEnd()
-    } catch (error) {
-        console.error("Failed to parse curr_device_selected:", error)
-    }
+    //     console.groupEnd()
+    // } catch (error) {
+    //     console.error("Failed to parse curr_device_selected:", error)
+    // }
 
 });
 

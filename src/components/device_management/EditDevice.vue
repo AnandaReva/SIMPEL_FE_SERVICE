@@ -210,8 +210,8 @@
                             </div>
 
                             <!-- Add New Data Button -->
-                            
-                            
+
+
                         </v-card-text>
                         <v-col cols="auto" class="d-flex align-center">
 
@@ -258,7 +258,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, reactive, computed } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { FormatTimestamp } from '@/utils/utils'
 import { useRouter } from 'vue-router';
 import { BASE_API_URL } from '@/configs/config';
@@ -376,9 +376,17 @@ const resetFileInput = () => {
 
 
 const handleImageDelete = () => {
-
-    new_device_image.value = {};
-    curr_device_image.value = {}
+    // Instead of clearing both, just clear the current and new images
+    new_device_image.value = {
+        file_id: null,
+        file_data: null,
+        file_name: null
+    };
+    curr_device_image.value = {
+        file_id: null,
+        file_data: null,
+        file_name: null
+    };
     resetFileInput();
 };
 
@@ -492,72 +500,6 @@ const removeNewDataField = (index) => {
     new_device_detail_data.value.splice(index, 1);
 };
 
-/* const requiredifNewData = (item) => {
-    if (!item.title.trim() && !item.data.trim()) {
-        return "Judul data tidak kosong";
-    }
-    if (item.data.trim() && !item.title.trim()) {
-        return "Judul data tidak kosong";
-    }
-    return true;
-};
-
-const requiredifNewTitle = (item) => {
-    if (!item.title.trim() && !item.data.trim()) {
-        return "Isi data tidak kosong";
-    }
-    if (item.title.trim() && !item.data.trim()) {
-        return "Isi data tidak kosong";
-    }
-    return true;
-};
-
-const requiredifCurrData = (item) => {
-    if (!item.title.trim() && !item.data.trim()) {
-        return "Judul data tidak kosong";
-    }
-    if (item.data.trim() && !item.title.trim()) {
-        return "Judul data tidak kosong";
-    }
-    return true;
-};
-
-const requiredifCurrTitle = (item) => {
-    if (!item.title.trim() && !item.data.trim()) {
-        return "Isi data tidak kosong";
-    }
-    if (item.title.trim() && !item.data.trim()) {
-        return "Isi data tidak kosong";
-    }
-    return true;
-};
-
-const noDuplicateTitles = (itemParam, index, isNewData) => {
-    const allItems = [
-        ...existing_device_detail_data.value,
-        ...new_device_detail_data.value
-    ];
-
-    const duplicate = allItems.some((otherItem, otherIndex) => {
-        if (isNewData && otherIndex >= existing_device_detail_data.value.length) {
-            return (
-                otherIndex !== (index + existing_device_detail_data.value.length) &&
-                otherItem.title &&
-                otherItem.title.trim() === itemParam.title.trim()
-            );
-        } else if (!isNewData) {
-            return (
-                otherIndex !== index &&
-                otherItem.title &&
-                otherItem.title.trim() === itemParam.title.trim()
-            );
-        }
-        return false;
-    });
-
-    return !duplicate || "Judul tidak boleh sama dengan yang lain";
-};
- */
 const isDisableAddContainer = computed(() => {
     if (new_device_detail_data.value.length === 0) return false;
     const lastItem = new_device_detail_data.value[new_device_detail_data.value.length - 1];
@@ -707,9 +649,27 @@ const isDisableSubmitBtn = computed(() => {
         item => item.title?.trim() || item.data?.trim()
     );
 
-    const isImageChanged = !!new_device_image.value?.file_data || !!new_device_image.value?.file_name;
+    const isImageChanged = computed(() => {
+        // Case 1: Had original image, now deleted (both new and current are empty)
+        const hadImageNowDeleted = original_device_image.value.file_data &&
+            !new_device_image.value.file_data &&
+            !curr_device_image.value.file_data;
 
-    const isDataChanged = isFieldChanged || isDeviceDetailChanged || isNewDeviceDetailFilled || isImageChanged;
+        // Case 2: New image uploaded
+        const newImageUploaded = !!new_device_image.value.file_data;
+
+        // Case 3: Had original image, current image is different
+        const imageModified = original_device_image.value.file_data &&
+            curr_device_image.value.file_data &&
+            curr_device_image.value.file_data !== original_device_image.value.file_data;
+
+        return hadImageNowDeleted || newImageUploaded || imageModified;
+    });
+
+    const isDataChanged = isFieldChanged ||
+        isDeviceDetailChanged ||
+        isNewDeviceDetailFilled ||
+        isImageChanged.value; // Use the new computed property
 
     console.log("isFieldChanged:", isFieldChanged);
     console.log("isDeviceDetailChanged:", isDeviceDetailChanged);
@@ -717,7 +677,7 @@ const isDisableSubmitBtn = computed(() => {
     console.log("isImageChanged:", isImageChanged);
     console.log("isDataChanged:", isDataChanged);
 
-    // 7. Hasil akhir tombol disable?
+
     const result = !(
         isDeviceNameValid &&
         isPasswordValid &&
@@ -798,14 +758,19 @@ const submitDeviceUpdate = () => {
                 }
             };
         }
-    } else if (!hasNewImage && hasOriginalImage) {
-        // Delete image (new image kosong, original masih ada)
+    } else if (
+        !new_device_image.value.file_data &&
+        !curr_device_image.value.file_data &&
+        hasOriginalImage
+    ) {
+        // Delete image
         pending_submit_data.value.image = {
             delete: {
                 file_id: original_device_image.value.file_id
             }
         };
     }
+
 
     // Hapus "data" jika kosong agar payload bersih
     if (Object.keys(pending_submit_data.value.data).length === 0) {
@@ -838,19 +803,13 @@ const handleConfirm = async () => {
 
     if (!pending_submit_data.value) return;
 
-    const isSuccess = updateDeviceData(original_device_data.value.id, pending_submit_data.value)
+    const isSuccess = await updateDeviceData(original_device_data.value.id, pending_submit_data.value);
     if (isSuccess) {
         pending_submit_data.value = null;
-
-
-        router.push({ name: "device-management" })
-
-
-
+        router.push({ name: "device-management" });
     }
-
-
 };
+
 
 const handleCancel = () => {
     popUpConfirmVisible.value = false;

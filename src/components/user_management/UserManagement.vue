@@ -57,7 +57,7 @@
                     </div>
 
 
-                    {{ curr_user }}
+                
 
                     <div>
                         <v-infinite-scroll :key="scrollKeyUsers" id="UserLostBox" ref="UserLostBox" height="550"

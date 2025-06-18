@@ -22,9 +22,20 @@
                     <v-row>
                         <v-col cols="12" md="6">
                             <v-text-field label="Faktor Emisi (kg CO₂/kWh)" v-model="curr_data.general.emissionFactor"
-                                type="number" step="0.001" :rules="emissionFactorRules" outlined dense />
+                                type="number" step="0.001" :rules="emissionFactorRules" outlined dense>
+                                <template v-slot:append>
+                                    <v-btn icon small @click="resetEmissionFactor" title="Reset ke nilai default">
+                                        <v-icon>mdi-restore</v-icon>
+                                    </v-btn>
+                                </template>
+                            </v-text-field>
+
                             <v-select label="Tanggal Laporan" v-model="curr_data.general.reportDate"
                                 :items="Array.from({ length: 31 }, (_, i) => i + 1)" outlined dense />
+
+
+
+
                         </v-col>
                     </v-row>
                     <v-row>
@@ -188,7 +199,6 @@ const curr_data = reactive({
     system: {
         theme: '',
         language: '',
-        notification: false
     }
 })
 
@@ -206,7 +216,6 @@ const original_data = reactive({
     system: {
         theme: '',
         language: '',
-        notification: false
     }
 })
 
@@ -215,12 +224,9 @@ const original_data = reactive({
 ////////////// GENERAL ////////////////
 
 const default_settings_value = ref({
-    emissionFactor: 0.0005,
+    emissionFactor: 0.813,
     reportDate: 1,
-    language: 'Indonesia',
-    theme: 'Terang',
-    notification: true,
-    time_zone: 'Asia/Jakarta'
+
 })
 
 const hasGeneralChanges = computed(() =>
@@ -230,8 +236,7 @@ const hasGeneralChanges = computed(() =>
 
 const hasSystemChanges = computed(() =>
     curr_data.system.theme !== original_data.system.theme ||
-    curr_data.system.language !== original_data.system.language ||
-    curr_data.system.notification !== original_data.system.notification
+    curr_data.system.language !== original_data.system.language
 )
 
 
@@ -240,6 +245,11 @@ const emissionFactorRules = [
     (v) => v !== null && v !== undefined && v !== '' || "Faktor Emisi harus diisi",
     (v) => parseFloat(v) > 0 || "Faktor Emisi harus lebih dari 0",
 ];
+
+
+const resetEmissionFactor = () => {
+    curr_data.general.emissionFactor = default_settings_value.value.emissionFactor;
+};
 
 
 
@@ -286,12 +296,6 @@ const showAccountSaveButton = computed(() => {
 });
 
 
-
-// Menjadi:
-const isEmailValid = computed(() =>
-    emailRules.every(rule => rule(curr_data.email) === true)
-)
-
 const hasValidEmailChange = computed(() =>
     curr_data.email.new !== '' &&
     curr_data.email.new !== original_data.email &&
@@ -299,78 +303,121 @@ const hasValidEmailChange = computed(() =>
 )
 
 
+// Add this to your script section
 
-const showEmailSaveButton = computed(() =>
-    isEmailValid.value && curr_data.email.new !== original_data.email
-
-);
-
-
-
-function saveField(field) {
+async function saveField(field) {
     isLoading.value = true;
 
-    setTimeout(() => {
+    try {
+        let payload = {
+            change_fields: {}
+        };
+
         switch (field) {
             case 'email':
                 if (curr_data.email.new && curr_data.email.new !== original_data.email) {
-                    // Arahkan ke verifikasi OTP
+                    // For email changes, we need to verify first
                     router.push({ name: 'VerifyOTP', query: { email: curr_data.email.new } });
+                    return;
                 }
                 break;
 
             case 'account':
                 if (showAccountSaveButton.value) {
-                    original_data.account.full_name = curr_data.account.full_name;
-                    original_data.account.username = curr_data.account.username;
+                    payload.change_fields.account = {
+                        username: curr_data.account.username,
+                        full_name: curr_data.account.full_name
+                    };
+
+                    const response = await Process('put', `${BASE_API_URL}/sysuser/update`, payload);
+
+                    if (response.success) {
+                        original_data.account.full_name = curr_data.account.full_name;
+                        original_data.account.username = curr_data.account.username;
+                        showSuccess('Perubahan akun berhasil disimpan');
+                    } else {
+                        throw new Error(response.message || 'Gagal menyimpan perubahan akun');
+                    }
                 }
                 break;
 
             case 'general':
                 if (hasGeneralChanges.value) {
-                    original_data.general.emissionFactor = curr_data.general.emissionFactor;
-                    original_data.general.reportDate = curr_data.general.reportDate;
+                    payload.change_fields.general = {
+                        emission_factor: parseFloat(curr_data.general.emissionFactor),
+                        report_date: parseInt(curr_data.general.reportDate)
+                    };
+
+                    const response = await Process('put', `${BASE_API_URL}/sysuser/update`, payload);
+
+                    if (response.success) {
+                        original_data.general.emissionFactor = curr_data.general.emissionFactor;
+                        original_data.general.reportDate = curr_data.general.reportDate;
+                        showSuccess('Pengaturan umum berhasil disimpan');
+                    } else {
+                        throw new Error(response.message || 'Gagal menyimpan pengaturan umum');
+                    }
                 }
                 break;
 
             case 'system':
                 if (hasSystemChanges.value) {
-                    original_data.system.theme = curr_data.system.theme;
-                    original_data.system.language = curr_data.system.language;
-                    original_data.system.notification = curr_data.system.notification;
+                    payload.change_fields.system = {
+                        theme: curr_data.system.theme,
+                        language: curr_data.system.language,
+                        time_zone: curr_data.system.time_zone
+                    };
+
+                    const response = await Process('put', `${BASE_API_URL}/sysuser/update`, payload);
+
+                    if (response.success) {
+                        original_data.system.theme = curr_data.system.theme;
+                        original_data.system.language = curr_data.system.language;
+                        original_data.system.time_zone = curr_data.system.time_zone;
+                        showSuccess('Pengaturan sistem berhasil disimpan');
+                    } else {
+                        throw new Error(response.message || 'Gagal menyimpan pengaturan sistem');
+                    }
                 }
                 break;
 
             default:
                 console.warn('Unknown field:', field);
         }
-
+    } catch (error) {
+        showError(error.message);
+    } finally {
         isLoading.value = false;
-        popUpProps.value = {
-            status: 'success',
-            errorMessage: '',
-            errorCode: ''
+    }
+}
+
+async function changePassword() {
+    if (!isPasswordValid.value) return;
+
+    isLoading.value = true;
+
+    try {
+        const payload = {
+            old_password: curr_data.password.oldPassword,
+            new_password: curr_data.password.newPassword
         };
-        popUpInfoVisible.value = true;
-    }, 1000);
+
+        const response = await Process('post', `${BASE_API_URL}/sysuser/change-password`, payload);
+
+        if (response.success) {
+            showSuccess('Password berhasil diubah');
+            // Clear password fields
+            curr_data.password.oldPassword = '';
+            curr_data.password.newPassword = '';
+        } else {
+            throw new Error(response.message || 'Gagal mengubah password');
+        }
+    } catch (error) {
+        showError(error.message);
+    } finally {
+        isLoading.value = false;
+    }
 }
-
-function changePassword() {
-    if (!curr_data.password.oldPassword || !curr_data.password.newPassword) return
-    isLoading.value = true
-    setTimeout(() => {
-        router.push({ name: 'VerifyResetPassword', query: { from: 'settings' } })
-        isLoading.value = false
-    }, 1000)
-}
-
-
-const isPasswordValid = computed(() => {
-    return passwordRules.every(rule => rule(curr_data.password.oldPassword) === true) &&
-        passwordRules.every(rule => rule(curr_data.password.newPassword) === true);
-});
-
-
 
 
 ///////////// SYSTEM ////////////////
@@ -409,6 +456,34 @@ const timeZones = [
     { label: '(UTC+06:00) Dhaka, Almaty', value: 'Asia/Dhaka' },
     { label: '(UTC−06:00) Central Time (US & Canada)', value: 'America/Chicago' }
 ]
+////////////////////////////////////
+
+// Helper functions for showing notifications
+function showSuccess(message) {
+    popUpProps.value = {
+        status: 'success',
+        errorMessage: message,
+        errorCode: ''
+    };
+    popUpInfoVisible.value = true;
+}
+
+function showError(message) {
+    popUpProps.value = {
+        status: 'error',
+        errorMessage: message,
+        errorCode: ''
+    };
+    popUpInfoVisible.value = true;
+}
+
+const isPasswordValid = computed(() => {
+    return passwordRules.every(rule => rule(curr_data.password.oldPassword) === true) &&
+        passwordRules.every(rule => rule(curr_data.password.newPassword) === true);
+});
+
+
+
 
 
 
@@ -430,14 +505,10 @@ onMounted(() => {
     original_data.account.username = userData.username || '';
     original_data.email = userData.email || '';
 
-
-
     curr_data.account = { ...original_data.account };
-
     curr_data.email = {
         new: original_data.email
     }
-
 
     // General
     const generalData = userData.data || {};
@@ -445,16 +516,28 @@ onMounted(() => {
     original_data.general.reportDate = generalData.reportDate ?? default_settings_value.value.reportDate;
     curr_data.general = { ...original_data.general };
 
-    // System
-    original_data.system.theme = generalData.theme ?? default_settings_value.value.theme;
-    original_data.system.language = generalData.language ?? default_settings_value.value.language;
-    original_data.system.notification = generalData.notification ?? default_settings_value.value.notification;
-    original_data.system.time_zone = generalData.time_zone ?? default_settings_value.value.time_zone;
+    // System - dengan fallback ke default jika tidak ada
+    const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    original_data.system.theme = generalData.theme || 'Terang'; // Default: Terang
+    original_data.system.language = generalData.language || 'Indonesia'; // Default: Indonesia
+    original_data.system.time_zone = generalData.time_zone || browserTimeZone || 'Asia/Jakarta'; // Default: zona waktu browser atau Jakarta
+
+    // Cek jika zona waktu browser ada di daftar timeZones kita
+    const timeZoneExists = timeZones.some(tz => tz.value === original_data.system.time_zone);
+    if (!timeZoneExists) {
+        // Jika zona waktu browser tidak ada di daftar, gunakan default Jakarta
+        original_data.system.time_zone = 'Asia/Jakarta';
+    }
+
     curr_data.system = { ...original_data.system };
+
+    console.log('System settings initialized:', {
+        theme: curr_data.system.theme,
+        language: curr_data.system.language,
+        time_zone: curr_data.system.time_zone
+    });
 });
-
-
-
 
 
 /* exp : {

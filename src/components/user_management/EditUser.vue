@@ -16,8 +16,35 @@
                     <v-card outlined class="mb-4">
                         <v-card-text>
                             <v-row>
+                                <v-col cols="12" md="6" class="mb-4">
+                                    <p class="text-subtitle-1 font-weight-medium mb-2">Nama Lengkap</p>
+                                    <v-card flat class="pa-3 d-flex align-center">
+                                        <v-icon size="24" color="primary" class="mr-2">mdi-file-account</v-icon>
+                                        <v-text-field maxlength="255" v-model="curr_user_data.full_name" label="Nama Lengkap" outlined
+                                            dense :rules="full_name_rules" required></v-text-field>
+                                    </v-card>
+                                </v-col>
+
+                                <v-col cols="12" md="6" class="mb-4">
+                                    <p class="text-subtitle-1 font-weight-medium mb-2">Username</p>
+                                    <v-card flat class="pa-3 d-flex align-center">
+                                        <v-icon size="24" color="primary" class="mr-2">mdi-account</v-icon>
+                                        <v-text-field maxlength="255" v-model="curr_user_data.username" label="Nama Pengguna" outlined
+                                            dense :rules="username_rules" required></v-text-field>
+                                    </v-card>
+                                </v-col>
+
+                                <v-col cols="12" md="6" class="mb-4">
+                                    <p class="text-subtitle-1 font-weight-medium mb-2">Email</p>
+                                    <v-card flat class="pa-3 d-flex align-center">
+                                        <v-icon size="24" color="primary" class="mr-2">mdi-email</v-icon>
+                                        <v-text-field maxlength="255" v-model="curr_user_data.email" label="Email Pengguna" outlined
+                                            dense :rules="emailRules" required></v-text-field>
+                                    </v-card>
+                                </v-col>
+
                                 <v-col cols="12" md="6">
-                                    <p class="text-subtitle-1 font-weight-medium mb-2">Peran </p>
+                                    <p class="text-subtitle-1 font-weight-medium mb-2">Peran</p>
                                     <v-card flat class="pa-3">
                                         <v-select v-model="curr_user_data.role" :items="availableRoles"
                                             label="Peran Pengguna" outlined dense :rules="role_rules"
@@ -25,8 +52,6 @@
                                     </v-card>
                                 </v-col>
 
-
-        
                                 <v-col cols="12" md="6">
                                     <p class="text-subtitle-1 font-weight-medium mb-2">Status</p>
                                     <v-card flat class="pa-3">
@@ -35,7 +60,6 @@
                                             :false-value="0" color="primary" hide-details />
                                     </v-card>
                                 </v-col>
-
                             </v-row>
                         </v-card-text>
                     </v-card>
@@ -137,9 +161,7 @@ import { Process } from '@/utils/requestHelper';
 const router = useRouter();
 
 // Role Management
-const availableRoles = ref([
-
-]);
+const availableRoles = ref([]);
 
 const roleHierarchy = {
     "system master": ["system admin", "system user"],
@@ -147,11 +169,32 @@ const roleHierarchy = {
     "system user": []
 };
 
+// Validation rules
+const emailRegrex = ref(/^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i);
+const usernameRegrex = ref(/^[A-Za-z0-9~!@#$%^&*()_+<>?/':=.,-]+$/);
 
+// Rules
+const username_rules = [
+    (v) => !!v || "Username harus diisi",
+    (v) => v.length >= 2 || "Username minimal 2 karakter",
+    (v) => v.length <= 255 || "Username maksimal 255 karakter",
+    (v) => usernameRegrex.value.test(v) || "Username hanya boleh mengandung huruf, angka, dan simbol '~!@#$%^&*()_+<>?/':=.,-'"
+];
+
+const emailRules = [
+    (v) => !!v || "Email harus diisi",
+    (v) => emailRegrex.value.test(v) || "Format email tidak valid",
+];
+
+const full_name_rules = [
+    (v) => !!v || "Nama lengkap harus diisi",
+    (v) => v.length >= 3 || "Nama minimal 3 karakter",
+    (v) => v.length <= 255 || "Nama maksimal 255 karakter"
+];
 
 const role_rules = [
-    (v) => !!v || "Role harus dipilih",
-    (v) => availableRoles.value.includes(v) || "Role tidak valid"
+    (v) => !!v || "Peran harus dipilih",
+    (v) => availableRoles.value.includes(v) || "Peran tidak valid"
 ];
 
 // State Management
@@ -175,11 +218,17 @@ const closePopUpInfo = () => {
 
 // User Data
 const curr_user_data = ref({
+    full_name: "",
+    username: "",
+    email: "",
     role: "",
     status: null
 });
 
 const original_user_data = ref({
+    full_name: "",
+    username: "",
+    email: "",
     role: "",
     status: null
 });
@@ -304,7 +353,10 @@ const getEditedUserData = (originalDataParam, existingDataParam) => {
 
 // Submit Logic
 const isDisableSubmitBtn = computed(() => {
-    // Validate role
+    // Validate basic fields
+    const isFullNameValid = full_name_rules.every(rule => rule(curr_user_data.value.full_name) === true);
+    const isUsernameValid = username_rules.every(rule => rule(curr_user_data.value.username) === true);
+    const isEmailValid = emailRules.every(rule => rule(curr_user_data.value.email) === true);
     const isRoleValid = role_rules.every(rule => rule(curr_user_data.value.role) === true);
 
     // Validate existing data
@@ -316,8 +368,13 @@ const isDisableSubmitBtn = computed(() => {
         item?.title?.trim() && item?.data?.trim());
 
     // Check for changes
-    const isRoleChanged = curr_user_data.value.role !== original_user_data.value.role;
-    const isStatusChanged = curr_user_data.value.status !== original_user_data.value.status;
+    const isBasicDataChanged = 
+        curr_user_data.value.full_name !== original_user_data.value.full_name ||
+        curr_user_data.value.username !== original_user_data.value.username ||
+        curr_user_data.value.email !== original_user_data.value.email ||
+        curr_user_data.value.role !== original_user_data.value.role ||
+        curr_user_data.value.status !== original_user_data.value.status;
+
     const isUserDetailChanged = !isUserDetailDataEqual(
         existing_user_detail_data.value,
         original_user_detail_data.value
@@ -326,9 +383,12 @@ const isDisableSubmitBtn = computed(() => {
         item => item.title?.trim() || item.data?.trim()
     );
 
-    const isDataChanged = isRoleChanged || isStatusChanged || isUserDetailChanged || isNewUserDetailFilled;
+    const isDataChanged = isBasicDataChanged || isUserDetailChanged || isNewUserDetailFilled;
 
     return !(
+        isFullNameValid &&
+        isUsernameValid &&
+        isEmailValid &&
         isRoleValid &&
         isCurrUserDetailsDataValid &&
         isNewUserDetailsDataValid &&
@@ -341,12 +401,19 @@ const pending_submit_data = ref({});
 const submitUserUpdate = () => {
     pending_submit_data.value = {};
 
-    // Check for role change
+    // Check for basic data changes
+    if (curr_user_data.value.full_name !== original_user_data.value.full_name) {
+        pending_submit_data.value.full_name = curr_user_data.value.full_name;
+    }
+    if (curr_user_data.value.username !== original_user_data.value.username) {
+        pending_submit_data.value.username = curr_user_data.value.username;
+    }
+    if (curr_user_data.value.email !== original_user_data.value.email) {
+        pending_submit_data.value.email = curr_user_data.value.email;
+    }
     if (curr_user_data.value.role !== original_user_data.value.role) {
         pending_submit_data.value.role = curr_user_data.value.role;
     }
-
-    // Check for status change
     if (curr_user_data.value.status !== original_user_data.value.status) {
         pending_submit_data.value.status = curr_user_data.value.status;
     }
@@ -449,8 +516,6 @@ async function updateUserData(userIdparam, userChangeFieldsParam) {
     }
 };
 
-
-
 onMounted(() => {
     const editor_user_data = JSON.parse(localStorage.getItem('user_data'));
     const editor_role = editor_user_data?.role?.trim();
@@ -495,17 +560,11 @@ onMounted(() => {
             }
         }
 
-        if (image && typeof image === "object") {
-            curr_user_image.value = { ...image };
-            original_user_image.value = { ...image };
-        }
-
     } catch (error) {
         console.error("Gagal parse data user:", error);
         router.push({ name: "user-management" });
     }
 });
-
 
 const backToUserManagPage = () => {
     router.push({ name: "user-management" });
