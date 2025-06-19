@@ -278,6 +278,14 @@
         <PopUpInfoBox v-if="popUpInfoVisible" class="popup-container" :status="popUpInfoProps.status"
             :errorMessage="popUpInfoProps.errorMessage" :errorCode="popUpInfoProps.errorCode"
             :visible="popUpInfoVisible" @close="closePopup" />
+
+
+        <PopUpConfirmationBox v-if="popUpConfirmVisible" class="popup-container" :title="popUpConfirmProps.title"
+            :message="popUpConfirmProps.message" :status="popUpConfirmProps.status" :visible="popUpConfirmVisible"
+            @confirm="handleConfirm" @cancel="handleCancel" />
+
+
+
     </v-container>
 
 </template>
@@ -289,7 +297,6 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { Process } from "@/utils/requestHelper";
 import { BASE_API_URL, WS_API_URL } from "@/configs/config";
 import { CreateSocketConnection } from "@/utils/wsHelper"
-import { ConvertUTCToLocal } from '@/utils/utils';
 import PopUpInfoBox from "@/components/parts/PopUpInfoBox.vue";
 import CanvasJS from "@canvasjs/charts";
 
@@ -306,12 +313,37 @@ const closePopup = () => {
     popUpInfoVisible.value = false;
 };
 
+const popUpConfirmVisible = ref(false);
+const popUpConfirmProps = ref({
+    title: "",
+    message: "",
+    status: "",
+});
+
+const handleConfirm = async () => {
+    popUpConfirmVisible.value = false;
+
+    if (!pendingDeviceAction.value) {
+        console.warn("Tidak ada aksi yang tertunda.");
+        return;
+    }
+
+    const message = pendingDeviceAction.value;
+    globalWs.value.send(JSON.stringify(message));
+    console.log("📩 Sent device action message:", message);
+
+    // Reset aksi tertunda
+    pendingDeviceAction.value = null;
+};
+
+const handleCancel = () => {
+    popUpConfirmVisible.value = false;
+    pendingDeviceAction.value = null;
+};
+
+
 
 const isLoading = ref(false);
-
-watch(isLoading, (newValue) => {
-    // console.log("isLoading changed to:", newValue);
-});
 
 
 const is_view_mode_compact = ref(false);
@@ -761,6 +793,9 @@ const closeDetailMenu = () => {
 
 
 
+
+const pendingDeviceAction = ref(null);  
+
 function handleDeviceMenuAction(actionParam, deviceIdParam) {
     console.log("handleDeviceMenuAction - action:", actionParam, ", device:", deviceIdParam);
 
@@ -775,16 +810,20 @@ function handleDeviceMenuAction(actionParam, deviceIdParam) {
         return;
     }
 
-    // Format standar pesan WebSocket untuk action ke device
-    const message = {
-        type: actionParam,   // <- misalnya:  "restart" , "deep_sleep"
+    // Simpan sementara aksi yang akan dikonfirmasi
+    pendingDeviceAction.value = {
+        type: actionParam,
         device_id: deviceIdParam,
     };
 
-    globalWs.value.send(JSON.stringify(message));
-    console.log("📩 Sent device action message:", message);
+    // Tampilkan popup konfirmasi
+    popUpConfirmProps.value = {
+        title: "Konfirmasi Aksi ke Perangkat",
+        message: `Apakah Anda yakin ingin melakukan ${actionParam} ke perangkat ini?`,
+        status: "info",
+    };
+    popUpConfirmVisible.value = true;
 }
-
 
 
 
