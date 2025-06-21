@@ -606,33 +606,33 @@ const getEditedDeviceData = (originalDataParam, existingDataParam) => {
 
 
 const isDisableSubmitBtn = computed(() => {
-    console.groupCollapsed("--- isDisableSubmitBtn ---");
+    //console.groupCollapsed("--- isDisableSubmitBtn ---");
 
     // 1. Validasi nama perangkat
     const isDeviceNameValid = curr_device_data.value?.name?.length >= 2 &&
         curr_device_data.value.name.length <= 255;
-    console.log("isDeviceNameValid:", isDeviceNameValid, curr_device_data.value?.name);
+  //  console.log("isDeviceNameValid:", isDeviceNameValid, curr_device_data.value?.name);
 
     // 2. Validasi password perangkat
     const isPasswordValid = curr_device_data.value?.password?.length >= 8 &&
         curr_device_data.value.password.length <= 255;
-    console.log("isPasswordValid:", isPasswordValid, curr_device_data.value?.password);
+  //  console.log("isPasswordValid:", isPasswordValid, curr_device_data.value?.password);
 
     // 3. Validasi interval pembacaan
     const isReadIntervalValid = typeof curr_device_data.value.read_interval === "number" &&
         curr_device_data.value.read_interval >= 1 &&
         curr_device_data.value.read_interval <= 120;
-    console.log("isReadIntervalValid:", isReadIntervalValid, curr_device_data.value?.read_interval);
+    //console.log("isReadIntervalValid:", isReadIntervalValid, curr_device_data.value?.read_interval);
 
     // 4. Validasi data device detail yang ada
     const isCurrDeviceDetailsDataValid = existing_device_detail_data.value.every(item =>
         item?.title?.trim() && item?.data?.trim());
-    console.log("isCurrDeviceDetailsDataValid:", isCurrDeviceDetailsDataValid);
+   // console.log("isCurrDeviceDetailsDataValid:", isCurrDeviceDetailsDataValid);
 
     // 5. Validasi data device detail baru
     const isNewDeviceDetailsDataValid = new_device_detail_data.value.every(item =>
         item?.title?.trim() && item?.data?.trim());
-    console.log("isNewDeviceDetailsDataValid:", isNewDeviceDetailsDataValid);
+   // console.log("isNewDeviceDetailsDataValid:", isNewDeviceDetailsDataValid);
 
     // 6. Apakah ada perubahan data?
     const isFieldChanged =
@@ -671,11 +671,11 @@ const isDisableSubmitBtn = computed(() => {
         isNewDeviceDetailFilled ||
         isImageChanged.value; // Use the new computed property
 
-    console.log("isFieldChanged:", isFieldChanged);
-    console.log("isDeviceDetailChanged:", isDeviceDetailChanged);
-    console.log("isNewDeviceDetailFilled:", isNewDeviceDetailFilled);
-    console.log("isImageChanged:", isImageChanged);
-    console.log("isDataChanged:", isDataChanged);
+    // console.log("isFieldChanged:", isFieldChanged);
+    // console.log("isDeviceDetailChanged:", isDeviceDetailChanged);
+    // console.log("isNewDeviceDetailFilled:", isNewDeviceDetailFilled);
+    // console.log("isImageChanged:", isImageChanged);
+    // console.log("isDataChanged:", isDataChanged);
 
 
     const result = !(
@@ -687,8 +687,8 @@ const isDisableSubmitBtn = computed(() => {
         isDataChanged
     );
 
-    console.log("FINAL isDisableSubmitBtn:", result);
-    console.groupEnd();
+    // console.log("FINAL isDisableSubmitBtn:", result);
+    // console.groupEnd();
     return result;
 });
 

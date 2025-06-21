@@ -320,22 +320,6 @@ const popUpConfirmProps = ref({
     status: "",
 });
 
-const handleConfirm = async () => {
-    popUpConfirmVisible.value = false;
-
-    if (!pendingDeviceAction.value) {
-        console.warn("Tidak ada aksi yang tertunda.");
-        return;
-    }
-
-    const message = pendingDeviceAction.value;
-    globalWs.value.send(JSON.stringify(message));
-    console.log("📩 Sent device action message:", message);
-
-    // Reset aksi tertunda
-    pendingDeviceAction.value = null;
-};
-
 const handleCancel = () => {
     popUpConfirmVisible.value = false;
     pendingDeviceAction.value = null;
@@ -419,6 +403,7 @@ const updateChart = (deviceId, message) => {
     if (!device) return;
 
     if (!device.chart) {
+
         initChart(deviceId);
         return;
     }
@@ -571,6 +556,7 @@ const initGlobalWebSocket = async () => {
             }
             console.log("📨 Message from server:", message);
             console.log("Raw Message : ", raw)
+
             console.log("Type:", message?.type, "| Full message:", message);
 
             switch (message?.type) {
@@ -602,9 +588,31 @@ const initGlobalWebSocket = async () => {
                     }
                     break;
                 case "subscribe_response":
-                // do nothing, handle by selectDevice
+                    // do nothing, handle by selectDevice
+                    break;
                 case "unsubscribe_response":
-                // do nothing, handle by removeMonitoredDevice
+                    // do nothing, handle by removeMonitoredDevice
+                    break;
+                case "deep_sleep_response":
+                    if (pendingDeviceAction.value?.callback) {
+                        console.log("📬 Menangani device response:", message.type);
+                        pendingDeviceAction.value.callback(message);
+                    } else {
+                        console.warn("⚠️ Tidak ada pendingDeviceAction untuk", message.type);
+                    }
+                    break;
+
+                case "restart_response":
+                    if (pendingDeviceAction.value?.callback) {
+                        console.log("📬 Menangani device response:", message.type);
+                        pendingDeviceAction.value.callback(message);
+                    } else {
+                        console.warn("⚠️ Tidak ada pendingDeviceAction untuk", message.type);
+                    }
+                    break;
+
+
+
                 default:
                     console.log("⚠️ initGlobalWebSocket -  Pesan tidak dikenali:", message);
             }
@@ -794,7 +802,7 @@ const closeDetailMenu = () => {
 
 
 
-const pendingDeviceAction = ref(null);  
+const pendingDeviceAction = ref(null);
 
 function handleDeviceMenuAction(actionParam, deviceIdParam) {
     console.log("handleDeviceMenuAction - action:", actionParam, ", device:", deviceIdParam);
@@ -810,10 +818,37 @@ function handleDeviceMenuAction(actionParam, deviceIdParam) {
         return;
     }
 
-    // Simpan sementara aksi yang akan dikonfirmasi
     pendingDeviceAction.value = {
         type: actionParam,
         device_id: deviceIdParam,
+        timeoutId: null,
+        callback: (responseMsg) => {
+            clearTimeout(pendingDeviceAction.value?.timeoutId);
+
+            const expectedResponseType = `${actionParam}_response`;
+            console.log("handleDeviceMenuAction - ", actionParam, ": ", responseMsg)
+            if (responseMsg.type === expectedResponseType && responseMsg.device_id === deviceIdParam) {
+                if (responseMsg.status === "success") {
+                    popUpInfoProps.value = {
+                        status: "success",
+                        errorMessage:  `Perintah ${actionParam} berhasil dikirim ke perangkat`,
+                        errorCode: "",
+                    };
+                } else {
+                    popUpInfoProps.value = {
+                        status: "error",
+                        errorMessage:  `Gagal mengirim perintah ${actionParam}`,
+                        errorCode: "",
+                    };
+                }
+                popUpInfoVisible.value = true;
+            } else {
+                console.warn("Response type tidak sesuai:", responseMsg.type, "dari device:", responseMsg.device_id);
+            }
+
+            pendingDeviceAction.value = null;
+            isLoading.value = false; // ✅ Matikan loading setelah respons diterima
+        }
     };
 
     // Tampilkan popup konfirmasi
@@ -824,6 +859,47 @@ function handleDeviceMenuAction(actionParam, deviceIdParam) {
     };
     popUpConfirmVisible.value = true;
 }
+
+
+const handleConfirm = async () => {
+    popUpConfirmVisible.value = false;
+
+    if (!pendingDeviceAction.value) {
+        console.warn("Tidak ada aksi yang tertunda.");
+        return;
+    }
+
+    // Aktifkan loading baru setelah konfirmasi
+    isLoading.value = true;
+
+    const message = pendingDeviceAction.value;
+
+    // Timeout jika tidak ada response
+    message.timeoutId = setTimeout(() => {
+        if (pendingDeviceAction.value) {
+            console.warn("⌛ Timeout - Tidak menerima response dari server");
+            popUpInfoProps.value = {
+                status: "error",
+                errorMessage: "Tidak ada respon dari server setelah 5 detik",
+                errorCode: "TIMEOUT",
+            };
+            popUpInfoVisible.value = true;
+            pendingDeviceAction.value = null;
+            isLoading.value = false;
+        }
+    }, 5000);
+
+    globalWs.value.send(JSON.stringify(message));
+    console.log("📩 Sent device action message:", message);
+};
+
+
+
+
+
+
+
+
 
 
 
