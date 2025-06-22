@@ -309,80 +309,64 @@ async function saveField(field) {
     isLoading.value = true;
 
     try {
-        let payload = {
-            change_fields: {}
-        };
-
-        switch (field) {
-            case 'email':
-                if (curr_data.email.new && curr_data.email.new !== original_data.email) {
-                    // For email changes, we need to verify first
-                    router.push({ name: 'VerifyOTP', query: { email: curr_data.email.new } });
-                    return;
+        if (field === 'email') {
+            if (curr_data.email.new && curr_data.email.new !== original_data.email) {
+                router.push({ name: 'VerifyOTP', query: { email: curr_data.email.new } });
+                return;
+            }
+        } else if (field === 'account' && showAccountSaveButton.value) {
+            const change_fields = {
+                account: {
+                    username: curr_data.account.username,
+                    full_name: curr_data.account.full_name
                 }
-                break;
+            };
 
-            case 'account':
-                if (showAccountSaveButton.value) {
-                    payload.change_fields.account = {
-                        username: curr_data.account.username,
-                        full_name: curr_data.account.full_name
-                    };
+            const success = await updateUserSetting(change_fields);
+            if (success) {
+                original_data.account.username = curr_data.account.username;
+                original_data.account.full_name = curr_data.account.full_name;
+                showSuccess('Perubahan akun berhasil disimpan');
+            } else {
+                throw new Error('Gagal menyimpan perubahan akun');
+            }
 
-                    const response = await Process('put', `${BASE_API_URL}/sysuser/update`, payload);
-
-                    if (response.success) {
-                        original_data.account.full_name = curr_data.account.full_name;
-                        original_data.account.username = curr_data.account.username;
-                        showSuccess('Perubahan akun berhasil disimpan');
-                    } else {
-                        throw new Error(response.message || 'Gagal menyimpan perubahan akun');
-                    }
+        } else if (field === 'general' && hasGeneralChanges.value) {
+            const change_fields = {
+                general: {
+                    emission_factor: parseFloat(curr_data.general.emissionFactor),
+                    report_date: parseInt(curr_data.general.reportDate)
                 }
-                break;
+            };
 
-            case 'general':
-                if (hasGeneralChanges.value) {
-                    payload.change_fields.general = {
-                        emission_factor: parseFloat(curr_data.general.emissionFactor),
-                        report_date: parseInt(curr_data.general.reportDate)
-                    };
+            const success = await updateUserSetting(change_fields);
+            if (success) {
+                original_data.general.emissionFactor = curr_data.general.emissionFactor;
+                original_data.general.reportDate = curr_data.general.reportDate;
+                showSuccess('Pengaturan umum berhasil disimpan');
+            } else {
+                throw new Error('Gagal menyimpan pengaturan umum');
+            }
 
-                    const response = await Process('put', `${BASE_API_URL}/sysuser/update`, payload);
-
-                    if (response.success) {
-                        original_data.general.emissionFactor = curr_data.general.emissionFactor;
-                        original_data.general.reportDate = curr_data.general.reportDate;
-                        showSuccess('Pengaturan umum berhasil disimpan');
-                    } else {
-                        throw new Error(response.message || 'Gagal menyimpan pengaturan umum');
-                    }
+        } else if (field === 'system' && hasSystemChanges.value) {
+            const change_fields = {
+                system: {
+                    theme: curr_data.system.theme,
+                    language: curr_data.system.language,
+                    time_zone: curr_data.system.time_zone
                 }
-                break;
+            };
 
-            case 'system':
-                if (hasSystemChanges.value) {
-                    payload.change_fields.system = {
-                        theme: curr_data.system.theme,
-                        language: curr_data.system.language,
-                        time_zone: curr_data.system.time_zone
-                    };
+            const success = await updateUserSetting(change_fields);
+            if (success) {
+                original_data.system = { ...curr_data.system };
+                showSuccess('Pengaturan sistem berhasil disimpan');
+            } else {
+                throw new Error('Gagal menyimpan pengaturan sistem');
+            }
 
-                    const response = await Process('put', `${BASE_API_URL}/sysuser/update`, payload);
-
-                    if (response.success) {
-                        original_data.system.theme = curr_data.system.theme;
-                        original_data.system.language = curr_data.system.language;
-                        original_data.system.time_zone = curr_data.system.time_zone;
-                        showSuccess('Pengaturan sistem berhasil disimpan');
-                    } else {
-                        throw new Error(response.message || 'Gagal menyimpan pengaturan sistem');
-                    }
-                }
-                break;
-
-            default:
-                console.warn('Unknown field:', field);
+        } else {
+            console.warn('Unknown or unhandled field:', field);
         }
     } catch (error) {
         showError(error.message);
@@ -418,6 +402,73 @@ async function changePassword() {
         isLoading.value = false;
     }
 }
+
+
+// Param expected:
+// {
+//   "change_fields": {
+//     "general": { "emission_factor": 0.5 },
+//     "account": { "username": "new_username", "email": "new@mail.com", "full_name": "New Name" },
+//     "system": { "timezone": "Asia/Jakarta", "theme": "dark", "language": "id" }
+//   }
+// }
+
+async function updateUserSetting(change_fields) {
+    console.log("----updateUserSetting----")
+    if (isFetchingUserDetail.value) {
+        console.log("Update already in progress...");
+        return false;
+    }
+
+    isFetchingUserDetail.value = true;
+
+    try {
+        const operation = "update_user_setting";
+        const baseUrl = BASE_API_URL;
+        const params = { change_fields };
+
+        console.log("Sending params:", params);
+        const response_be = await Process(baseUrl, operation, params);
+
+        if (!response_be.success || response_be.status !== "success") {
+            console.error("Update failed:", response_be.message || response_be.error_message);
+            return false;
+        }
+
+        const updatedData = response_be.payload?.new_user_detailed_data;
+
+        if (!updatedData) {
+            console.warn("No updated user data returned from backend.");
+            return true; // tetap dianggap sukses, tergantung implementasi
+        }
+
+        // Simpan ke localStorage
+        
+        const userDataRaw = localStorage.getItem("user_data");
+        let userData = {};
+
+        if (userDataRaw) {
+            try {
+                userData = JSON.parse(userDataRaw);
+            } catch (e) {
+                console.warn("Failed to parse existing user_data, starting from empty object.");
+            }
+        }
+
+        // Simpan updatedData ke dalam field "data"
+        userData.data = updatedData;
+        console.log("Updated user data saved to localStorage.");
+        return true;
+
+    } catch (err) {
+        console.error("ERROR WHILE UPDATING USER SETTING:", err);
+        return false;
+    } finally {
+        isFetchingUserDetail.value = false;
+    }
+}
+
+
 
 
 ///////////// SYSTEM ////////////////

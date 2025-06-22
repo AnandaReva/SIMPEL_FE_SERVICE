@@ -143,7 +143,7 @@ onve<template>
                                     <v-icon size="64" color="grey">mdi-chart-bar</v-icon>
                                 </v-col>
                                 <v-col class="d-flex align-center justify-center">
-                                    <p class="text-h6 mt-4 mb-6">Tidak ada data bulanan pada tahun {{ }}</p>
+                                    <p class="text-h6 mt-4 mb-6">Tidak ada data bulanan pada tahun {{ props.year_selected_detail?.year }}</p>
                                 </v-col>
                             </v-card>
                         </v-col>

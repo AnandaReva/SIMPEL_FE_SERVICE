@@ -5,6 +5,12 @@ import MonitoringPage from '@/components/monitoring/MonitoringPage.vue';
 
 
 import ReportPage from '@/components/reports/ReportPage.vue';
+
+
+import ReportDeviceDetailed from '@/components/reports/ReportDeviceDetailed.vue';
+
+
+
 /* import YearlyReport from '@/components/reports/YearlyReport.vue';
 import MonthlyReport from '@/components/reports/MonthlyReport.vue';
 import DailyReport from '@/components/reports/DailyReport.vue'
@@ -46,12 +52,25 @@ const routes = [
         meta: { requiresAuth: true },
     },
 
+
+    ////////// REPORT /////////////
+
     {
         path: '/report/',
         name: 'report',
         component: ReportPage,
         meta: { requiresAuth: true, parent: 'report' },
     },
+    {
+        path: '/report/device-detailed',
+        name: 'report-device',
+        component: ReportDeviceDetailed,
+        meta: { requiresAuth: true, parent: 'report' },
+    },
+
+
+
+    /////////// USER MANAGEMENTS /////////////
 
     {
         path: '/users',
@@ -59,7 +78,7 @@ const routes = [
         component: UserManagementPage,
         meta: { requiresAuth: true },
     },
-        {
+    {
         path: '/user/add',
         name: 'user-add',
         component: AddUser,

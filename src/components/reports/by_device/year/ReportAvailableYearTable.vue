@@ -134,15 +134,6 @@ watch(year_list_pageSize, async (newSize) => {
     await getReportYearList()
 })
 
-const handleManualStartYear = async () => {
-    if (start_year.value < min_year.value || start_year.value > max_year.value) {
-        alert("Tahun tidak tersedia dalam data.")
-        return
-    }
-
-    paginationDirection.value = "next"
-    await getReportYearList()
-}
 
 
 
