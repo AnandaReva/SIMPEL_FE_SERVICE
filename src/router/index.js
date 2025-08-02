@@ -1,130 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginPage from '@/components/Login.vue';
-//import DashboardPage from '@/components/Dashboard.vue';
-import MonitoringPage from '@/components/monitoring/MonitoringPage.vue';
 
-
-import ReportPage from '@/components/reports/ReportPage.vue';
-
-
-import ReportDeviceDetailed from '@/components/reports/ReportDeviceDetailed.vue';
-
-
-
-/* import YearlyReport from '@/components/reports/YearlyReport.vue';
-import MonthlyReport from '@/components/reports/MonthlyReport.vue';
-import DailyReport from '@/components/reports/DailyReport.vue'
-import DayDetailReport from '@/components/reports/DayDetailReport.vue';
- */
-
-import DeviceManagement from '@/components/device_management/DeviceManagement.vue';
-import AddDevice from '@/components/device_management/AddDevice.vue';
-import EditDevice from '@/components/device_management/EditDevice.vue';
-
-import UserManagementPage from '@/components/user_management/UserManagement.vue';
-import AddUser from '@/components/user_management/Adduser.vue';
-
-import EditUser from '@/components/user_management/EditUser.vue';
-
-
-import SettingsPage from '@/components/Settings.vue';
-
-
-import VerifyOTP from '@/components/auths/VerifyOTP.vue';
-import ResetPassword from '@/components/auths/ResetPassword.vue';
-import VerifyResetPassword from '@/components/auths/VerifyResetPassword.vue';
 
 const routes = [
     {
         path: '/',
-        redirect: '/monitoring'
+        redirect: '/dashboard'
     },
-    // {
-    //     path: '/dashboard',
-    //     name: 'dashboard',
-    //     component: DashboardPage,
-    //     meta: { requiresAuth: true },
-    // },
-    {
-        path: '/monitoring',
-        name: 'monitoring',
-        component: MonitoringPage,
-        meta: { requiresAuth: true },
-    },
-
-
-    ////////// REPORT /////////////
-
-    {
-        path: '/report/',
-        name: 'report',
-        component: ReportPage,
-        meta: { requiresAuth: true, parent: 'report' },
-    },
-    {
-        path: '/report/device-detailed',
-        name: 'report-device',
-        component: ReportDeviceDetailed,
-        meta: { requiresAuth: true, parent: 'report' },
-    },
-
-
-
-    /////////// USER MANAGEMENTS /////////////
-
-    {
-        path: '/users',
-        name: 'user-management',
-        component: UserManagementPage,
-        meta: { requiresAuth: true },
-    },
-    {
-        path: '/user/add',
-        name: 'user-add',
-        component: AddUser,
-        meta: { requiresAuth: true, parent: 'user-management' },
-    },
-    {
-        path: '/user/edit/:username',
-        name: 'user-edit',
-        component: EditUser,
-        meta: { requiresAuth: true, parent: 'user-management' },
-    },
-
-
-    // device managements
-
-    {
-        path: '/device',
-        name: 'device-management',
-        component: DeviceManagement,
-        meta: { requiresAuth: true },
-    },
-    {
-        path: '/device/add',
-        name: 'device-add',
-        component: AddDevice,
-        meta: { requiresAuth: true, parent: 'device-management' },
-    },
-    {
-        path: '/device/edit/:device_name',
-        name: 'device-edit',
-        component: EditDevice,
-        meta: { requiresAuth: true, parent: 'device-management' },
-    },
-
-
-    {
-        path: '/settings',
-        name: 'settings',
-        component: SettingsPage,
-        meta: { requiresAuth: true },
-    },
-
-
-
-
-
 
 
     {
@@ -133,24 +15,7 @@ const routes = [
         component: LoginPage,
         meta: { requiresAuth: false },
     },
-    // {
-    //     path: '/verify-otp',
-    //     name: 'verify-otp',
-    //     component: VerifyOTP,
-    //     meta: { requiresAuth: false },
-    // },
-    {
-        path: '/reset-password',
-        name: 'reset-password',
-        component: ResetPassword,
-        meta: { requiresAuth: false },
-    },
-    {
-        path: '/reset-password-confirm/:signature',
-        name: 'reset-password-confirm',
-        component: VerifyResetPassword,
-        meta: { requiresAuth: false },
-    }
+
 ];
 
 const router = createRouter({

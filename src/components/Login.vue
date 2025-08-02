@@ -143,6 +143,7 @@ const popUpInfoProps = ref({
 });
 
 
+
 const isLoading = ref(false);
 
 watch(isLoading, (newValue) => {
@@ -315,7 +316,7 @@ const calculateToken = async (fullNonce, saltParam) => {
   );
 
   if (error) {
-    console.error("Error generating Argon2 hash:", error);
+    console.error("Error generating PBKDF2 hash:", error);
     return "";
   }
 

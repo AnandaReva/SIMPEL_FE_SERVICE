@@ -36,7 +36,7 @@
                                         <v-icon size="24" color="primary" class="mr-2">mdi-access-point-network</v-icon>
                                         <v-text-field maxlength="50" v-model="curr_device_data.name"
                                             label="Nama Perangkat" outlined dense
-                                            prepend-inner-icon="mdi-access-point-network" class="mb-4"
+                                        class="mb-4"
                                             :rules="device_name_rules" required></v-text-field>
                                     </v-card>
                                 </v-col>
@@ -46,7 +46,7 @@
                                     <v-card flat class="pa-3 d-flex align-center">
                                         <v-icon size="24" color="primary" class="mr-2">mdi-lock</v-icon>
                                         <v-text-field v-model="curr_device_data.password" label="Password" outlined
-                                            dense prepend-inner-icon="mdi-lock"
+                                          
                                             :type="showPassword ? 'text' : 'device_password'"
                                             :append-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
                                             @click:append="showPassword = !showPassword" :rules="device_password_rules"
@@ -56,9 +56,10 @@
 
                                 <v-col cols="12" md="6">
                                     <p class="text-subtitle-1 font-weight-medium mb-2">Interval Pembacaan (Detik)</p>
-                                    <v-card flat class="pa-3">
-                                        <v-text-field v-model.number="curr_device_data.read_interval" type="number"
-                                            outlined dense prepend-inner-icon="mdi-timer" :rules="read_interval_rules"
+                                  <v-card flat class="pa-3 d-flex align-center">
+                                          <v-icon size="24" color="primary" class="mr-2">mdi-timer</v-icon>
+                                        <v-text-field v-model.number="curr_device_data.read_interval" type="number" outlined
+                                        :rules="read_interval_rules"
                                             required></v-text-field>
                                     </v-card>
                                 </v-col>
@@ -446,17 +447,23 @@ const fileInputRef = ref(null);
 /////////// COMMON DEVICE DATA ///////////
 
 
+const deviceNameAndPasswordRegex = /^[a-zA-Z0-9!@#$%&\-+]+$/;
+
+
+
 // Validation rules
 const device_name_rules = [
     (v) => !!v || "Nama perangkat harus diisi",
     (v) => v.length >= 2 || "Nama perangkat minimal 2 karakter",
     (v) => v.length <= 255 || "Nama perangkat maksimal 255 karakter",
+    (v) => deviceNameAndPasswordRegex.test(v) || "Tidak boleh mengandung spasi atau underscore (_)",
 ];
 
 const device_password_rules = [
     (v) => !!v || "Password harus diisi",
     (v) => v.length >= 8 || "Password minimal 8 karakter",
     (v) => v.length <= 255 || "Password maksimal 255 karakter",
+      (v) => deviceNameAndPasswordRegex.test(v) || "Tidak boleh mengandung spasi atau underscore (_)",
 ];
 
 const read_interval_rules = [

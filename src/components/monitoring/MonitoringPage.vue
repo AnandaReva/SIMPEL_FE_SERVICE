@@ -392,9 +392,43 @@ watch(available_devices_to_monitor, (newVal) => {
 
 // Helper functions
 const formatValue = (newValue) => {
-    return newValue === undefined || newValue === null ? "-" : newValue.toFixed(2);
+    return newValue === undefined || newValue === null ? "-" : newValue.toFixed(3);
 };
 
+/* 
+import { DateTime } from "luxon";
+
+const updateChart = (deviceId, message) => {
+const device = monitored_devices.value.find(d => d.device_id === deviceId);
+if (!device) return;
+
+if (!device.chart) {
+
+    initChart(deviceId);
+    return;
+}
+
+try {
+    // Ambil waktu saat ini dari browser (waktu saat data masuk)
+    const localDateTime = DateTime.now().setZone("Asia/Jakarta");
+
+    console.log("🕒 LocalDate (Browser - Jakarta):", localDateTime.toISO());
+
+    device.dataPoints.push({
+        x: localDateTime.toJSDate(),
+        y: parseFloat(message.power) || 0,
+    });
+
+    if (device.dataPoints.length > maxDataLength.value) {
+        device.dataPoints.shift();
+    }
+
+    device.chart.options.data[0].dataPoints = device.dataPoints;
+    device.chart.render();
+} catch (error) {
+    console.error("❌ Error updating chart:", error);
+}
+}; */
 
 import { DateTime } from "luxon";
 
@@ -403,19 +437,19 @@ const updateChart = (deviceId, message) => {
     if (!device) return;
 
     if (!device.chart) {
-
         initChart(deviceId);
         return;
     }
 
     try {
-        // Ambil waktu saat ini dari browser (waktu saat data masuk)
-        const localDateTime = DateTime.now().setZone("Asia/Jakarta");
+        // ✅ Tangkap waktu data diterima oleh client (browser)
+        const receiveTime = DateTime.now().setZone("Asia/Jakarta");
 
-        console.log("🕒 LocalDate (Browser - Jakarta):", localDateTime.toISO());
+        console.log("📥 Data diterima:", receiveTime.toISO());
 
+        // Latensi sekarang hanya diukur dari waktu kedatangan
         device.dataPoints.push({
-            x: localDateTime.toJSDate(),
+            x: receiveTime.toJSDate(),
             y: parseFloat(message.power) || 0,
         });
 
@@ -429,7 +463,6 @@ const updateChart = (deviceId, message) => {
         console.error("❌ Error updating chart:", error);
     }
 };
-
 
 // Fungsi initChart yang menggunakan labelFormatter untuk menampilkan HH:mm:ss
 const initChart = (deviceId) => {

@@ -204,17 +204,25 @@ const showPassword = ref(false);
 const dataContainers = ref([{ title: "", data: "" }]);
 
 // Validation rules
+const deviceNameAndPasswordRegex = /^[a-zA-Z0-9!@#$%&\-+]+$/;
+
+
+
+// Validation rules
 const device_name_rules = [
     (v) => !!v || "Nama perangkat harus diisi",
     (v) => v.length >= 2 || "Nama perangkat minimal 2 karakter",
     (v) => v.length <= 255 || "Nama perangkat maksimal 255 karakter",
+    (v) => deviceNameAndPasswordRegex.test(v) || "Tidak boleh mengandung spasi atau underscore (_)",
 ];
 
 const device_password_rules = [
     (v) => !!v || "Password harus diisi",
     (v) => v.length >= 8 || "Password minimal 8 karakter",
     (v) => v.length <= 255 || "Password maksimal 255 karakter",
+    (v) => deviceNameAndPasswordRegex.test(v) || "Tidak boleh mengandung spasi atau underscore (_)",
 ];
+
 
 const read_interval_rules = [
     (v) => !!v || "Interval harus diisi",

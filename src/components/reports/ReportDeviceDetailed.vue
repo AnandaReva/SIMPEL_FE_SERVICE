@@ -170,15 +170,15 @@
                         <!-- Kanan: Lihat Semua + tombol -->
                         <div cols="auto" class="position-absolute" style="right: 24px; top: 12px;">
                             <div class="d-flex align-center">
+                                
+                                <div>
+                                    
+                                    <span class="text-caption mr-2">Lihat Laporan Semua Perangkat</span>
+                                </div>
                                 <v-btn icon color="primary" class="rounded-circle" style="width: 36px; height: 36px;"
                                     @click="toReportPage">
                                     <v-icon>mdi-chart-waterfall</v-icon>
                                 </v-btn>
-
-                                <div class="ml-2">
-
-                                    <span class="text-caption mr-2">Lihat Laporan Semua Perangkat</span>
-                                </div>
                             </div>
                         </div>
 

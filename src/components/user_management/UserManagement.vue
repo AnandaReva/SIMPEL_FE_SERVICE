@@ -412,6 +412,9 @@ function selectUser(userSelected) {
 }
 
 
+
+
+
 ////////// USER DETAIL ////////////
 async function getUserDetail(userIdParam) {
     console.log("----getUserDetail----")

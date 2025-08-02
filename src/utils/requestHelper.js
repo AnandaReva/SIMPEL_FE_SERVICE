@@ -79,7 +79,7 @@ export async function Auth_Process(baseUrl, process_name, params = {}) {
       (error.message === "Network Error" ? "503" : "999999");
 
     const errorMessage =
-      error.response?.data?.ErrorMessage || error.message || "Unknown error";
+      error.response?.data?.ErrorMessage || error.message || "";
     const payload = error.response?.data?.Payload || {};
     console.error("disini:", errorMessage);
     return {
@@ -176,7 +176,7 @@ export async function Process(apiUrl, process_name, params = {}) {
       error.response?.status?.toString() ||
       (error.message === "Network Error" ? "503" : "999999");
 
-    const errorMessage = error.response?.data?.ErrorMessage || "Unknown error";
+    const errorMessage = error.response?.data?.ErrorMessage || "";
     const payload = error.response?.data?.Payload || {};
 
     if (errorCode === "401") {

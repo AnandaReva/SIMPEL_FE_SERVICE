@@ -345,8 +345,8 @@ function searchDevices() {
 
 
 async function getDeviceList(pageNumberParam) {
-    console.log("----getDeviceList----")
-    if (isFetchingDevices.value == true) {
+    console.log("----getDeviceList----");
+    if (isFetchingDevices.value) {
         console.log("Fetching devices already in progress...");
         return false;
     }
@@ -370,14 +370,7 @@ async function getDeviceList(pageNumberParam) {
         const response_be = await Process(baseUrl, operation, params);
 
         if (response_be.status !== "success") {
-            console.error("getDeviceList FAILED!!:", response_be.error_message);
-            popUpInfoProps.value = {
-                status: "error",
-                errorMessage: "Gagal Mendapatkan Data Perangkat Aktif",
-                errorCode: response_be.error_code,
-            };
-            popUpInfoVisible.value = true;
-            return false;
+            throw new Error(response_be.error_message || "Gagal Mendapatkan Data Daftar Perangkat");
         }
 
         const responseBE = response_be.payload;
@@ -397,11 +390,20 @@ async function getDeviceList(pageNumberParam) {
         return true;
     } catch (err) {
         console.error("ERROR WHILE GETTING DEVICES:", err);
+
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: err.message || "Terjadi kesalahan saat memuat daftar perangkat",
+            errorCode: null,
+        };
+        popUpInfoVisible.value = true;
+
         return false;
     } finally {
         isFetchingDevices.value = false;
     }
 }
+
 
 ///
 function selectDevice(deviceSelected) {
@@ -418,10 +420,10 @@ function selectDevice(deviceSelected) {
 }
 
 
-////////// DEVICE DETAIL ////////////
+////////// DEVICE DETAIL //////////
 async function getDeviceDetail(deviceIdParam) {
-    console.log("----getDeviceDetail----")
-    if (isFetchingDeviceDetail.value == true) {
+    console.log("----getDeviceDetail----");
+    if (isFetchingDeviceDetail.value === true) {
         console.log("Fetching device detail already in progress...");
         return false;
     }
@@ -440,21 +442,17 @@ async function getDeviceDetail(deviceIdParam) {
         const response_be = await Process(baseUrl, operation, params);
 
         if (response_be.status !== "success") {
-            console.error("getDeviceDetail FAILED!!:", response_be.error_message);
-            throw new Error("Gagal mendapatkan detail perangkat", response_be.error_message);   
-        
+            const message = response_be.error_message || "Gagal mendapatkan detail perangkat";
+            throw new Error(message);
         }
 
         const responseBE = response_be.payload;
 
         console.log("getDeviceDetail SUCCESS!!");
 
-
-
         if (!curr_device.value || typeof curr_device.value !== 'object') {
             curr_device.value = {};
         }
-
 
         Object.assign(curr_device.value, {
             id: responseBE.device_id,
@@ -468,24 +466,29 @@ async function getDeviceDetail(deviceIdParam) {
             image: responseBE.device_image,
         });
 
-
-        // Optional: log jika device_data kosong
         if (!responseBE.device_data) {
             console.log("device_data is empty (null or undefined).");
         }
 
-       sessionStorage.setItem("device_management", JSON.stringify(curr_device.value))
+        sessionStorage.setItem("device_management", JSON.stringify(curr_device.value));
 
         return true;
 
     } catch (err) {
         console.error("ERROR WHILE GETTING DEVICE DETAIL DATA:", err);
+
+        popUpInfoProps.value = {
+            status: "error",
+            errorMessage: err.message || "Terjadi kesalahan saat memuat detail perangkat",
+            errorCode: null,
+        };
+        popUpInfoVisible.value = true;
+
         return false;
     } finally {
         isFetchingDeviceDetail.value = false;
     }
 }
-
 
 
 
